@@ -317,16 +317,20 @@ export function wallInfo(w) {
   const dx = w.x2 - w.x1, dz = w.z2 - w.z1, L = Math.hypot(dx, dz) || 0.001, ang = Math.atan2(dz, dx);
   return { L, ang, ux: dx / L, uz: dz / L, nx: -dz / L, nz: dx / L };
 }
+// raccord d'une extrémité de mur sur un autre mur (angle ou T) : le mur est prolongé (ou raccourci) pour finir exactement sur la face
+// opposée de l'autre mur, quelle que soit la position du point (sur l'axe, sur une face, ou un peu au-delà) → jamais de dépassement
 function extension(w, end) {
-  const { ux, uz } = wallInfo(w), px = end ? w.x2 : w.x1, pz = end ? w.z2 : w.z1; let ext = 0;
+  const i = wallInfo(w), px = end ? w.x2 : w.x1, pz = end ? w.z2 : w.z1, dir = end ? 1 : -1, ox = dir * i.ux, oz = dir * i.uz;
+  let best = null, bd = Infinity;
   for (const o of S.walls) {
     if (o === w) continue;
-    const oi = wallInfo(o); if (Math.abs(ux * oi.uz - uz * oi.ux) < 0.2) continue;
-    // distance du point à l'axe de l'autre mur, et position le long de celui-ci
-    const t = (px - o.x1) * oi.ux + (pz - o.z1) * oi.uz, dist = Math.abs((px - o.x1) * oi.nx + (pz - o.z1) * oi.nz);
-    if (dist <= o.t / 2 + 0.03 && t >= -o.t / 2 - 0.03 && t <= oi.L + o.t / 2 + 0.03) ext = Math.max(ext, o.t / 2 - 0.0008);
+    const oi = wallInfo(o), cos = ox * oi.nx + oz * oi.nz; if (Math.abs(cos) < 0.2) continue;   // murs (presque) parallèles : pas de raccord
+    const t = (px - o.x1) * oi.ux + (pz - o.z1) * oi.uz, d = (px - o.x1) * oi.nx + (pz - o.z1) * oi.nz;
+    if (Math.abs(d) <= o.t / 2 + 0.03 && t >= -o.t / 2 - 0.03 && t <= oi.L + o.t / 2 + 0.03 && Math.abs(d) < bd) { bd = Math.abs(d); best = { o, d, cos }; }
   }
-  return ext;
+  if (!best) return 0;
+  const { o, d, cos } = best, ext = ((Math.sign(cos) * o.t) / 2 - d) / cos;
+  return Math.max(-o.t, Math.min(o.t / Math.abs(cos) + 0.05, ext)) - 0.0008;
 }
 // repère monde d'un point le long du mur
 export function wallPoint(w, s) { const i = wallInfo(w); return { x: w.x1 + i.ux * s, z: w.z1 + i.uz * s }; }

@@ -34,20 +34,48 @@ const labels = new Map();
 const wpp = () => (isOrtho() ? (2 * V.size) / R.h : (2 * V.dist * Math.tan(THREE.MathUtils.degToRad(R.persp.fov / 2))) / R.h);
 const gsnap = (v, g = settings.snap) => (g > 0 ? r2(Math.round(v / g) * g) : v);
 
+// accroches façon DAO : extrémité, milieu, perpendiculaire, intersection, sur le mur, alignement ; renvoie { x, z, snap: nom }
+const SNAPS = { ext: ['Extrémité', 0x18a558], mil: ['Milieu', 0x0aa5c2], perp: ['Perpendiculaire', 0xf08a00], inter: ['Intersection', 0xe0457b], axe: ['Sur le mur', 0x7a5af8], ali: ['Aligné', 0x8a96a3] };
 function snapPoint(x, z, o = {}) {
-  // aimant sur les extrémités de murs
-  const rad2 = Math.max(0.15, wpp() * 12);
-  let best = null, bd = rad2;
-  for (const w of S.walls) for (const [px, pz] of [[w.x1, w.z1], [w.x2, w.z2]]) {
-    if (o.skip && o.skip.includes(w.id)) continue;
-    const d = Math.hypot(px - x, pz - z); if (d < bd) { bd = d; best = { x: px, z: pz, snapped: true }; }
+  const rad = Math.max(0.15, wpp() * 14), walls = S.walls.filter((w) => !(o.skip && o.skip.includes(w.id)));
+  const near1 = (cands) => { let best = null, bd = rad; for (const c of cands) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } } return best; };
+  const out = (p, k) => ({ x: r2(p.x), z: r2(p.z), snapped: true, snap: k });
+  // 1. extrémités, 2. milieux
+  let c = near1(walls.flatMap((w) => [{ x: w.x1, z: w.z1 }, { x: w.x2, z: w.z2 }])); if (c) return out(c, 'ext');
+  c = near1(walls.map((w) => ({ x: (w.x1 + w.x2) / 2, z: (w.z1 + w.z2) / 2 }))); if (c) return out(c, 'mil');
+  const foot = (w, px, pz) => { const i = wallInfo(w), t = (px - w.x1) * i.ux + (pz - w.z1) * i.uz; return t < -0.01 || t > i.L + 0.01 ? null : { x: w.x1 + i.ux * t, z: w.z1 + i.uz * t, w, i, t }; };
+  // 3. perpendiculaire depuis le point de départ
+  if (o.from) { c = near1(walls.map((w) => foot(w, o.from.x, o.from.z)).filter(Boolean)); if (c) return out(c, 'perp'); }
+  // 4. contrainte orthogonale (Maj / bouton) ou alignement automatique sur le point de départ
+  let cx = x, cz = z, line = null;
+  if (o.from) {
+    if (o.ortho) { if (Math.abs(x - o.from.x) > Math.abs(z - o.from.z)) { cz = o.from.z; line = 'h'; } else { cx = o.from.x; line = 'v'; } }
+    else { if (Math.abs(x - o.from.x) < 0.08) { cx = o.from.x; line = 'v'; } else if (Math.abs(z - o.from.z) < 0.08) { cz = o.from.z; line = 'h'; } }
   }
-  if (o.from && !best) { // verrouillage orthogonal (Maj ou bouton)
-    if (o.ortho) { if (Math.abs(x - o.from.x) > Math.abs(z - o.from.z)) z = o.from.z; else x = o.from.x; }
-    else { if (Math.abs(x - o.from.x) < 0.08) x = o.from.x; if (Math.abs(z - o.from.z) < 0.08) z = o.from.z; }
+  // 5. sur l'axe d'un mur (si une contrainte est active : intersection exacte de la ligne contrainte avec l'axe)
+  let bestW = null, bd = rad * 0.8;
+  for (const w of walls) { const f = foot(w, cx, cz); if (f) { const d = Math.hypot(f.x - cx, f.z - cz); if (d < bd) { bd = d; bestW = f; } } }
+  if (bestW) {
+    const { w, i } = bestW;
+    if (line) {   // intersection de la ligne horizontale / verticale avec l'axe du mur
+      if (line === 'h' && Math.abs(i.uz) > 0.05) { const t = (cz - w.z1) / i.uz; if (t >= 0 && t <= i.L) return out({ x: w.x1 + i.ux * t, z: cz }, 'inter'); }
+      if (line === 'v' && Math.abs(i.ux) > 0.05) { const t = (cx - w.x1) / i.ux; if (t >= 0 && t <= i.L) return out({ x: cx, z: w.z1 + i.uz * t }, 'inter'); }
+    } else { const t = Math.max(0, Math.min(i.L, gsnap(bestW.t, 0.05))); return out({ x: w.x1 + i.ux * t, z: w.z1 + i.uz * t }, 'axe'); }
   }
-  if (best) return best;
-  return { x: r2(gsnap(x)), z: r2(gsnap(z)) };
+  // 6. alignement sur l'extrémité d'un autre mur (repérage), sinon grille
+  if (!line) {
+    let ax = null, az = null;
+    for (const w of walls) for (const [px, pz] of [[w.x1, w.z1], [w.x2, w.z2]]) { if (ax == null && Math.abs(px - x) < rad * 0.4) ax = px; if (az == null && Math.abs(pz - z) < rad * 0.4) az = pz; }
+    if (ax != null || az != null) return { x: r2(ax ?? gsnap(x)), z: r2(az ?? gsnap(z)), snapped: true, snap: 'ali' };
+  }
+  return { x: r2(line === 'v' ? cx : gsnap(cx)), z: r2(line === 'h' ? cz : gsnap(cz)), snap: line ? 'ali' : null };
+}
+// repère d'accroche sous le curseur (anneau coloré + nom)
+function snapMark(p) {
+  const k = p && SNAPS[p.snap]; if (!k) { labels.has('snap') && (labels.get('snap').el.remove(), labels.delete('snap')); return; }
+  const r = Math.max(0.08, wpp() * 9), m = new THREE.Mesh(new THREE.RingGeometry(r * 0.7, r, p.snap === 'ext' ? 4 : p.snap === 'mil' ? 3 : 24), new THREE.MeshBasicMaterial({ color: k[1], depthTest: false, side: THREE.DoubleSide }));
+  m.rotation.x = -Math.PI / 2; if (p.snap === 'ext') m.rotation.z = Math.PI / 4; m.position.set(p.x, 0.12, p.z); m.renderOrder = 31; R.tmp.add(m);
+  label('snap', k[0], p.x, 0.5, p.z); labels.get('snap').el.classList.add('snapl');
 }
 
 let structRaf = 0;
@@ -270,7 +298,7 @@ function zoom(f, cx, cy) {
 // ---------- chaîne de murs ----------
 function endChain() { chain = null; clearTmp(); clearLabels(); }
 function wallPreview(a, b) {
-  clearTmp();
+  clearTmp(); snapMark(b);
   const L = Math.hypot(b.x - a.x, b.z - a.z);
   if (L > 0.02) {
     const m = new THREE.Mesh(new THREE.BoxGeometry(L, D.wall.h, D.wall.t), new THREE.MeshBasicMaterial({ color: 0x2f7bff, transparent: true, opacity: 0.35, depthWrite: false }));
@@ -424,7 +452,7 @@ function move(e) {
     if (placing(tool) || tool === 'door' || tool === 'window' || tool === 'marker') moveGhost(x, y);
     else if (tool === 'wall' && chain) { const g = groundPoint(x, y); if (g) { const p = snapPoint(g.x, g.z, { from: chain, ortho: settings.ortho || e.shiftKey }); chain.cur = p; wallPreview(chain, p); } }
     else if ((tool === 'room' || tool === 'floor') && rect && !rect.fresh) { const g = groundPoint(x, y); if (g) { rect.b = { x: gsnap(g.x), z: gsnap(g.z) }; rectPreview(rect.a, rect.b); } }
-    else if (tool === 'wall' && !chain) { const g = groundPoint(x, y); if (g) { const p = snapPoint(g.x, g.z); wallPreview(p, p); clearLabels(); } }
+    else if (tool === 'wall' && !chain) { const g = groundPoint(x, y); if (g) { const p = snapPoint(g.x, g.z); wallPreview(p, p); if (labels.has('len')) { labels.get('len').el.remove(); labels.delete('len'); } } }
     else if (tool === 'select' || tool === 'erase' || tool === 'paint') { if (e.pointerType === 'mouse') setHover(pick(x, y)); }
     return;
   }
@@ -473,6 +501,7 @@ function dragHandle(x, y, e) {
     const skip = [ent.id, ...drag.linked.map((l) => l.id)];
     const p = snapPoint(g.x, g.z, { skip, from: drag.h.id === 'p1' ? { x: ent.x2, z: ent.z2 } : { x: ent.x1, z: ent.z1 }, ortho: settings.ortho || e.shiftKey });
     if (drag.h.id === 'p1') { ent.x1 = p.x; ent.z1 = p.z; } else { ent.x2 = p.x; ent.z2 = p.z; }
+    clearTmp(); snapMark(p);
     for (const l of drag.linked) { const w = find('wall', l.id); if (l.end === 1) { w.x1 = p.x; w.z1 = p.z; } else { w.x2 = p.x; w.z2 = p.z; } }
     scheduleStructure();
   } else if (drag.kind === 'floor') {
@@ -509,6 +538,7 @@ function up(e) {
     if (w < 0.3 && h < 0.3 && rect.fresh) { rect.fresh = false; return; } // clic simple : attendre le 2e coin
     createRoom(rect.a.x, rect.a.z, rect.b.x, rect.b.z, tool === 'room'); rect = null; clearTmp(); clearLabels();
   } else if (d.type === 'move' || d.type === 'handle') {
+    if (d.type === 'handle') { clearTmp(); snapMark(null); }
     if (d.moved) { commit(); emit('select'); }
   }
 }
