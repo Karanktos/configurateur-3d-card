@@ -149,7 +149,7 @@ function openingThumb(o, img, key) {
 // panneau de gauche : bibliothèque selon l'outil
 // ---------------------------------------------------------------------------------------------
 const lib = () => $('#lib'), props = () => $('#props');
-const L = { cat: 'Chambre', q: '' };
+const L = { cat: 'Salon', sub: '', q: '' };
 
 function wallDefaults() {
   const ch = () => { /* valeurs par défaut : pas de reconstruction */ };
@@ -179,10 +179,12 @@ function openingLibrary(kind) {
 
 function itemLibrary() {
   const top = el('div', {});
-  const chips = el('div', { class: 'chips' }, CATS.map((c) => el('button', { class: 'chip' + (L.cat === c && !L.q ? ' on' : ''), onclick: () => { L.cat = c; L.q = ''; renderLib(); } }, c)));
+  const chips = el('div', { class: 'chips' }, CATS.map((c) => el('button', { class: 'chip' + (L.cat === c && !L.q ? ' on' : ''), onclick: () => { L.cat = c; L.sub = ''; L.q = ''; renderLib(); } }, c)));
+  const subs = [...new Set(ALL.filter((d) => d.cat === L.cat).map((d) => d.sub))];
+  const subChips = L.q || subs.length < 2 ? null : el('div', { class: 'chips sub' }, ['Tout', ...subs].map((s) => el('button', { class: 'chip' + ((s === 'Tout' ? !L.sub : L.sub === s) ? ' on' : ''), onclick: () => { L.sub = s === 'Tout' ? '' : s; renderLib(); } }, s)));
   const search = el('input', { type: 'search', placeholder: 'Rechercher un meuble…', value: L.q, style: { width: '100%', padding: '7px 9px', border: '1px solid var(--line)', borderRadius: '8px', background: 'var(--panel)', marginBottom: '8px' } });
   search.addEventListener('input', () => { L.q = search.value; const pos = search.selectionStart; renderLib(); const s = lib().querySelector('input[type=search]'); s.focus(); s.setSelectionRange(pos, pos); });
-  const list = ALL.filter((d) => (L.q ? d.name.toLowerCase().includes(L.q.toLowerCase()) || d.cat.toLowerCase().includes(L.q.toLowerCase()) : d.cat === L.cat));
+  const list = ALL.filter((d) => (L.q ? d.name.toLowerCase().includes(L.q.toLowerCase()) || d.cat.toLowerCase().includes(L.q.toLowerCase()) : d.cat === L.cat && (!L.sub || d.sub === L.sub)));
   const grid = el('div', { class: 'grid2' });
   list.forEach((d) => {
     const img = el('img', { alt: d.name });
@@ -190,7 +192,7 @@ function itemLibrary() {
       el('div', { class: 'im' }, img), el('b', {}, d.name), el('span', {}, `${Math.round(d.w * 100)}×${Math.round(d.d * 100)}×${Math.round(d.h * 100)} cm`)));
     itemThumb(d, img);
   });
-  top.append(search, chips, grid.children.length ? grid : el('div', { class: 'empty' }, 'Aucun résultat'));
+  top.append(search, chips, ...(subChips ? [subChips] : []), grid.children.length ? grid : el('div', { class: 'empty' }, 'Aucun résultat'));
   const out = [top];
   if (D.item) {
     out.push(el('h3', { style: { margin: '14px 0 8px' } }, 'Configurer avant la pose'));
