@@ -1,7 +1,7 @@
 // Cœur : état du plan, scène three.js, rendu des entités, caméra, historique.
 import * as THREE from 'three';
 import { clamp, rad, disposeTree, r2 } from './util.js';
-import { getTex, floorDef, finishDef, TEX_SIZE } from './textures.js';
+import { getTex, floorDef, finishDef, TEX_SIZE, texKey, texSize } from './textures.js';
 import { wallGeometry } from './geom.js';
 import { buildOpening, modelOf, defaultOpening } from './openings.js';
 import { buildItem, defOf, defaultItem } from './catalog.js';
@@ -418,12 +418,16 @@ export function renderOpenings() {
 export function renderFloors() {
   clearKind('floor');
   S.floors.forEach((f, idx) => {
-    const fd = floorDef(f.mat), size = fd.tex ? TEX_SIZE[fd.tex] : [1, 1], sc = f.scale || 1;
+    const fd = floorDef(f.mat), key = texKey(fd.tex, f.pose), size = texSize(key), sc = f.scale || 1;
+    const a = ((f.sens || 0) * Math.PI) / 180, ca = Math.cos(a), sa = Math.sin(a);   // sens de pose : 0°, 90° ou 45° (diagonale)
     const geo = new THREE.PlaneGeometry(f.w, f.d); geo.rotateX(-Math.PI / 2);
     const uv = geo.attributes.uv, pos = geo.attributes.position;
     // motif ancré sur l'origine de la maison (et non sur le coin du sol) : deux sols voisins de même matière se raccordent sans décalage
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, (f.x + f.w / 2 + pos.getX(i)) / (size[0] * sc), (f.z + f.d / 2 + pos.getZ(i)) / (size[1] * sc));
-    const m = new THREE.Mesh(geo, surfMat(fd.tex, f.color, fd.tex === 'marble' || fd.id === 'uni' ? 0.35 : 0.7));
+    for (let i = 0; i < uv.count; i++) {
+      const wx = f.x + f.w / 2 + pos.getX(i), wz = f.z + f.d / 2 + pos.getZ(i);
+      uv.setXY(i, (wx * ca + wz * sa) / (size[0] * sc), (-wx * sa + wz * ca) / (size[1] * sc));
+    }
+    const m = new THREE.Mesh(geo, surfMat(key, f.color, fd.tex === 'marble' || fd.id === 'uni' ? 0.35 : 0.7));
     m.receiveShadow = true; m.position.set(f.x + f.w / 2, FLOOR_Y + Math.min(idx, 40) * 0.0004, f.z + f.d / 2);
     const g = new THREE.Group(); g.add(m); tagRef(g, 'floor', f.id); root.floor.add(g); objs.floor.set(f.id, g);
   });

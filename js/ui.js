@@ -9,7 +9,7 @@ import {
 import { entities, stateOf, nameOf, hasHA, onHass, listDashboards, publishPlan, navigate } from './ha.js';
 import { iconList, refresh as refreshPins } from './pins.js';
 import * as SUN from './sun.js';
-import { FLOORS, FINISHES, PALETTE, TILE, floorDef, finishDef, swatch } from './textures.js';
+import { FLOORS, FINISHES, PALETTE, TILE, POSES, canStagger, floorDef, finishDef, swatch } from './textures.js';
 import { CATS, ALL, FINS, buildItem, defOf, defaultItem } from './catalog.js';
 import { FACADES, HANDLES as KHANDLES, HFINS, FCOLORS, KSTYLE_KEYS, KDEF, isKitchen, facadeOf } from './kitchen.js';
 import { DOORS, WINDOWS, MATS, GLASSES, HANDLES, defaultOpening, buildOpening, modelOf } from './openings.js';
@@ -87,6 +87,15 @@ function fText(label, o, k, on, ph = '') {
 const fBtns = (...b) => el('div', { class: 'row', style: { marginBottom: '10px' } }, b);
 const btn = (t, fn, cls = '') => el('button', { class: 'btn ' + cls, onclick: fn }, t);
 
+// pose en quinconce (carrelages) et sens de pose (tout sol à motif)
+const SENS = [[0, '0°'], [90, '90°'], [45, 'Diagonale']];
+function fPose(o, ch) {
+  const d = floorDef(o.mat), out = [];
+  if (o.pose == null) o.pose = 'auto'; if (o.sens == null) o.sens = 0;
+  if (canStagger(d.tex)) out.push(fSeg('Pose', o, 'pose', POSES, ch));
+  if (d.tex) out.push(fSeg('Sens de pose', o, 'sens', SENS, ch));
+  return out;
+}
 const prevMat = new Map();   // sol → revêtement qu'il avait avant le changement (pour « appliquer aux autres sols »)
 function fFloorMat(o, on) {
   const wrap = el('div', { class: 'mats' });
@@ -170,7 +179,7 @@ function wallDefaults() {
 }
 function floorDefaults() {
   const ch = () => {};
-  return [fFloorMat(D.floor, ch), fColor('Couleur / teinte', D.floor, 'color', ch, floorDef(D.floor.mat).presets), fRange('Taille du motif', D.floor, 'scale', 0.4, 2.5, 0.05, ch, 'x', null, null)];
+  return [fFloorMat(D.floor, ch), fColor('Couleur / teinte', D.floor, 'color', ch, floorDef(D.floor.mat).presets), fRange('Taille du motif', D.floor, 'scale', 0.4, 2.5, 0.05, ch, 'x', null, null), ...fPose(D.floor, ch)];
 }
 
 function openingLibrary(kind) {
@@ -697,12 +706,12 @@ export function renderProps() {
     const tsz = el('p', { class: 'sub' }), showSize = () => { const d = floorDef(e.mat), [tw, th] = (d.tex && TILE[d.tex]) || [0, 0], sc = e.scale || 1, f2 = (v) => (v * sc).toFixed(2).replace('.', ','); tsz.textContent = tw ? `Un carreau mesure ${f2(tw)} × ${f2(th)} m (taille du motif 1 = dimensions réelles)` : ''; };
     const ch = (f) => { rebuildFloors(); showSize(); if (f) commit(); };
     n.append(el('h2', {}, 'Sol'), el('p', { class: 'sub' }, `${(e.w * e.d).toFixed(1).replace('.', ',')} m² · ${floorDef(e.mat).name}`));
-    n.append(fFloorMat(e, ch), fColor('Couleur / teinte', e, 'color', ch, floorDef(e.mat).presets), fRange('Taille du motif (lames, carreaux)', e, 'scale', 0.4, 2.5, 0.05, ch, 'x'));
+    n.append(fFloorMat(e, ch), fColor('Couleur / teinte', e, 'color', ch, floorDef(e.mat).presets), fRange('Taille du motif (lames, carreaux)', e, 'scale', 0.4, 2.5, 0.05, ch, 'x'), ...fPose(e, ch));
     showSize(); n.append(tsz);
     n.append(fRange('Largeur', e, 'w', 0.4, 20, 0.05, ch), fRange('Profondeur', e, 'd', 0.4, 20, 0.05, ch));
     // reporter matière, teinte et taille sur les autres sols qui ont (ou avaient) le même revêtement
     const was = prevMat.get(e.id) || e.mat, others = S.floors.filter((f) => f !== e && (f.mat === was || f.mat === e.mat));
-    const apply = others.length ? btn(`Appliquer aux ${others.length} autre${others.length > 1 ? 's' : ''} sol${others.length > 1 ? 's' : ''} « ${floorDef(was).name} »${was !== e.mat ? ' / « ' + floorDef(e.mat).name + ' »' : ''}`, () => { others.forEach((f) => { f.mat = e.mat; f.color = e.color; f.scale = e.scale || 1; }); prevMat.delete(e.id); rebuildFloors(); commit(); renderProps(); }) : null;
+    const apply = others.length ? btn(`Appliquer aux ${others.length} autre${others.length > 1 ? 's' : ''} sol${others.length > 1 ? 's' : ''} « ${floorDef(was).name} »${was !== e.mat ? ' / « ' + floorDef(e.mat).name + ' »' : ''}`, () => { others.forEach((f) => { f.mat = e.mat; f.color = e.color; f.scale = e.scale || 1; f.pose = e.pose; f.sens = e.sens; }); prevMat.delete(e.id); rebuildFloors(); commit(); renderProps(); }) : null;
     n.append(fBtns(...[apply, btn('Dupliquer', duplicateSelected), del].filter(Boolean)));
   } else if (kind === 'opening') {
     const ch = (f) => { rebuildStructure(); if (f) commit(); };

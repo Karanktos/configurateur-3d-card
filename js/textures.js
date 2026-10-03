@@ -68,14 +68,16 @@ function boards(o) {
 const GEN = {
   // parquet classique : lames de 12,5 cm de large et 0,6 à 1,2 m de long (motif 2 × 1 m)
   parquet: () => boards({ W: 2, H: 1, rows: 8, ppm: 512, minL: 0.6, maxL: 1.2, joint: 2, bg: 150, seed: 7 }),
-  tile(n) {
+  tile(n, k = 0) {   // k : rangées décalées de 1/k de carreau (pose en quinconce) ; le motif compte alors un multiple de k rangées
     return () => {
-      const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(11 + n), s = 512 / n;
-      x.fillStyle = grey(120); x.fillRect(0, 0, 512, 512);
-      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
-        const t = 226 + r() * 22, g = x.createLinearGradient(i * s, j * s, (i + 1) * s, (j + 1) * s);
-        g.addColorStop(0, grey(t + 6)); g.addColorStop(1, grey(t - 8));
-        const m = n > 2 ? 2 : 3; x.fillStyle = g; x.fillRect(i * s + m, j * s + m, s - 2 * m, s - 2 * m);
+      const ny = k ? k * Math.ceil(n / k) : n, s = 512 / n, c = cv(512, Math.round(ny * s)), x = c.getContext('2d', { willReadFrequently: true }), r = rng(11 + n);
+      x.fillStyle = grey(120); x.fillRect(0, 0, 512, c.height);
+      for (let j = 0; j < ny; j++) for (let i = 0; i < n; i++) {
+        const t = 226 + r() * 22, off = k ? ((j % k) * s) / k : 0, m = n > 2 ? 2 : 3;
+        for (const ox of [-512, 0]) {
+          const x0 = i * s + off + ox, g = x.createLinearGradient(x0, j * s, x0 + s, (j + 1) * s);
+          g.addColorStop(0, grey(t + 6)); g.addColorStop(1, grey(t - 8)); x.fillStyle = g; x.fillRect(x0 + m, j * s + m, s - 2 * m, s - 2 * m);
+        }
       }
       noise(x, c, 4, 5);
       return c;
@@ -281,7 +283,7 @@ GEN.pavers = () => {   // pavés 25 × 12,5 cm en appareil décalé
 // ---- carrelages et dalles « grand format » (travertin, grès cérame, effet béton / marbre / bois…) ----
 // o : { tw, th, nx, ny, stagger, rows, style, seed, joint, base, vary } ; la période du motif est nx·tw × ny·th (m) — rows = [{ h, ws:[…] }] pour un calepinage libre (opus)
 function slabTex(o) {
-  const rows = o.rows || Array.from({ length: o.ny }, (_, j) => ({ h: o.th, ws: Array(o.nx).fill(o.tw), off: (j % 2) * (o.stagger || 0) * o.tw }));
+  const rows = o.rows || Array.from({ length: o.ny }, (_, j) => ({ h: o.th, ws: Array(o.nx).fill(o.tw), off: o.k != null ? (o.k ? ((j % o.k) * o.tw) / o.k : 0) : (j % 2) * (o.stagger || 0) * o.tw }));
   const W = rows[0].ws.reduce((a, b) => a + b, 0), H = rows.reduce((a, r) => a + r.h, 0);
   return () => {
     const ppm = Math.min(512 / Math.min(W, H), 1100 / Math.max(W, H)), cw = Math.round(W * ppm), ch = Math.round(H * ppm);
@@ -398,10 +400,25 @@ export const TILE = { tile4: [0.25, 0.25], tile2: [0.5, 0.5], tile1: [1, 1], che
 for (const [k, o] of Object.entries(SLABS)) if (o.tw) TILE[k] = [o.tw, o.th];
 TEX_SIZE.ciment = [0.8, 0.8]; TEX_SIZE.zellige = [0.8, 0.8]; TEX_SIZE.tomette = [0.55, 0.476];
 
+// ---- pose des carreaux : « droit » (alignés), « demi » (quinconce ½), « tiers » (quinconce ⅓) ----
+// une variante s'écrit « matière@pose » et se génère à la demande ; « auto » (ou rien) = calepinage d'origine du modèle
+export const POSES = [['auto', 'Modèle'], ['droit', 'Droite'], ['demi', 'Quinconce ½'], ['tiers', 'Quinconce ⅓']];
+const POSE_K = { droit: 0, demi: 2, tiers: 3 };
+export const canStagger = (kind) => !!(kind && ((SLABS[kind] && SLABS[kind].tw) || /^tile[124]$/.test(kind)));
+export const texKey = (kind, pose) => (kind && pose && pose !== 'auto' && POSE_K[pose] != null && canStagger(kind) ? kind + '@' + pose : kind);
+const slabPose = (kind, pose) => { const o = SLABS[kind], k = POSE_K[pose]; return { ...o, k, ny: k ? k * Math.ceil(o.ny / k) : o.ny }; };
+function variant(key) {
+  const [kind, pose] = key.split('@'), k = POSE_K[pose];
+  if (SLABS[kind]) { const o = slabPose(kind, pose); GEN[key] = slabTex(o); TEX_SIZE[key] = slabSize(o); }
+  else { const n = +kind.slice(4); GEN[key] = GEN.tile(n, k); TEX_SIZE[key] = [1, (k ? k * Math.ceil(n / k) : n) / n]; }
+}
+export const texSize = (key) => { if (!key) return [1, 1]; if (!TEX_SIZE[key] && key.includes('@')) variant(key); return TEX_SIZE[key]; };
+
 const cache = {};
 export function getTex(kind) {
   if (!kind) return null;
   if (cache[kind]) return cache[kind];
+  if (!GEN[kind] && kind.includes('@')) variant(kind);
   const c = GEN[kind]();
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
