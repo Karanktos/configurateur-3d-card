@@ -4,7 +4,7 @@ import { defaultItem } from './catalog.js';
 import { defaultOpening } from './openings.js';
 
 export function loadSample() {
-  Object.assign(S, { walls: [], openings: [], floors: [], items: [], nid: 1 });
+  Object.assign(S, { walls: [], openings: [], floors: [], items: [], markers: [], lights: [], nid: 1 });
   const IN = '#f2efe9', OUT = { c: '#e9e1d2', f: 'crepi' };
   const wall = (x1, z1, x2, z2, fa = { c: IN, f: 'peinture' }, fb = { c: IN, f: 'peinture' }, h = 2.5) => {
     const w = { id: nid(), x1, z1, x2, z2, t: 0.2, h, fa, fb }; S.walls.push(w); return w;
@@ -46,6 +46,19 @@ export function loadSample() {
   // salle de bain
   it('baignoire', 9.05, 6.5, 180); it('douche', 7.1, 6.4, 180); it('vasque', 9.66, 4.95, 270); it('miroir', 9.91, 4.95, 270);
   it('wc', 7.9, 4.5, 0); it('seche_serv', 6.7, 5.2, 90, { elev: 0.5 });
+  // lumières (groupes de points lumineux) et capteurs d'exemple : non reliés, à relier à vos entités (panneau de droite → champ « Entité »)
+  const lgrp = (name, x, z, pts) => {
+    const g = { id: nid(), name, ent: '', ic: 'mdi:ceiling-light', x, z, h: 2 }; S.lights.push(g);
+    pts.forEach(([px, pz]) => { const o = { ...defaultItem('spot'), id: nid(), x: px, z: pz, rot: 0, grp: g.id, ent: '' }; S.items.push(o); });
+  };
+  lgrp('Lumière séjour', 3.2, 3.5, [[2.2, 2.4], [4.2, 2.4], [2.2, 4.6], [4.2, 4.6]]);
+  lgrp('Lumière chambre', 8.5, 2.0, [[8.0, 1.2], [9.0, 2.8]]);
+  lgrp('Lumière salle de bain', 8.2, 5.5, [[8.2, 5.5]]);
+  const pin = (x, z, ic, title) => S.markers.push({ ent: '', ic, h: 2, title, action: 'auto', id: nid(), x, z });
+  pin(8.0, 0.1, 'mdi:window-closed-variant', 'Fenêtre chambre (exemple)');
+  pin(2.0, 6.9, 'mdi:door', 'Porte d\'entrée (exemple)');
+  pin(5.0, 2.0, 'mdi:motion-sensor', 'Présence séjour (exemple)');
+  pin(3.0, 1.6, 'mdi:thermometer', 'Température (exemple)');
   rebuildAll(); commit(); select(null); frameAll();
   void load;
 }
