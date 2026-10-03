@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { clamp, rad, deg, r2, disposeTree } from './util.js';
 import {
   S, R, V, settings, sel, nid, find, select, commit, emit, on, setupCam, groundPoint, pick, pickHandle, project, entityBox, wireBox,
-  rebuildStructure, rebuildFloors, rebuildAll, renderItem, moveItemObj, supportTop, wallInfo, wallPoint, invalidate, setOpen, hasAnim, entityObj, updateCutaway, FLOOR_Y, bounds,
+  rebuildStructure, rebuildFloors, rebuildAll, renderItem, dropItemObjs, moveItemObj, supportTop, wallInfo, wallPoint, invalidate, setOpen, hasAnim, entityObj, updateCutaway, FLOOR_Y, bounds,
   undo, redo, frameAll, entOfItem, isOrtho, viewOnly,
 } from './core.js';
 import { buildItem, defaultItem, defOf } from './catalog.js';
@@ -93,11 +93,13 @@ export function rebuildGhost() { clearGhost(); updateGhost(); }
 // mode Configurer de la vue publiée : on ne supprime que les pastilles, les groupes de lumières et leurs points
 export const cfgDeletable = (kind, id) => kind === 'marker' || kind === 'light' || (kind === 'item' && !!(find('item', id) || {}).grp);
 export function removeEntity(kind, id) {
+  const gone = kind === 'item' ? [id] : kind === 'light' ? S.items.filter((i) => i.grp === id).map((i) => i.id) : [];
   if (kind === 'wall') { S.openings = S.openings.filter((o) => o.wall !== id); S.walls = S.walls.filter((w) => w.id !== id); }
   else if (kind === 'light') { S.items = S.items.filter((i) => i.grp !== id); S.lights = S.lights.filter((l) => l.id !== id); if (LGRP.id === id) LGRP.id = null; }
   else S[kind + 's'] = S[kind + 's'].filter((e) => e.id !== id);
   if (sel.kind === kind && sel.id === id) select(null);
-  if (kind === 'item' || kind === 'light') rebuildAll(); else rebuildStructure();
+  if (kind === 'item' || kind === 'light') dropItemObjs(gone);   // un meuble supprimé : on ne reconstruit pas toute la maison
+  else if (kind === 'floor') rebuildFloors(); else if (kind === 'marker') invalidate(false); else rebuildStructure();
   commit();
 }
 export function duplicateSelected() {
@@ -106,8 +108,7 @@ export function duplicateSelected() {
   if (sel.kind === 'marker') { c.x += 0.3; c.z += 0.3; S.markers.push(c); }
   else if (sel.kind === 'light') {
     c.name += ' (copie)'; c.x += 0.5; c.z += 0.5; S.lights.push(c);
-    for (const it of S.items.filter((i) => i.grp === e.id)) { const k = JSON.parse(JSON.stringify(it)); k.id = nid(); k.grp = c.id; k.x += 0.5; k.z += 0.5; S.items.push(k); }
-    rebuildAll();
+    for (const it of S.items.filter((i) => i.grp === e.id)) { const k = JSON.parse(JSON.stringify(it)); k.id = nid(); k.grp = c.id; k.x += 0.5; k.z += 0.5; S.items.push(k); renderItem(k); }
   }
   else if (sel.kind === 'item') { c.x += 0.3; c.z += 0.3; S.items.push(c); renderItem(c); }
   else if (sel.kind === 'floor') { c.x += 0.5; c.z += 0.5; S.floors.push(c); rebuildFloors(); }

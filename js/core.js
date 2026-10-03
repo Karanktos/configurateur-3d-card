@@ -6,6 +6,7 @@ import { wallGeometry } from './geom.js';
 import { buildOpening, modelOf, defaultOpening } from './openings.js';
 import { buildItem, defOf, defaultItem } from './catalog.js';
 import { applyParts, LG } from './anim.js';
+import { mergeStatic } from './merge.js';
 import { levelOf, stateOf, hasHA } from './ha.js';
 import * as SUN from './sun.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -89,7 +90,7 @@ export function reset() { S.walls = []; S.openings = []; S.floors = []; S.items 
 
 export function select(kind, id) {
   sel.kind = kind || null; sel.id = kind ? id : null;
-  drawSelection(); emit('select'); invalidate();
+  drawSelection(); emit('select'); invalidate(false);   // le contour de sélection ne projette pas d'ombre
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -104,7 +105,7 @@ let dirty = true, shadowDirty = true, animating = false;
 export const invalidate = (shadow = true) => { dirty = true; if (shadow) shadowDirty = true; };
 
 export function initScene(canvas) {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });   // pas de preserveDrawingBuffer : la capture lit l'image juste après l'avoir dessinée
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; // recalculées à la demande (invalidate)
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95; renderer.setClearColor(0x000000, 0);
@@ -138,6 +139,7 @@ export function initScene(canvas) {
 
 function resize() {
   const p = R.canvas.parentElement, w = Math.max(50, p.clientWidth), h = Math.max(50, p.clientHeight);
+  if (w === R.w && h === R.h) return;   // l'observateur se déclenche aussi au démarrage, juste après l'appel direct
   R.renderer.setSize(w, h, false); R.canvas.style.width = w + 'px'; R.canvas.style.height = h + 'px';
   R.w = w; R.h = h; if (settings.present && !settings.free) fitView(); else setupCam(); invalidate(false);
 }
@@ -389,16 +391,28 @@ export function renderPlot() {
   const side = new THREE.Mesh(new THREE.BoxGeometry(w, 0.45, d), soilMat); side.position.set(cx, -0.01 - 0.225 - 0.002, cz); side.receiveShadow = true;
   root.plot.add(top, side); invalidate();
 }
+// clé de construction : ce qui change la forme d'un objet (pas sa position ni son état d'ouverture) → on ne reconstruit que si elle change
+const built = new Map();
+const keyOf = (o, omit) => JSON.stringify(o, (k, v) => (omit.has(k) ? undefined : v));
+const OMIT_O = new Set(['s', 'open', 'open2', 'shut', 'ent', 'ent2', 'shutEnt']);
+const OMIT_I = new Set(['x', 'z', 'rot', 'elev', 'open', 'ent', 'visEnt']);
+const retarget = (key, v) => { const a = anims.get(key); if (a && !a.live) a.tg = v || 0; };   // objet conservé : reprendre l'état d'ouverture enregistré (annuler / rétablir)
+function placeOpening(g, o, w) { const { ang } = wallInfo(w), p = wallPoint(w, o.s); g.position.set(p.x, o.y0, p.z); g.rotation.y = -ang; }
 export function renderOpenings() {
-  clearKind('opening');
+  const keep = new Set();
   for (const o of S.openings) {
     const w = find('wall', o.wall); if (!w) continue;
-    const { ang } = wallInfo(w), p = wallPoint(w, o.s), b = buildOpening(o, w.t);
-    const g = new THREE.Group(); g.add(b.group); g.position.set(p.x, o.y0, p.z); g.rotation.y = -ang;
-    tagRef(g, 'opening', o.id); root.opening.add(g); objs.opening.set(o.id, g);
+    const k = keyOf(o, OMIT_O) + '|' + w.t, old = objs.opening.get(o.id);
+    keep.add(o.id);
+    if (old && built.get('o' + o.id) === k) { placeOpening(old, o, w); retarget('o' + o.id, o.open); retarget('p' + o.id, o.open2); retarget('s' + o.id, o.shut); continue; }
+    disposeEntity(objs.opening, o.id);
+    const b = buildOpening(o, w.t); mergeStatic(b.group, b.parts, b.shutParts);
+    const g = new THREE.Group(); g.add(b.group); placeOpening(g, o, w);
+    tagRef(g, 'opening', o.id); root.opening.add(g); objs.opening.set(o.id, g); built.set('o' + o.id, k);
     regAnim('o' + o.id, b.parts.filter((p) => !p.grp), o.open); regAnim('p' + o.id, b.parts.filter((p) => p.grp), o.open2);
     regAnim('s' + o.id, b.shutParts, o.shut);
   }
+  for (const id of [...objs.opening.keys()]) if (!keep.has(id)) { disposeEntity(objs.opening, id); built.delete('o' + id); for (const p of 'ops') anims.delete(p + id); }
 }
 export function renderFloors() {
   clearKind('floor');
@@ -414,12 +428,22 @@ export function renderFloors() {
 }
 export function renderItem(it) {
   disposeEntity(objs.item, it.id);
-  const b = buildItem(it), g = new THREE.Group(); g.add(b.group);
+  const b = buildItem(it), g = new THREE.Group(); mergeStatic(b.group, b.parts); g.add(b.group);
   g.position.set(it.x, FLOOR_Y + (it.elev || 0), it.z); g.rotation.y = rad(it.rot || 0);
-  tagRef(g, 'item', it.id); g.visible = itemVisible(it); root.item.add(g); objs.item.set(it.id, g);
+  tagRef(g, 'item', it.id); g.visible = itemVisible(it); root.item.add(g); objs.item.set(it.id, g); built.set('i' + it.id, keyOf(it, OMIT_I));
   regAnim('i' + it.id, b.parts, it.open);
 }
-export function renderItems() { clearKind('item'); S.items.forEach(renderItem); }
+export function renderItems() {
+  const keep = new Set();
+  for (const it of S.items) {
+    const g = objs.item.get(it.id); keep.add(it.id);
+    if (g && built.get('i' + it.id) === keyOf(it, OMIT_I)) { g.position.set(it.x, FLOOR_Y + (it.elev || 0), it.z); g.rotation.y = rad(it.rot || 0); g.visible = itemVisible(it); retarget('i' + it.id, it.open); continue; }
+    renderItem(it);
+  }
+  dropItemObjs([...objs.item.keys()].filter((id) => !keep.has(id)));
+}
+// retire de la scène les meubles supprimés (sans reconstruire le reste)
+export function dropItemObjs(ids) { for (const id of ids) { disposeEntity(objs.item, id); built.delete('i' + id); anims.delete('i' + id); } drawSelection(); invalidate(); }
 
 function regAnim(key, parts, target) {
   const old = anims.get(key), cur = old ? old.cur : target || 0;

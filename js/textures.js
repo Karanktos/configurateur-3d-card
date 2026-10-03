@@ -41,7 +41,7 @@ function blotches(c, x, n, seed, a) {
 const GEN = {
   // lames de parquet : 8 rangées de 12,5 cm sur 1 m
   parquet() {
-    const c = cv(512), x = c.getContext('2d'), r = rng(7);
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(7);
     x.fillStyle = grey(150); x.fillRect(0, 0, 512, 512);
     for (let i = 0; i < 8; i++) {
       const off = r() * 512;
@@ -65,7 +65,7 @@ const GEN = {
   },
   tile(n) {
     return () => {
-      const c = cv(512), x = c.getContext('2d'), r = rng(11 + n), s = 512 / n;
+      const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(11 + n), s = 512 / n;
       x.fillStyle = grey(120); x.fillRect(0, 0, 512, 512);
       for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
         const t = 226 + r() * 22, g = x.createLinearGradient(i * s, j * s, (i + 1) * s, (j + 1) * s);
@@ -77,13 +77,13 @@ const GEN = {
     };
   },
   concrete() {
-    const c = cv(512), x = c.getContext('2d');
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true });
     x.fillStyle = grey(212); x.fillRect(0, 0, 512, 512);
     blotches(c, x, 55, 21, 0.06); noise(x, c, 9, 22);
     return c;
   },
   carpet() {
-    const c = cv(256), x = c.getContext('2d');
+    const c = cv(256), x = c.getContext('2d', { willReadFrequently: true });
     x.fillStyle = grey(205); x.fillRect(0, 0, 256, 256);
     noise(x, c, 26, 31);
     const r = rng(32); x.strokeStyle = 'rgba(0,0,0,0.07)';
@@ -91,7 +91,7 @@ const GEN = {
     return c;
   },
   marble() {
-    const c = cv(512), x = c.getContext('2d'), r = rng(41);
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(41);
     x.fillStyle = grey(240); x.fillRect(0, 0, 512, 512);
     blotches(c, x, 30, 42, 0.05);
     for (let v = 0; v < 12; v++) {
@@ -107,7 +107,7 @@ const GEN = {
     return c;
   },
   stone() {
-    const c = cv(512), x = c.getContext('2d'), r = rng(51);
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(51);
     x.fillStyle = grey(110); x.fillRect(0, 0, 512, 512);
     let y = 0;
     while (y < 512) {
@@ -123,20 +123,20 @@ const GEN = {
     return c;
   },
   checker() {
-    const c = cv(512), x = c.getContext('2d');
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true });
     for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { x.fillStyle = (i + j) % 2 ? grey(110) : grey(250); x.fillRect(i * 128, j * 128, 128, 128); }
     noise(x, c, 4, 61);
     return c;
   },
   crepi() {
-    const c = cv(512), x = c.getContext('2d');
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true });
     x.fillStyle = grey(236); x.fillRect(0, 0, 512, 512);
     noise(x, c, 14, 71); blotches(c, x, 30, 72, 0.04);
     return c;
   },
   // briques 22 × 6,5 cm : motif de 4 briques × 15 rangées (0,88 × 0,975 m)
   brique() {
-    const c = cv(704, 780), x = c.getContext('2d'), r = rng(81);
+    const c = cv(704, 780), x = c.getContext('2d', { willReadFrequently: true }), r = rng(81);
     x.fillStyle = grey(200); x.fillRect(0, 0, 704, 780);
     for (let j = 0; j < 15; j++) for (let i = -1; i < 4; i++) {
       const px = i * 176 + (j % 2 ? 88 : 0), py = j * 52, t = 165 + r() * 70;
@@ -147,7 +147,7 @@ const GEN = {
     return c;
   },
   lambris() {
-    const c = cv(512), x = c.getContext('2d'), r = rng(91);
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(91);
     for (let i = 0; i < 5; i++) {
       const t = 205 + r() * 35, px = i * 102.4;
       x.fillStyle = grey(t); x.fillRect(px, 0, 102.4, 512);
@@ -160,7 +160,7 @@ const GEN = {
   },
   // faïence « métro » 20 × 10 cm : motif 0,4 × 0,4 m
   metro() {
-    const c = cv(512), x = c.getContext('2d');
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true });
     x.fillStyle = grey(190); x.fillRect(0, 0, 512, 512);
     for (let j = 0; j < 4; j++) for (let i = -1; i < 2; i++) {
       const px = i * 256 + (j % 2 ? 128 : 0), py = j * 128;
@@ -171,7 +171,7 @@ const GEN = {
   },
   // grain de bois (menuiseries, meubles) : stries le long de l'axe u
   bois() {
-    const c = cv(512), x = c.getContext('2d'), r = rng(101);
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(101);
     x.fillStyle = grey(222); x.fillRect(0, 0, 512, 512);
     for (let i = 0; i < 90; i++) {
       const y0 = r() * 512, a = 0.05 + r() * 0.12, len = 140 + r() * 360, x0 = r() * 512;
@@ -185,7 +185,7 @@ const GEN = {
   },
   // gravier / terre du terrain : mouchetis gris à teinter (motif de 3 m)
   gravel() {
-    const c = cv(512), x = c.getContext('2d'), r = rng(77);
+    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(77);
     x.fillStyle = grey(176); x.fillRect(0, 0, 512, 512);
     blotches(c, x, 90, 5, 0.1);
     for (let i = 0; i < 9000; i++) { x.globalAlpha = 0.45; x.fillStyle = grey(95 + r() * 150); x.fillRect(r() * 512, r() * 512, 1 + r() * 2.4, 1 + r() * 2); }
@@ -193,7 +193,7 @@ const GEN = {
     return c;
   },
   lames() { // volet roulant : lames horizontales de 4 cm, motif de 0,32 m
-    const c = cv(64, 512), x = c.getContext('2d');
+    const c = cv(64, 512), x = c.getContext('2d', { willReadFrequently: true });
     for (let j = 0; j < 8; j++) {
       const g = x.createLinearGradient(0, j * 64, 0, j * 64 + 64); g.addColorStop(0, grey(250)); g.addColorStop(0.8, grey(215)); g.addColorStop(1, grey(120));
       x.fillStyle = g; x.fillRect(0, j * 64, 64, 64);
@@ -204,7 +204,7 @@ const GEN = {
 
 // ---- matières supplémentaires (sols) ----
 GEN.chevron = () => {   // parquet en chevron : lames à 45° qui se rejoignent en pointe
-  const c = cv(512), x = c.getContext('2d'), r = rng(31);
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(31);
   x.fillStyle = grey(95); x.fillRect(0, 0, 512, 512);
   for (const half of [0, 1]) {
     x.save(); x.beginPath(); x.rect(half ? 256 : 0, 0, 256, 512); x.clip();
@@ -221,7 +221,7 @@ GEN.chevron = () => {   // parquet en chevron : lames à 45° qui se rejoignent 
   noise(x, c, 6, 32); return c;
 };
 GEN.plank = () => {   // parquet à larges lames (4 rangées de 25 cm par mètre)
-  const c = cv(512), x = c.getContext('2d'), r = rng(41);
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(41);
   x.fillStyle = grey(110); x.fillRect(0, 0, 512, 512);
   for (let i = 0; i < 4; i++) {
     let px = r() * 200;
@@ -237,7 +237,7 @@ GEN.plank = () => {   // parquet à larges lames (4 rangées de 25 cm par mètre
   noise(x, c, 6, 42); return c;
 };
 GEN.hex = () => {   // carreaux hexagonaux (carreaux de ciment), motif de 1 m × 0,866 m
-  const c = cv(512, 443), x = c.getContext('2d'), r = rng(51), R = 128 / Math.sqrt(3);
+  const c = cv(512, 443), x = c.getContext('2d', { willReadFrequently: true }), r = rng(51), R = 128 / Math.sqrt(3);
   x.fillStyle = grey(95); x.fillRect(0, 0, 512, 443);
   for (let row = -1; row <= 5; row++) for (let col = -1; col <= 5; col++) {
     const cx = col * 128 + (row & 1 ? 64 : 0), cy = row * R * 1.5, tone = 205 + r() * 40;
@@ -248,13 +248,13 @@ GEN.hex = () => {   // carreaux hexagonaux (carreaux de ciment), motif de 1 m ×
   noise(x, c, 5, 52); return c;
 };
 GEN.granite = () => {   // granit : fond moucheté fin (motif de 60 cm)
-  const c = cv(256), x = c.getContext('2d'), r = rng(101);
+  const c = cv(256), x = c.getContext('2d', { willReadFrequently: true }), r = rng(101);
   x.fillStyle = grey(190); x.fillRect(0, 0, 256, 256);
   for (let i = 0; i < 5200; i++) { x.fillStyle = grey(70 + r() * 185); const s = 0.8 + r() * 2.2, px = r() * 256, py = r() * 256; for (const [ox, oy] of [[0, 0], [256, 0], [-256, 0], [0, 256], [0, -256]]) x.fillRect(px + ox, py + oy, s, s); }
   noise(x, c, 10, 102); return c;
 };
 GEN.terrazzo = () => {
-  const c = cv(512), x = c.getContext('2d'), r = rng(61);
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(61);
   x.fillStyle = grey(232); x.fillRect(0, 0, 512, 512);
   for (let i = 0; i < 520; i++) {
     const cx = r() * 512, cy = r() * 512, s = 3 + r() * 11, tone = 90 + r() * 140;
@@ -267,7 +267,7 @@ GEN.terrazzo = () => {
   noise(x, c, 4, 62); return c;
 };
 GEN.grass = () => {
-  const c = cv(512), x = c.getContext('2d'), r = rng(71);
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(71);
   x.fillStyle = grey(170); x.fillRect(0, 0, 512, 512);
   blotches(c, x, 70, 72, 0.14);
   for (let i = 0; i < 16000; i++) {
@@ -278,7 +278,7 @@ GEN.grass = () => {
   x.globalAlpha = 1; noise(x, c, 6, 73); return c;
 };
 GEN.deck = () => {   // terrasse en lames de bois espacées (rangées de 14 cm)
-  const c = cv(512), x = c.getContext('2d'), r = rng(81);
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(81);
   x.fillStyle = grey(60); x.fillRect(0, 0, 512, 512);
   const rows = 7, h = 512 / rows;
   for (let i = 0; i < rows; i++) {
@@ -295,7 +295,7 @@ GEN.deck = () => {   // terrasse en lames de bois espacées (rangées de 14 cm)
   noise(x, c, 6, 82); return c;
 };
 GEN.pavers = () => {   // pavés 25 × 12,5 cm en appareil décalé
-  const c = cv(512), x = c.getContext('2d'), r = rng(91);
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(91);
   x.fillStyle = grey(80); x.fillRect(0, 0, 512, 512);
   for (let i = 0; i < 8; i++) for (let k = -1; k < 4; k++) {
     const px = k * 128 + (i & 1 ? 64 : 0), tone = 175 + r() * 60; x.fillStyle = grey(tone); x.fillRect(px + 2, i * 64 + 2, 124, 60);
@@ -309,7 +309,7 @@ function slabTex(o) {
   const W = rows[0].ws.reduce((a, b) => a + b, 0), H = rows.reduce((a, r) => a + r.h, 0);
   return () => {
     const ppm = Math.min(512 / Math.min(W, H), 1100 / Math.max(W, H)), cw = Math.round(W * ppm), ch = Math.round(H * ppm);
-    const c = cv(cw, ch), x = c.getContext('2d'), r = rng(o.seed || 5), jt = Math.max(1.5, (o.joint ?? 0.004) * ppm), st = o.style || 'gres';
+    const c = cv(cw, ch), x = c.getContext('2d', { willReadFrequently: true }), r = rng(o.seed || 5), jt = Math.max(1.5, (o.joint ?? 0.004) * ppm), st = o.style || 'gres';
     x.fillStyle = grey(st === 'travertin' ? 120 : 105); x.fillRect(0, 0, cw, ch);
     let y = 0;
     for (const row of rows) {
@@ -383,7 +383,7 @@ const SLABS = {
 for (const [k, o] of Object.entries(SLABS)) GEN[k] = slabTex(o);
 const slabSize = (o) => { const rows = o.rows || Array.from({ length: o.ny }, () => ({ h: o.th, ws: Array(o.nx).fill(o.tw) })); return [rows[0].ws.reduce((a, b) => a + b, 0), rows.reduce((a, r) => a + r.h, 0)]; };
 GEN.ciment = () => {   // carreaux de ciment 20 × 20 cm, motif géométrique (période 0,8 m)
-  const c = cv(512), x = c.getContext('2d'), r = rng(261), t = 128;
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(261), t = 128;
   x.fillStyle = grey(215); x.fillRect(0, 0, 512, 512);
   for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
     const ox = i * t, oy = j * t, rot = (i + j) % 2;
@@ -398,7 +398,7 @@ GEN.ciment = () => {   // carreaux de ciment 20 × 20 cm, motif géométrique (p
   noise(x, c, 6, 262); void r; return c;
 };
 GEN.zellige = () => {   // zellige : carreaux de 10 cm irréguliers et brillants (période 0,8 m)
-  const c = cv(512), x = c.getContext('2d'), r = rng(271), t = 64;
+  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(271), t = 64;
   x.fillStyle = grey(150); x.fillRect(0, 0, 512, 512);
   for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
     const tone = 205 + (r() - 0.5) * 70, g = x.createLinearGradient(i * t, j * t, i * t + t, j * t + t); g.addColorStop(0, grey(tone + 18)); g.addColorStop(1, grey(tone - 22));
@@ -448,7 +448,7 @@ const swCache = {};
 export function swatch(kind, color, px = 56) {
   const key = kind + color + px;
   if (swCache[key]) return swCache[key];
-  const out = cv(px), x = out.getContext('2d');
+  const out = cv(px), x = out.getContext('2d', { willReadFrequently: true });
   if (kind) {
     const src = getTex(kind).userData.canvas;
     const [sx, sy] = TEX_SIZE[kind], zoom = Math.min(1, 0.5 / Math.max(sx, sy));

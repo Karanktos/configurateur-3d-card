@@ -32,9 +32,10 @@ function parentHass() {
   return null;
 }
 export function connectAuto() {
-  window.__setHass = setHass;
-  const tick = () => { const h = parentHass(); if (h) setHass(h); };
-  tick(); setInterval(tick, 1000);
+  let pushed = false;   // la carte transmet hass elle-même : la recherche périodique ne sert alors plus
+  window.__setHass = (h) => { pushed = true; setHass(h); };
+  const tick = () => { if (pushed) { clearInterval(timer); return; } const h = parentHass(); if (h) setHass(h); };
+  const timer = setInterval(tick, 1000); tick();
 }
 
 export const stateOf = (eid) => (H.hass && eid ? H.hass.states[eid] || null : null);

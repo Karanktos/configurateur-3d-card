@@ -106,7 +106,7 @@ let tr, tscene, tcam;
 const thumbCache = new Map();
 function thumbInit() {
   if (tr) return;
-  tr = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  tr = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   tr.setSize(180, 180, false); tr.setPixelRatio(1); tr.toneMapping = THREE.ACESFilmicToneMapping; tr.toneMappingExposure = 0.95;
   tscene = new THREE.Scene(); tscene.add(new THREE.HemisphereLight('#fff', '#b8c0c8', 1.2));
   tscene.environment = new THREE.PMREMGenerator(tr).fromScene(new RoomEnvironment(), 0.04).texture; tscene.environmentIntensity = 0.55;
