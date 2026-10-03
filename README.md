@@ -3,6 +3,9 @@
 Dessinez votre maison en 3D (façon Sims / IKEA : murs, sols, portes, fenêtres, meubles, lumières), puis affichez-la dans un tableau de bord Home Assistant
 où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'ouvrent, lumières qui s'allument, capteurs, soleil réel ou simulé.
 
+**Cuisine modulaire** façon configurateur de grande surface : meubles bas, hauts, colonnes et demi-colonnes aux dimensions standard (four, micro-ondes, plaque, évier, lave-vaisselle, réfrigérateur intégrés), joues, fileurs et crédence ;
+façades Sofia, Tokyo, Oxford, Shaker, Rainurée ou Brillante, poignées et finitions au choix, plan de travail. Le style choisi est repris pour chaque nouveau meuble, et les meubles se collent bord à bord.
+
 ![Aperçu](docs/apercu.png)
 
 ## Installation (HACS)
@@ -95,7 +98,7 @@ RÈGLES :
 - "items" (meubles) : {"id":40,"model":"canape3","x":3,"z":2.5,"rot":0} ; x,z = CENTRE du meuble ; rot en degrés : 0 = face avant vers le sud, 90 = vers l'est, 180 = vers le nord, 270 = vers l'ouest (la face avant regarde vers l'intérieur de la pièce).
   model à choisir UNIQUEMENT dans cette liste :
   salon : canape2, canape3, canape_angle, fauteuil, tablebasse, meubletv, tv, biblio ; salle à manger : table, table_r, chaise, buffet ;
-  chambre : lit90, lit140, lit160, chevet, commode, armoire2, armoire3 ; cuisine : kbas60, kbas80, ktiroirs, khaut, kevier, ilot ;
+  chambre : lit90, lit140, lit160, chevet, commode, armoire2, armoire3 ; cuisine : k_b_porte, k_b_tiroirs, k_b_evier, k_b_plaque, k_b_lv, k_h77, k_c_frigo, k_c_four, ilot (meubles bord à bord, largeurs 0.3 à 1.2) ;
   électroménager : frigo, cuisiniere, four, lavelinge, lavevaisselle, hotte ; salle de bain : wc, vasque, baignoire, douche, miroir ; bureau : bureau, chaise_bureau ; déco : plante, tapis.
 - Chaque id est un entier unique dans tout le fichier. Termine par "markers":[],"lights":[],"meta":{"rot":0,"v":2,"plot":true},"nid":100.
 STRUCTURE : {"walls":[...],"floors":[...],"openings":[...],"items":[...],"markers":[],"lights":[],"meta":{"rot":0,"v":2,"plot":true},"nid":100}

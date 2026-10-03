@@ -11,11 +11,12 @@ import { iconList, refresh as refreshPins } from './pins.js';
 import * as SUN from './sun.js';
 import { FLOORS, FINISHES, PALETTE, TILE, floorDef, finishDef, swatch } from './textures.js';
 import { CATS, ALL, FINS, buildItem, defOf, defaultItem } from './catalog.js';
+import { FACADES, HANDLES as KHANDLES, HFINS, FCOLORS, KSTYLE_KEYS, KDEF, isKitchen } from './kitchen.js';
 import { DOORS, WINDOWS, MATS, GLASSES, HANDLES, defaultOpening, buildOpening, modelOf } from './openings.js';
 import { wallGeometry } from './geom.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import {
-  T, D, LGRP, setTool, startPlacing, startPlacingLight, setLightModel, setPlacingModel, rebuildGhost, removeEntity, duplicateSelected, rotateSelected, toggleAnim, toggleGroupPreview, validOpeningNow,
+  T, D, LGRP, setTool, startPlacing, startPlacingLight, setLightModel, setPlacingModel, rebuildGhost, withKitchenStyle, removeEntity, duplicateSelected, rotateSelected, toggleAnim, toggleGroupPreview, validOpeningNow,
 } from './tools.js';
 import { svg } from './mdi.js';
 
@@ -134,7 +135,13 @@ function pump() {
   try { if (!thumbCache.has(j.key)) thumbCache.set(j.key, j.fn()); j.img.src = thumbCache.get(j.key); } catch (e) { console.warn('vignette', j.key, e); }
   setTimeout(pump, 0);
 }
-const itemThumb = (def, img) => enqueue('i' + def.id, () => renderThumb(buildItem(defaultItem(def.id)).group), img);
+const styleKey = (o) => KSTYLE_KEYS.map((k) => o[k]).join('|');
+const itemThumb = (def, img) => {
+  if (!def.kmod) { enqueue('i' + def.id, () => renderThumb(buildItem(defaultItem(def.id)).group), img); return; }
+  const it = withKitchenStyle(defaultItem(def.id));   // meuble de cuisine : vignette dans le style choisi pour la cuisine
+  enqueue('i' + def.id + styleKey(it), () => renderThumb(buildItem(it).group), img);
+};
+const kThumb = (style, img) => { const it = { ...defaultItem('k_h77'), ...style, w: 0.5 }; enqueue('kf' + styleKey(it), () => renderThumb(buildItem(it).group, [0.32, 0.12, 1.3]), img); };   // façade vue de face
 function openingThumb(o, img, key) {
   enqueue(key, () => {
     const probe = { ...o }, g = new THREE.Group(), W = o.w + 0.9, Hh = Math.max(o.y0 + o.h + 0.3, 1.2);
@@ -181,11 +188,11 @@ function openingLibrary(kind) {
 function itemLibrary() {
   const top = el('div', {});
   const chips = el('div', { class: 'chips' }, CATS.map((c) => el('button', { class: 'chip' + (L.cat === c && !L.q ? ' on' : ''), onclick: () => { L.cat = c; L.sub = ''; L.q = ''; renderLib(); } }, c)));
-  const subs = [...new Set(ALL.filter((d) => d.cat === L.cat).map((d) => d.sub))];
+  const subs = [...new Set(ALL.filter((d) => d.cat === L.cat && !d.hidden).map((d) => d.sub))];
   const subChips = L.q || subs.length < 2 ? null : el('div', { class: 'chips sub' }, ['Tout', ...subs].map((s) => el('button', { class: 'chip' + ((s === 'Tout' ? !L.sub : L.sub === s) ? ' on' : ''), onclick: () => { L.sub = s === 'Tout' ? '' : s; renderLib(); } }, s)));
   const search = el('input', { type: 'search', placeholder: 'Rechercher un meuble…', value: L.q, style: { width: '100%', padding: '7px 9px', border: '1px solid var(--line)', borderRadius: '8px', background: 'var(--panel)', marginBottom: '8px' } });
   search.addEventListener('input', () => { L.q = search.value; const pos = search.selectionStart; renderLib(); const s = lib().querySelector('input[type=search]'); s.focus(); s.setSelectionRange(pos, pos); });
-  const list = ALL.filter((d) => (L.q ? d.name.toLowerCase().includes(L.q.toLowerCase()) || d.cat.toLowerCase().includes(L.q.toLowerCase()) : d.cat === L.cat && (!L.sub || d.sub === L.sub)));
+  const list = ALL.filter((d) => !d.hidden && (L.q ? d.name.toLowerCase().includes(L.q.toLowerCase()) || d.cat.toLowerCase().includes(L.q.toLowerCase()) : d.cat === L.cat && (!L.sub || d.sub === L.sub)));
   const grid = el('div', { class: 'grid2' });
   list.forEach((d) => {
     const img = el('img', { alt: d.name });
@@ -193,7 +200,7 @@ function itemLibrary() {
       el('div', { class: 'im' }, img), el('b', {}, d.name), el('span', {}, `${Math.round(d.w * 100)}×${Math.round(d.d * 100)}×${Math.round(d.h * 100)} cm`)));
     itemThumb(d, img);
   });
-  top.append(search, chips, ...(subChips ? [subChips] : []), grid.children.length ? grid : el('div', { class: 'empty' }, 'Aucun résultat'));
+  top.append(search, chips, ...(L.cat === 'Cuisine' && !L.q ? [kitchenCard()] : []), ...(subChips ? [subChips] : []), grid.children.length ? grid : el('div', { class: 'empty' }, 'Aucun résultat'));
   const out = [top];
   if (D.item) {
     out.push(el('h3', { style: { margin: '14px 0 8px' } }, 'Configurer avant la pose'));
@@ -201,6 +208,80 @@ function itemLibrary() {
     out.push(el('p', { class: 'sub' }, 'Clique dans la scène pour poser (reste actif pour en poser plusieurs). R : pivoter · Échap : terminer.'));
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Cuisine modulaire : style mémorisé (façade, couleurs, poignées, plan de travail) repris pour chaque nouveau meuble
+// ---------------------------------------------------------------------------------------------
+const KFIN = [['mat', 'Mat'], ['bois', 'Décor bois'], ['brillant', 'Brillant']];
+const CAISSONS = ['#f1efea', '#d9d4cb', '#8f9598', '#3a3d40', '#c8a57a'];
+const WTC = ['#c9a27a', '#e8e4dc', '#b9b4aa', '#6e6a64', '#2e3033', '#f4f3ef', '#8a6445'];
+const WTL = () => defOf('k_b_porte').selects.find((x) => x.k === 'plan').list;
+export const kitchenStyle = () => (S.meta.kitchen = S.meta.kitchen || { ...KDEF });
+const kItems = () => S.items.filter((i) => isKitchen(defOf(i.model)));
+const remember = (o) => { const ks = kitchenStyle(); KSTYLE_KEYS.forEach((k) => { ks[k] = o[k]; }); };
+function fChips(label, o, k, opts, on) {
+  const wrap = el('div', { class: 'chips', style: { marginBottom: '0' } });
+  opts.forEach(([v, t]) => wrap.append(el('button', { class: 'chip' + (o[k] === v ? ' on' : ''), onclick: () => { o[k] = v; on(true); } }, t)));
+  return el('div', { class: 'f' }, el('div', { class: 'l' }, label), wrap);
+}
+function fDots(label, o, k, opts, on) {
+  const pal = el('div', { class: 'pal' });
+  opts.forEach(([v, t, c]) => pal.append(el('button', { class: 'sw' + (o[k] === v ? ' on' : ''), title: t, style: { background: c }, onclick: () => { o[k] = v; on(true); } })));
+  const cur = opts.find((x) => x[0] === o[k]);
+  return el('div', { class: 'f' }, el('div', { class: 'l' }, label + (cur ? ' : ' + cur[1] : '')), pal);
+}
+// on(fin, redessiner) : fin = modification terminée ; redessiner = les choix affichés dépendent de la valeur (vignettes, options)
+function kStyleForm(o, on) {
+  const fac = el('div', { class: 'mats' });
+  FACADES.forEach(([id, name, desc]) => {
+    const img = el('img', { alt: '' });
+    fac.append(el('button', { class: 'mat' + (o.fa === id ? ' on' : ''), title: desc, onclick: () => { o.fa = id; if (id === 'tokyo') o.poi = 'gorge'; else if (o.poi === 'gorge') o.poi = 'barre'; on(true, true); } }, img, el('b', {}, name)));
+    kThumb({ ...o, fa: id, poi: id === 'tokyo' ? 'gorge' : o.poi === 'gorge' ? 'barre' : o.poi }, img);
+  });
+  const cur = FACADES.find((f) => f[0] === o.fa);
+  const out = [el('div', { class: 'f' }, el('div', { class: 'l' }, 'Modèle de façade' + (cur ? ' : ' + cur[2] : '')), fac),
+    fColor('Couleur des façades', o, 'c1', (f) => on(f, f), FCOLORS), fSeg('Aspect', o, 'fin', KFIN, (f) => on(f, true))];
+  if (o.fa === 'tokyo') out.push(el('p', { class: 'sub' }, 'Tokyo : poignée intégrée (gorge) sur toutes les façades.'));
+  else out.push(fChips('Poignées', o, 'poi', KHANDLES, (f) => on(f, true)));
+  if (o.fa !== 'tokyo' && o.poi !== 'gorge') out.push(fDots('Finition des poignées', o, 'pf', HFINS, (f) => on(f, true)));
+  out.push(fSelect('Plan de travail', o, 'plan', WTL(), (f) => on(f, true)));
+  if (['strat', 'granit', 'quartz'].includes(o.plan)) out.push(fColor('Teinte du plan de travail', o, 'c2', (f) => on(f, f), WTC));
+  out.push(fColor('Caissons (intérieur)', o, 'c3', (f) => on(f, f), CAISSONS));
+  return out;
+}
+function applyStyleToAll(o) {
+  const list = kItems(); if (!list.length) return;
+  list.forEach((i) => { KSTYLE_KEYS.forEach((k) => { i[k] = o[k]; }); renderItem(i); });
+  drawSelection(); commit(); toast(`Style appliqué à ${list.length} élément${list.length > 1 ? 's' : ''} de cuisine`);
+}
+// carte de la bibliothèque (catégorie Cuisine)
+function kitchenCard() {
+  const ks = kitchenStyle(), n = kItems().length;
+  const onKS = (fin, redraw) => {
+    if (D.item && isKitchen(defOf(D.item.model))) { KSTYLE_KEYS.forEach((k) => { D.item[k] = ks[k]; }); rebuildGhost(); }
+    if (fin) commit(); if (redraw) renderLib();
+  };
+  const det = el('details', { class: 'card', open: L.kClosed == null ? !n : !L.kClosed });   // replié d'office dès que la cuisine a des meubles
+  det.addEventListener('toggle', () => { L.kClosed = !det.open; });
+  const fa = FACADES.find((f) => f[0] === ks.fa), hd = KHANDLES.find((h) => h[0] === ks.poi);
+  det.append(el('summary', { style: { cursor: 'pointer', fontWeight: '700', marginBottom: '6px' } }, '🎨 Style de ma cuisine', el('span', { style: { fontWeight: '400', color: 'var(--muted)', fontSize: '12px' } }, ` · ${fa ? fa[1] : ''}${ks.fa === 'tokyo' ? '' : ', poignée ' + (hd ? hd[1].toLowerCase() : '')}`)),
+    el('p', { class: 'sub' }, 'Repris automatiquement pour chaque nouveau meuble de cuisine. Les meubles se collent bord à bord.'), ...kStyleForm(ks, onKS));
+  if (n) det.append(fBtns(btn(`Appliquer aux ${n} élément${n > 1 ? 's' : ''} déjà posé${n > 1 ? 's' : ''}`, () => applyStyleToAll(ks))));
+  return det;
+}
+// formulaire d'un meuble de cuisine : largeurs standard (et réglages propres au meuble)
+function kitchenItemForm(it, d, ch) {
+  const out = [];
+  if (d.widths && d.widths.length > 1) out.push(fSeg('Largeur (cm)', it, 'w', d.widths.map((w) => [w, String(Math.round(w * 100))]), ch));
+  if (!d.lock) out.push(fRange('Profondeur', it, 'd', 0.01, 1.2, 0.01, ch), fRange('Hauteur', it, 'h', 0.01, 1.2, 0.01, ch));
+  return out;
+}
+// style d'un meuble posé : modifiable seul, mémorisé pour les suivants, ou reporté sur toute la cuisine
+function kitchenStyleSection(it, ch) {
+  const n = kItems().length;
+  return [el('h3', { style: { marginTop: '10px' } }, 'Style'), ...kStyleForm(it, (fin, redraw) => { remember(it); ch(fin); if (redraw) renderProps(); }),
+    ...(n > 1 ? [fBtns(btn(`Appliquer ce style à toute la cuisine (${n})`, () => applyStyleToAll(it), 'accent'))] : [])];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -520,16 +601,19 @@ export function openingForm(o, onChg, isDefault = false) {
 
 export function itemForm(it, onChg, isDefault = false) {
   const d = defOf(it.model), ch = (fin) => onChg(fin), out = [];
-  const lock = d.lock ? 0.1 : 0.5, wmax = d.lock ? 1.1 : 2;
-  out.push(fRange('Largeur', it, 'w', +(d.w * (1 - lock)).toFixed(2), +(d.w * (d.lock ? 1.1 : 2.2)).toFixed(2), 0.01, ch));
-  out.push(fRange('Profondeur', it, 'd', +(d.d * (1 - lock)).toFixed(2), +(d.d * (d.lock ? 1.1 : 2)).toFixed(2), 0.01, ch));
-  out.push(fRange('Hauteur', it, 'h', +(d.h * (1 - lock)).toFixed(2), +(d.h * (d.lock ? 1.1 : wmax)).toFixed(2), 0.01, ch));
-  void wmax;
+  if (d.kmod) out.push(...kitchenItemForm(it, d, ch, isDefault));
+  else {
+    const lock = d.lock ? 0.1 : 0.5, wmax = d.lock ? 1.1 : 2;
+    out.push(fRange('Largeur', it, 'w', +(d.w * (1 - lock)).toFixed(2), +(d.w * (d.lock ? 1.1 : 2.2)).toFixed(2), 0.01, ch));
+    out.push(fRange('Profondeur', it, 'd', +(d.d * (1 - lock)).toFixed(2), +(d.d * (d.lock ? 1.1 : 2)).toFixed(2), 0.01, ch));
+    out.push(fRange('Hauteur', it, 'h', +(d.h * (1 - lock)).toFixed(2), +(d.h * (d.lock ? 1.1 : wmax)).toFixed(2), 0.01, ch));
+  }
   if (!isDefault) out.push(fRange('Orientation', it, 'rot', 0, 345, 15, (f) => { ch(f); }, '°'));
-  out.push(fRange('Surélévation (mural / posé)', it, 'elev', 0, 2.4, 0.05, ch));
+  if (!d.kmod || !['bas', 'col', 'demi'].includes(d.kmod)) out.push(fRange(d.kmod ? 'Hauteur de pose (bas du meuble)' : 'Surélévation (mural / posé)', it, 'elev', 0, 2.4, 0.01, ch));
   (d.colors || []).forEach((c, i) => out.push(fColor(c[0], it, 'c' + (i + 1), ch)));
   if (d.fin !== null) out.push(fSelect('Finition', it, 'fin', FINS, ch));
-  (d.selects || []).forEach((s) => out.push(fSelect(s.l, it, s.k, s.list, ch)));
+  (d.selects || []).forEach((s) => { if (!(d.kmod && s.k === 'plan')) out.push(fSelect(s.l, it, s.k, s.list, ch)); });
+  if (d.kmod && !isDefault) out.push(...kitchenStyleSection(it, ch));
   if (d.variants) out.push(fSeg('Variante', it, 'v', d.variants.map((t, i) => [i, t]), ch));
   (d.fields || []).forEach((f) => out.push(fRange(f.l, it, f.k, f.min, f.max, f.step, ch, f.unit || '')));
   if (!isDefault) {
@@ -627,7 +711,7 @@ export function renderProps() {
     n.append(fBtns(btn('Dupliquer', duplicateSelected), del));
   } else if (kind === 'item') {
     const d = defOf(e.model), ch = (f) => { renderItem(e); drawSelection(); if (f) commit(); };
-    n.append(el('h2', {}, d.name), el('p', { class: 'sub' }, d.cat));
+    n.append(el('h2', {}, d.name), el('p', { class: 'sub' }, d.kmod ? `${d.cat} · ${d.sub}` : d.cat));
     if (isLightItem(e) && e.grp) {
       const g = find('light', e.grp);
       n.append(fSelect('Groupe de lumières', e, 'grp', S.lights.map((l) => [l.id, l.name || 'Sans nom']), (f) => { syncLive(); refreshPins(); if (f) { commit(); renderProps(); } }));

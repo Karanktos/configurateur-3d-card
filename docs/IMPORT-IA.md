@@ -93,7 +93,7 @@ Modèles de **fenêtres** (`y0` par défaut entre parenthèses) :
 { "id": 31, "model": "canape3", "x": 2.6, "z": 3.9, "rot": 90, "elev": 0, "w": 2.1, "d": 0.92, "h": 0.82, "fin": "mat", "v": 0, "open": 0, "c1": "#9aa5a8", "c2": "#5a4636", "ent": "" }
 ```
 (x, z) = **centre** du meuble ; `w` (largeur), `d` (profondeur), `h` (hauteur) peuvent être modifiés (garder entre 0,6 et 2 fois la valeur par défaut) ; `c1`, `c2`… = couleurs ; `fin` : `mat`, `bois` ou `brillant`.
-`elev` = surélévation (meuble mural). Les éléments « posés » (plaque de cuisson, micro-ondes, évier à poser, petit électroménager) prennent `elev` = hauteur du plan de travail sous eux (0,85 pour un meuble bas de cuisine).
+`elev` = surélévation (meuble mural). Les éléments « posés » (plaque de cuisson, micro-ondes, évier à poser, petit électroménager) prennent `elev` = hauteur du plan de travail sous eux (0,906 pour un meuble bas de cuisine `k_b_…`).
 Pour un plan de travail : `"plan": "strat"` (valeurs : `strat`, `bois`, `pierre`, `granit`, `marbre`, `quartz`, `beton`, `inox`).
 
 **Lumières** : un groupe dans `lights` (`{ "id": 52, "name": "Lumière séjour", "ent": "", "ic": "mdi:ceiling-light", "x": 3.2, "z": 3.5, "h": 2 }`), et ses points lumineux dans `items`
@@ -179,25 +179,97 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 
 ### Cuisine
 
-* `kbas60` — Meuble bas 60 (1 porte) — 0.6×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
-* `kbas80` — Meuble bas 80 (2 portes) — 0.8×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
-* `ktiroirs` — Meuble bas 60 (3 tiroirs) — 0.6×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
+Cuisine modulaire (dimensions standard : socle 10 cm, caissons de 76,8 cm, plan de 3,8 cm → plan à 0,906 m ; haut des colonnes et des meubles hauts à 2,244 m).
+Les meubles `k_…` partagent un **style** (mêmes champs sur chaque meuble, et dans `meta.kitchen` pour les nouveaux meubles) :
+`fa` = façade (`sofia`, `tokyo`, `oxford`, `shaker`, `rainure`, `brillant`), `c1` = couleur des façades, `fin` = `mat`|`bois`|`brillant`, `poi` = poignée (`barre`, `bouton`, `coquille`, `profil`, `cuir`, `gorge`), `pf` = finition des poignées (`inox`, `noir`, `laiton`, `cuivre`, `chrome`, `blanc`, `bronze`), `plan` = plan de travail (`strat`, `bois`, `pierre`, `granit`, `marbre`, `quartz`, `beton`, `inox`), `c2` = teinte du plan (stratifié, granit, quartz), `c3` = couleur des caissons. Meubles bas : `top` = 1 (avec plan de travail) ou 0.
+Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce), les meubles hauts au-dessus avec leur `elev` par défaut.
+
+**Meubles bas**
+
+* `k_b_porte` — Bas porte(s) — 0.6×0.6×0.906 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `hg=L|R`
+* `k_b_porte_tiroir` — Bas porte(s) et tiroir — 0.6×0.6×0.906 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `hg=L|R`
+* `k_b_tiroirs` — Bas tiroirs — 0.6×0.6×0.906 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `nt=2|3|4`
+* `k_b_vitre` — Bas porte vitrée — 0.6×0.6×0.906 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `hg=L|R`
+* `k_b_ouvert` — Bas ouvert (étagères) — 0.6×0.6×0.906 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2
+* `k_b_evier` — Bas pour évier (évier inclus) — 0.8×0.6×0.906 — largeurs 0.6 / 0.8 / 0.9 / 1 / 1.2 — `ev=inox|granit|ceram`, `bacs=1|2`, `hg=L|R`
+* `k_b_poubelle` — Bas pour poubelle — 0.4×0.6×0.906 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 — `hg=L|R`
+* `k_b_four` — Bas pour four — 0.6×0.6×0.906
+* `k_b_plaque` — Bas pour plaque (2 casseroliers) — 0.6×0.6×0.906 — largeurs 0.6 / 0.8 / 0.9
+* `k_b_four_plaque` — Bas pour four et plaque — 0.6×0.6×0.906 — largeurs 0.6 / 0.9
+* `k_b_lv` — Bas pour lave-vaisselle (intégrable) — 0.6×0.6×0.906 — largeurs 0.45 / 0.6
+* `k_b_ll` — Bas pour lave-linge — 0.6×0.6×0.906
+* `k_b_seche` — Bas pour sèche-linge — 0.6×0.6×0.906
+* `k_b_frigo` — Bas pour réfrigérateur (sous plan) — 0.6×0.6×0.906 — `hg=L|R`
+* `k_b_congel` — Bas pour congélateur (sous plan) — 0.6×0.6×0.906 — `hg=L|R`
+* `k_b_bouteilles` — Casier à bouteilles — 0.2×0.6×0.906 — largeurs 0.15 / 0.2 / 0.3
+* `k_b_angle` — Bas d'angle — 1×0.6×0.906 — largeurs 0.9 / 1 / 1.2 — `ang=L|R`
+
+**Meubles hauts**
+
+* `k_h38` — Haut H38 (abattant) — 0.6×0.35×0.384 — elev 1.86 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2
+* `k_h77` — Haut H77 — 0.6×0.35×0.768 — elev 1.476 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `hg=L|R`
+* `k_h103` — Haut H103 — 0.6×0.35×1.024 — elev 1.22 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `hg=L|R`
+* `k_h77_vitre` — Haut H77 vitré — 0.6×0.35×0.768 — elev 1.476 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2 — `hg=L|R`
+* `k_h77_ouvert` — Haut H77 ouvert — 0.6×0.35×0.768 — elev 1.476 — largeurs 0.3 / 0.4 / 0.45 / 0.5 / 0.6 / 0.8 / 0.9 / 1 / 1.2
+* `k_h_hotte` — Haut H38 avec hotte intégrée — 0.6×0.35×0.384 — elev 1.86 — largeurs 0.6 / 0.9
+* `k_h_mo` — Haut H77 pour micro-ondes — 0.6×0.4×0.768 — elev 1.476
+
+**Colonnes (H 224)**
+
+* `k_c_tablettes` — Colonne avec tablettes — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_four` — Colonne pour four — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_mo` — Colonne pour micro-ondes — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_four_mo` — Colonne four et micro-ondes — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_lv` — Colonne lave-vaisselle surélevé — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_frigo` — Colonne réfrigérateur intégré — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_frigo_four` — Colonne réfrigérateur et four — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_c_frigo_mo` — Colonne réfrigérateur et micro-ondes — 0.6×0.6×2.244 — largeurs 0.45 / 0.6 — `hg=L|R`
+
+**Demi-colonnes (H 147)**
+
+* `k_d_tablettes` — Demi-colonne avec tablettes — 0.6×0.6×1.473 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_d_four` — Demi-colonne pour four — 0.6×0.6×1.473 — largeurs 0.45 / 0.6
+* `k_d_mo` — Demi-colonne pour micro-ondes — 0.6×0.6×1.473 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_d_four_mo` — Demi-colonne four et micro-ondes — 0.6×0.6×1.473 — largeurs 0.45 / 0.6
+* `k_d_frigo` — Demi-colonne réfrigérateur intégré — 0.6×0.6×1.473 — largeurs 0.45 / 0.6 — `hg=L|R`
+* `k_d_lv` — Demi-colonne lave-vaisselle surélevé — 0.6×0.6×1.473 — largeurs 0.45 / 0.6 — `hg=L|R`
+
+**Joues, fileurs, crédence**
+
+* `k_joue_bas` — Joue meuble bas — 0.019×0.6×0.868
+* `k_joue_haut` — Joue meuble haut H77 — 0.019×0.35×0.768 — elev 1.476
+* `k_joue_col` — Joue colonne — 0.019×0.62×2.244
+* `k_joue_demi` — Joue demi-colonne — 0.019×0.62×1.473
+* `k_fileur_bas` — Fileur meuble bas — 0.05×0.6×0.868 — largeurs 0.03 / 0.05 / 0.08 / 0.1 / 0.15
+* `k_fileur_haut` — Fileur meuble haut — 0.05×0.35×0.768 — elev 1.476 — largeurs 0.03 / 0.05 / 0.08 / 0.1 / 0.15
+* `k_fileur_col` — Fileur colonne — 0.05×0.6×2.244 — largeurs 0.03 / 0.05 / 0.08 / 0.1 / 0.15
+* `k_credence` — Crédence (assortie au plan) — 1.2×0.012×0.6 — elev 0.906 — largeurs 0.6 / 0.9 / 1.2 / 1.8 / 2.4 / 3
+* `k_plan` — Plan de travail — 1.2×0.62×0.038 — elev 0.868 — largeurs 0.6 / 0.9 / 1.2 / 1.8 / 2.4 / 3 / 3.6
+
+**Îlots et accessoires**
+
+* `ilot` — Îlot central — 1.8×0.9×0.92 — couleurs : Caissons, Plan
+* `desserte` — Desserte à roulettes — 0.6×0.4×0.85 — couleurs : Plateaux, Structure
+* `hotte_ilot` — Hotte îlot — 0.9×0.5×1.1 — elev 1.55 — couleurs : Inox
+* `evier_pose` — Évier à poser (1 bac + égouttoir) — 0.8×0.5×0.2 — couleurs : Inox
+
+**Anciens modèles** (toujours acceptés, préférer les modules `k_…`)
+
+* `kbas60` — Meuble bas 60 (1 porte) — 0.6×0.6×0.85 — couleurs : Façades, Plan de travail
+* `kbas80` — Meuble bas 80 (2 portes) — 0.8×0.6×0.85 — couleurs : Façades, Plan de travail
+* `ktiroirs` — Meuble bas 60 (3 tiroirs) — 0.6×0.6×0.85 — couleurs : Façades, Plan de travail
 * `khaut` — Meuble haut 60 — 0.6×0.35×0.7 — elev 1.45 — couleurs : Façades
-* `kevier` — Évier 120 + meuble — 1.2×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
-* `ilot` — Îlot central — 1.8×0.9×0.92 — couleurs : Caissons, Plan — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
+* `kevier` — Évier 120 + meuble — 1.2×0.6×0.85 — couleurs : Façades, Plan de travail
 * `colonne_four` — Colonne four + micro-ondes — 0.6×0.6×2.1 — couleurs : Façades
-* `kbas40` — Meuble bas 40 — 0.4×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
-* `kbas120` — Meuble bas 120 (4 tiroirs / portes) — 1.2×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
-* `kbas_four` — Meuble bas pour four — 0.6×0.6×0.85 — couleurs : Façades, Plan de travail — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
+* `kbas40` — Meuble bas 40 — 0.4×0.6×0.85 — couleurs : Façades, Plan de travail
+* `kbas120` — Meuble bas 120 (4 tiroirs / portes) — 1.2×0.6×0.85 — couleurs : Façades, Plan de travail
+* `kbas_four` — Meuble bas pour four — 0.6×0.6×0.85 — couleurs : Façades, Plan de travail
 * `khaut40` — Meuble haut 40 — 0.4×0.35×0.7 — elev 1.45 — couleurs : Façades
 * `khaut80` — Meuble haut 80 — 0.8×0.35×0.7 — elev 1.45 — couleurs : Façades
 * `khaut_vitre` — Meuble haut vitré 60 — 0.6×0.35×0.7 — elev 1.45 — couleurs : Cadre
 * `colonne_frigo` — Colonne pour réfrigérateur — 0.6×0.6×2.1 — couleurs : Façades, Plan de travail
 * `colonne_rangement` — Colonne de rangement — 0.6×0.6×2.1 — couleurs : Façades, Plan de travail
-* `plan_travail` — Plan de travail seul — 1.2×0.6×0.04 — elev 0.85 — couleurs : Teinte — option `plan=strat|bois|pierre|granit|marbre|quartz|beton|inox`
-* `desserte` — Desserte à roulettes — 0.6×0.4×0.85 — couleurs : Plateaux, Structure
-* `hotte_ilot` — Hotte îlot — 0.9×0.5×1.1 — elev 1.55 — couleurs : Inox
-* `evier_pose` — Évier à poser (1 bac + égouttoir) — 0.8×0.5×0.2 — couleurs : Inox
+* `plan_travail` — Plan de travail seul — 1.2×0.6×0.04 — elev 0.85 — couleurs : Teinte
 
 ### Électroménager
 

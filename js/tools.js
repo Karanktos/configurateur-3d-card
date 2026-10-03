@@ -7,6 +7,7 @@ import {
   undo, redo, frameAll, entOfItem, isOrtho, viewOnly,
 } from './core.js';
 import { buildItem, defaultItem, defOf } from './catalog.js';
+import { KSTYLE_KEYS } from './kitchen.js';
 import { buildOpening, defaultOpening, modelOf } from './openings.js';
 import { floorDef } from './textures.js';
 import { toggle as haToggle, moreInfo, isToggleable } from './ha.js';
@@ -77,8 +78,14 @@ export function setTool(t) {
 function clearTmp() { for (const c of [...R.tmp.children]) { R.tmp.remove(c); disposeTree(c); } invalidate(false); }
 function clearGhost() { if (ghost) { R.ghost.remove(ghost); disposeTree(ghost); ghost = null; } invalidate(false); }
 
+// nouveau meuble de cuisine : reprend le style mémorisé de la cuisine (façade, couleurs, poignées, plan de travail)
+export function withKitchenStyle(o) {
+  const d = defOf(o.model), ks = S.meta.kitchen;
+  if (d && d.kmod && ks) for (const k of KSTYLE_KEYS) if (ks[k] != null) o[k] = ks[k];
+  return o;
+}
 export function startPlacing(model) {
-  D.item = D.item && D.item.model === model ? D.item : defaultItem(model);
+  D.item = D.item && D.item.model === model ? D.item : withKitchenStyle(defaultItem(model));
   setTool('item');
 }
 export function startPlacingLight(model) {
@@ -86,7 +93,7 @@ export function startPlacingLight(model) {
   setTool('light');
 }
 export function setLightModel(model) { LGRP.model = model; D.item = defaultItem(model); clearGhost(); updateGhost(); }
-export function setPlacingModel(model) { D.item = defaultItem(model); clearGhost(); updateGhost(); }
+export function setPlacingModel(model) { D.item = withKitchenStyle(defaultItem(model)); clearGhost(); updateGhost(); }
 export function rebuildGhost() { clearGhost(); updateGhost(); }
 
 // ---------- création / suppression ----------
@@ -167,7 +174,29 @@ function validOpening(o, s, wallId = o.wall) {
 export function validOpeningNow(o) { return validOpening(o, o.s); }
 
 // ---------- meubles ----------
+// meubles de cuisine : bord à bord avec le module voisin de même orientation (bas contre bas, haut contre haut, colonnes avec les deux)
+function kitchenSnap(it, p) {
+  const d = defOf(it.model); if (!d || !d.kmod) return p;
+  const r = rad(p.rot || 0), ux = Math.cos(r), uz = -Math.sin(r), vx = Math.sin(r), vz = Math.cos(r);
+  const a0 = it.elev || d.elev || 0, a1 = a0 + it.h;
+  let best = null, bd = 0.15;
+  for (const o of S.items) {
+    if (o === it || (it.id && o.id === it.id)) continue;
+    const od = defOf(o.model); if (!od || !od.kmod) continue;
+    if (Math.abs((((o.rot || 0) - (p.rot || 0)) % 360 + 540) % 360 - 180) > 1) continue;
+    const b0 = o.elev || 0, b1 = b0 + o.h; if (Math.min(a1, b1) - Math.max(a0, b0) < 0.05) continue;
+    const dx = o.x - p.x, dz = o.z - p.z, t = dx * ux + dz * uz, s = dx * vx + dz * vz;
+    if (Math.abs(s) > 0.3) continue;
+    const gap = Math.abs(t) - (o.w + it.w) / 2;
+    if (Math.abs(gap) < bd) { bd = Math.abs(gap); best = { k: Math.sign(t) * gap }; }
+  }
+  return best ? { ...p, x: r2(p.x + ux * best.k), z: r2(p.z + uz * best.k) } : p;
+}
 function magnet(it, x, z) {
+  const p = magnet0(it, x, z);
+  return settings.magnet ? kitchenSnap(it, p) : p;
+}
+function magnet0(it, x, z) {
   let rot = it.rot;
   x = gsnap(x, 0.05); z = gsnap(z, 0.05);
   if (!settings.magnet || FREE.has(it.model)) return { x, z, rot };

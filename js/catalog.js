@@ -5,6 +5,7 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 import { boxG } from './util.js';
 import { getTexM } from './textures.js';
 import { addPart } from './anim.js';
+import { registerKitchen, KDEF, KSTYLE_KEYS } from './kitchen.js';
 
 export const CATS = ['Chambre', 'Salon', 'Salle à manger', 'Cuisine', 'Électroménager', 'Salle de bain', 'Bureau', 'Éclairage', 'Déco', 'Extérieur'];
 export const FINS = [['mat', 'Laqué mat'], ['bois', 'Bois / décor'], ['brillant', 'Brillant']];
@@ -82,6 +83,7 @@ export function defaultItem(model) {
   (d.colors || []).forEach((c, i) => { o['c' + (i + 1)] = c[1]; });
   (d.fields || []).forEach((f) => { o[f.k] = f.def; });
   (d.selects || []).forEach((s) => { o[s.k] = s.def; });
+  if (d.kmod) for (const k of KSTYLE_KEYS) o[k] = KDEF[k];   // meuble de cuisine : style par défaut (remplacé par le style mémorisé de la cuisine)
   o.ent = '';
   return o;
 }
@@ -286,6 +288,8 @@ reg('kevier', 'Cuisine', 'Évier 120 + meuble', 1.2, 0.6, 0.85, 249, kCols, (g, 
   const dw = (w - 0.004) / 2;
   for (let i = 0; i < 2; i++) K.cdoor(dw, bh - 0.01, bm, -w / 2 + (i + 0.5) * dw, pl + 0.005, d / 2 - 0.01, i === 0 ? 1 : -1, g, { hy: bh - 0.12, hlen: 0.18 });
 }, { anim: 'Ouvrir les portes' });
+
+registerKitchen(reg, wt, WTSEL);   // cuisine modulaire (js/kitchen.js)
 
 // ---------- ÉLECTROMÉNAGER ----------
 function fridge(kind) {
@@ -935,7 +939,7 @@ SMALLAPP('grille_pain', 'Grille-pain', 0.3, 0.17, 0.2, 35, (g, p, K) => { K.rbox
 const SUBS = {
   Salon: { 'Canapés et fauteuils': ['canape2', 'canape3', 'canape_angle', 'canape_conv', 'fauteuil', 'fauteuil_coque', 'bergere', 'chauffeuse'], 'Tables': ['tablebasse', 'tablebasse_r', 'table_basse_carree', 'gueridon'], 'Meubles TV': ['meubletv', 'meuble_tv_tiroirs', 'tv', 'tv_mur'], 'Rangements': ['biblio', 'biblio_haute', 'enfilade', 'vitrine_salon', 'etagere_cubes', 'etagere_murale', 'console'], 'Chauffage': ['poele'], 'Confort': ['pouf'] },
   'Salle à manger': { 'Tables': ['table', 'table_r', 'table_extensible', 'table_haute'], 'Chaises et bancs': ['chaise', 'chaise_visiteur', 'chaise_bar', 'tabouret', 'banc'], 'Rangements': ['buffet', 'vaisselier'] },
-  Cuisine: { 'Meubles bas': ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four'], 'Meubles hauts': ['khaut40', 'khaut', 'khaut80', 'khaut_vitre'], 'Colonnes': ['colonne_frigo', 'colonne_four', 'colonne_rangement'], 'Évier, plans et îlots': ['kevier', 'evier_pose', 'plan_travail', 'ilot', 'desserte', 'hotte_ilot'] },
+  Cuisine: { 'Îlots et accessoires': ['evier_pose', 'ilot', 'desserte', 'hotte_ilot'] },
   Chambre: { 'Lits': ['lit90', 'lit140', 'lit160', 'tete_de_lit'], 'Armoires et dressings': ['armoire2', 'armoire3', 'armoire_coulissante', 'dressing_ouvert'], 'Commodes et chevets': ['commode', 'commode6', 'chiffonnier', 'chevet', 'chevet_susp'], 'Coiffeuses et bancs': ['coiffeuse', 'banc_lit'] },
   Enfant: { 'Lits': ['lit70', 'lit_cabane'], 'Bureau et jeux': ['bureau_enfant', 'tipi'], 'Rangements': ['rangement_jouets'] },
   'Salle de bain': { 'Sanitaires': ['wc', 'wc_suspendu', 'vasque', 'lave_mains'], 'Meubles': ['sous_vasque', 'double_vasque', 'meuble_colonne', 'miroir', 'panier_linge'], 'Bain et douche': ['baignoire', 'baignoire_ilot', 'douche', 'douche_ital'], 'Accessoires': ['porte_serviettes', 'seche_serv'] },
@@ -947,6 +951,8 @@ const SUBS = {
   'Extérieur': { 'Mobilier de jardin': ['table_jardin', 'chaise_jardin', 'banc_jardin', 'transat', 'parasol', 'barbecue'], 'Végétation': ['arbre', 'haie', 'bac_potager', 'jardiniere'], 'Aménagements': ['piscine', 'pergola', 'abri_jardin', 'carport', 'trampoline', 'cloture', 'portillon'], 'Véhicules': ['voiture1', 'voiture2'] },
 };
 for (const [cat, subs] of Object.entries(SUBS)) for (const [sub, ids] of Object.entries(subs)) for (const id of ids) { if (DEFS[id]) { DEFS[id].cat = cat; DEFS[id].sub = sub; } else console.warn('catalogue : modèle inconnu', id); }
+// anciens meubles de cuisine : remplacés par la cuisine modulaire, toujours acceptés dans les plans existants mais masqués dans la bibliothèque
+for (const id of ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four', 'khaut40', 'khaut', 'khaut80', 'khaut_vitre', 'colonne_frigo', 'colonne_four', 'colonne_rangement', 'kevier', 'plan_travail']) if (DEFS[id]) { DEFS[id].hidden = true; DEFS[id].cat = 'Cuisine'; DEFS[id].sub = 'Anciens modèles'; }
 for (const d of Object.values(DEFS)) d.sub = d.sub || 'Autres';
 CATS.length = 0; CATS.push('Salon', 'Cuisine', 'Salle à manger', 'Chambre', 'Enfant', 'Salle de bain', 'Bureau', 'Entrée', 'Électroménager', 'Éclairage', 'Déco', 'Extérieur');
 
