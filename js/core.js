@@ -131,7 +131,7 @@ const camDir = () => new THREE.Vector3(Math.sin(V.pol) * Math.sin(V.az), Math.co
 export const isOrtho = () => settings.view === '2d' || settings.camOrtho;
 // vue maison fixe : projection oblique (x' = x + k·hauteur), les murs laissent voir leurs faces sans perdre le plan au sol
 const SHEAR = 0.18;
-const shearNow = () => (settings.present && !settings.free && settings.camOrtho && settings.view === '3d' ? SHEAR : 0);
+const shearNow = () => (settings.present && !settings.free && settings.camOrtho && settings.view === '3d' ? (S.meta && S.meta.view && S.meta.view.sh != null ? S.meta.view.sh : SHEAR) : 0);
 export function setupCam() {
   const aspect = R.w / R.h;
   if (settings.view === '2d') {
