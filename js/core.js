@@ -3,8 +3,8 @@ import * as THREE from 'three';
 import { clamp, rad, disposeTree, r2 } from './util.js';
 import { getTex, floorDef, finishDef, TEX_SIZE } from './textures.js';
 import { wallGeometry } from './geom.js';
-import { buildOpening, modelOf } from './openings.js';
-import { buildItem, defOf } from './catalog.js';
+import { buildOpening, modelOf, defaultOpening } from './openings.js';
+import { buildItem, defOf, defaultItem } from './catalog.js';
 import { applyParts, LG } from './anim.js';
 import { levelOf, stateOf, hasHA } from './ha.js';
 import * as SUN from './sun.js';
@@ -36,8 +36,27 @@ export const sel_get = () => (sel.kind ? find(sel.kind, sel.id) : null);
 // ---------------------------------------------------------------------------------------------
 const hist = { stack: [], i: -1 };
 const snap = () => JSON.stringify({ walls: S.walls, openings: S.openings, floors: S.floors, items: S.items, markers: S.markers, lights: S.lights, meta: S.meta, nid: S.nid });
+// Plan écrit à la main ou par une IA : champs manquants complétés par les valeurs par défaut, éléments inconnus ignorés, identifiants attribués
+function normalize(o) {
+  let nid = Math.max(o.nid || 1, 1 + Math.max(0, ...['walls', 'openings', 'floors', 'items', 'markers', 'lights'].flatMap((k) => (o[k] || []).map((e) => +e.id || 0))));
+  const ensure = (e) => { if (!Number.isFinite(e.id)) e.id = nid++; return e; };
+  const num = (v, d) => (Number.isFinite(+v) && v !== null && v !== '' ? +v : d);
+  const face = (f) => ({ c: '#f2efe9', f: 'peinture', ...(f || {}) });
+  o.walls = (o.walls || []).filter((w) => [w.x1, w.z1, w.x2, w.z2].every((v) => Number.isFinite(+v))).map((w) => ensure({ ...w, t: num(w.t, 0.2), h: num(w.h, 2.5), fa: face(w.fa), fb: face(w.fb) }));
+  const wallIds = new Set(o.walls.map((w) => w.id));
+  o.openings = (o.openings || []).filter((x) => wallIds.has(x.wall)).map((x) => {
+    const kind = x.kind === 'door' ? 'door' : 'window'; let base; try { base = defaultOpening(kind, x.model); } catch (e) { base = defaultOpening(kind, kind === 'door' ? 'battant' : 'battant2'); }
+    return ensure({ ...base, ...x, kind, model: base.model, w: num(x.w, base.w), h: num(x.h, base.h), y0: num(x.y0, base.y0), s: num(x.s, 1) });
+  });
+  o.floors = (o.floors || []).filter((f) => num(f.w, 0) > 0 && num(f.d, 0) > 0).map((f) => ensure({ mat: 'parquet', scale: 1, ...f, color: f.color || floorDef(f.mat).color }));
+  o.items = (o.items || []).filter((i) => defOf(i.model)).map((i) => ensure({ ...defaultItem(i.model), ...i, x: num(i.x, 0), z: num(i.z, 0), rot: num(i.rot, 0) }));
+  o.markers = (o.markers || []).map((m) => ensure({ ent: '', ic: 'mdi:gesture-tap', h: 2, title: '', action: 'auto', ...m, x: num(m.x, 0), z: num(m.z, 0) }));
+  o.lights = (o.lights || []).map((l) => ensure({ name: 'Lumière', ent: '', ic: 'mdi:ceiling-light', h: 2, ...l, x: num(l.x, 0), z: num(l.z, 0) }));
+  o.meta = { rot: 0, v: 2, ...(o.meta || {}) }; o.nid = nid;
+  return o;
+}
 function restore(json) {
-  const o = JSON.parse(json);
+  const o = normalize(JSON.parse(json));
   S.walls = o.walls || []; S.openings = o.openings || []; S.floors = o.floors || []; S.items = o.items || []; S.markers = o.markers || []; S.lights = o.lights || []; S.meta = o.meta || { rot: 0 }; S.nid = o.nid || 1;
 }
 export function commit(save = true) {
