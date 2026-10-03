@@ -11,7 +11,7 @@ import { iconList, refresh as refreshPins } from './pins.js';
 import * as SUN from './sun.js';
 import { FLOORS, FINISHES, PALETTE, TILE, floorDef, finishDef, swatch } from './textures.js';
 import { CATS, ALL, FINS, buildItem, defOf, defaultItem } from './catalog.js';
-import { FACADES, HANDLES as KHANDLES, HFINS, FCOLORS, KSTYLE_KEYS, KDEF, isKitchen } from './kitchen.js';
+import { FACADES, HANDLES as KHANDLES, HFINS, FCOLORS, KSTYLE_KEYS, KDEF, isKitchen, facadeOf } from './kitchen.js';
 import { DOORS, WINDOWS, MATS, GLASSES, HANDLES, defaultOpening, buildOpening, modelOf } from './openings.js';
 import { wallGeometry } from './geom.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
@@ -233,18 +233,23 @@ function fDots(label, o, k, opts, on) {
 }
 // on(fin, redessiner) : fin = modification terminée ; redessiner = les choix affichés dépendent de la valeur (vignettes, options)
 function kStyleForm(o, on) {
-  const fac = el('div', { class: 'mats' });
-  FACADES.forEach(([id, name, desc]) => {
-    const img = el('img', { alt: '' });
-    fac.append(el('button', { class: 'mat' + (o.fa === id ? ' on' : ''), title: desc, onclick: () => { o.fa = id; if (id === 'tokyo') o.poi = 'gorge'; else if (o.poi === 'gorge') o.poi = 'barre'; on(true, true); } }, img, el('b', {}, name)));
-    kThumb({ ...o, fa: id, poi: id === 'tokyo' ? 'gorge' : o.poi === 'gorge' ? 'barre' : o.poi }, img);
-  });
+  // façades groupées par enseigne ; choisir une façade applique sa couleur et son aspect d'origine (modifiables ensuite)
+  const fac = el('div', {}), pick = (id, opt) => ({ fa: id, c1: opt.c || o.c1, fin: opt.c ? opt.fin || 'mat' : o.fin, poi: opt.gorge ? 'gorge' : o.poi === 'gorge' ? 'barre' : o.poi });
+  for (const brand of [...new Set(FACADES.map((f) => f[3].brand))]) {
+    const grid = el('div', { class: 'mats', style: { gridTemplateColumns: 'repeat(3,minmax(0,1fr))' } });
+    FACADES.filter((f) => f[3].brand === brand).forEach(([id, name, desc, opt]) => {
+      const img = el('img', { alt: '' });
+      grid.append(el('button', { class: 'mat' + (o.fa === id ? ' on' : ''), title: desc, onclick: () => { Object.assign(o, pick(id, opt)); on(true, true); } }, img, el('b', { style: { fontSize: '10px', overflowWrap: 'anywhere', display: 'block' } }, name)));
+      kThumb({ ...o, ...pick(id, opt) }, img);
+    });
+    fac.append(el('div', { style: { fontSize: '11px', color: 'var(--muted)', margin: '6px 0 4px' } }, brand), grid);
+  }
   const cur = FACADES.find((f) => f[0] === o.fa);
   const out = [el('div', { class: 'f' }, el('div', { class: 'l' }, 'Modèle de façade' + (cur ? ' : ' + cur[2] : '')), fac),
     fColor('Couleur des façades', o, 'c1', (f) => on(f, f), FCOLORS), fSeg('Aspect', o, 'fin', KFIN, (f) => on(f, true))];
-  if (o.fa === 'tokyo') out.push(el('p', { class: 'sub' }, 'Tokyo : poignée intégrée (gorge) sur toutes les façades.'));
+  if (facadeOf(o.fa).gorge) out.push(el('p', { class: 'sub' }, `${cur ? cur[1] : ''} : poignée intégrée (gorge) sur toutes les façades.`));
   else out.push(fChips('Poignées', o, 'poi', KHANDLES, (f) => on(f, true)));
-  if (o.fa !== 'tokyo' && o.poi !== 'gorge') out.push(fDots('Finition des poignées', o, 'pf', HFINS, (f) => on(f, true)));
+  if (!facadeOf(o.fa).gorge && o.poi !== 'gorge') out.push(fDots('Finition des poignées', o, 'pf', HFINS, (f) => on(f, true)));
   out.push(fSelect('Plan de travail', o, 'plan', WTL(), (f) => on(f, true)));
   if (['strat', 'granit', 'quartz'].includes(o.plan)) out.push(fColor('Teinte du plan de travail', o, 'c2', (f) => on(f, f), WTC));
   out.push(fColor('Caissons (intérieur)', o, 'c3', (f) => on(f, f), CAISSONS));
@@ -265,7 +270,7 @@ function kitchenCard() {
   const det = el('details', { class: 'card', open: L.kClosed == null ? !n : !L.kClosed });   // replié d'office dès que la cuisine a des meubles
   det.addEventListener('toggle', () => { L.kClosed = !det.open; });
   const fa = FACADES.find((f) => f[0] === ks.fa), hd = KHANDLES.find((h) => h[0] === ks.poi);
-  det.append(el('summary', { style: { cursor: 'pointer', fontWeight: '700', marginBottom: '6px' } }, '🎨 Style de ma cuisine', el('span', { style: { fontWeight: '400', color: 'var(--muted)', fontSize: '12px' } }, ` · ${fa ? fa[1] : ''}${ks.fa === 'tokyo' ? '' : ', poignée ' + (hd ? hd[1].toLowerCase() : '')}`)),
+  det.append(el('summary', { style: { cursor: 'pointer', fontWeight: '700', marginBottom: '6px' } }, '🎨 Style de ma cuisine', el('span', { style: { fontWeight: '400', color: 'var(--muted)', fontSize: '12px' } }, ` · ${fa ? fa[1] : ''}${facadeOf(ks.fa).gorge ? '' : ', poignée ' + (hd ? hd[1].toLowerCase() : '')}`)),
     el('p', { class: 'sub' }, 'Repris automatiquement pour chaque nouveau meuble de cuisine. Les meubles se collent bord à bord.'), ...kStyleForm(ks, onKS));
   if (n) det.append(fBtns(btn(`Appliquer aux ${n} élément${n > 1 ? 's' : ''} déjà posé${n > 1 ? 's' : ''}`, () => applyStyleToAll(ks))));
   return det;

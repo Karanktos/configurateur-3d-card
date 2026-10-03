@@ -4,7 +4,7 @@ Dessinez votre maison en 3D (façon Sims / IKEA : murs, sols, portes, fenêtres,
 où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'ouvrent, lumières qui s'allument, capteurs, soleil réel ou simulé.
 
 **Cuisine modulaire** façon configurateur de grande surface : meubles bas, hauts, colonnes et demi-colonnes aux dimensions standard (four, micro-ondes, plaque, évier, lave-vaisselle, réfrigérateur intégrés), joues, fileurs et crédence ;
-façades Sofia, Tokyo, Oxford, Shaker, Rainurée ou Brillante, poignées et finitions au choix, plan de travail. Le style choisi est repris pour chaque nouveau meuble, et les meubles se collent bord à bord.
+façades façon Leroy Merlin (Sofia, Tokyo, Oxford…) ou IKEA (Voxtorp, Bodbyn, Axstad, Havstorp, Kungsbacka, Nickebo, Sinarp…), poignées et finitions au choix, plan de travail. Le style choisi est repris pour chaque nouveau meuble, et les meubles se collent bord à bord.
 
 ![Aperçu](docs/apercu.png)
 

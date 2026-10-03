@@ -6,14 +6,34 @@
 
 export const SOCLE = 0.1, CB = 0.768, PT = 0.038, H_BAS = SOCLE + CB + PT, H_TOP = 2.244;   // H_TOP : haut des colonnes = haut des meubles hauts
 
+// [id, nom, description, { look : rendu (flat | moulure | shaker | rainure | chanfrein), gorge : poignée intégrée, gloss : laqué brillant,
+//   c / fin : couleur et aspect d'origine (appliqués quand on choisit la façade), brand }]
+const LM = 'Leroy Merlin (Delinia)', IK = 'IKEA (Metod)';
 export const FACADES = [
-  ['sofia', 'Sofia', 'Lisse mat, contemporaine'],
-  ['tokyo', 'Tokyo', 'Lisse, poignée intégrée (gorge)'],
-  ['oxford', 'Oxford', 'Cadre à moulures, esprit anglais'],
-  ['shaker', 'Shaker', 'Cadre fin, panneau central'],
-  ['rainure', 'Rainurée', 'Lames verticales'],
-  ['brillant', 'Brillante', 'Lisse laquée brillante'],
+  ['sofia', 'Sofia', 'Lisse mat, contemporaine', { look: 'flat', brand: LM }],
+  ['tokyo', 'Tokyo', 'Lisse, poignée intégrée (gorge)', { look: 'flat', gorge: true, brand: LM }],
+  ['oxford', 'Oxford', 'Cadre à moulures, esprit anglais', { look: 'moulure', brand: LM }],
+  ['shaker', 'Shaker', 'Cadre fin, panneau central', { look: 'shaker', brand: LM }],
+  ['rainure', 'Rainurée', 'Lames verticales', { look: 'rainure', brand: LM }],
+  ['brillant', 'Brillante', 'Lisse laquée brillante', { look: 'flat', gloss: true, brand: LM }],
+  ['voxtorp', 'Voxtorp', 'Lisse mat, blanc', { look: 'flat', c: '#f2f1ec', fin: 'mat', brand: IK }],
+  ['voxtorp_br', 'Voxtorp brillant', 'Lisse brillant, blanc', { look: 'flat', gloss: true, c: '#f6f6f4', fin: 'mat', brand: IK }],
+  ['ringhult', 'Ringhult', 'Lisse brillant, gris clair', { look: 'flat', gloss: true, c: '#d9dad7', fin: 'mat', brand: IK }],
+  ['kallarp', 'Kallarp', 'Brillant, gris-bleu', { look: 'flat', gloss: true, c: '#6f7f8c', fin: 'mat', brand: IK }],
+  ['kungsbacka', 'Kungsbacka', 'Lisse mat, anthracite', { look: 'flat', c: '#3c3f42', fin: 'mat', brand: IK }],
+  ['nickebo', 'Nickebo', 'Mat, sans poignée (gorge), vert-gris', { look: 'flat', gorge: true, c: '#6b7566', fin: 'mat', brand: IK }],
+  ['bodbyn', 'Bodbyn', 'Cadre mouluré, blanc cassé', { look: 'moulure', c: '#ece6d6', fin: 'mat', brand: IK }],
+  ['axstad', 'Axstad', 'Cadre fin, blanc mat', { look: 'shaker', c: '#efeee9', fin: 'mat', brand: IK }],
+  ['stensund', 'Stensund', 'Cadre fin, vert clair', { look: 'shaker', c: '#b7c4b0', fin: 'mat', brand: IK }],
+  ['havstorp', 'Havstorp', 'Cadre étroit, beige', { look: 'chanfrein', c: '#d9c9b3', fin: 'mat', brand: IK }],
+  ['upplov', 'Upplöv', 'Mat à bord relevé, beige foncé', { look: 'chanfrein', c: '#cbbda4', fin: 'mat', brand: IK }],
+  ['askersund', 'Askersund', 'Effet frêne clair', { look: 'flat', c: '#dcc8a8', fin: 'bois', brand: IK }],
+  ['forsbacka', 'Forsbacka', 'Chêne, lisse', { look: 'flat', c: '#c9a476', fin: 'bois', brand: IK }],
+  ['sinarp', 'Sinarp', 'Bois brun, rainures', { look: 'rainure', c: '#8a5e3c', fin: 'bois', brand: IK }],
+  ['torhamn', 'Torhamn', 'Frêne naturel, cadre', { look: 'shaker', c: '#d8c19b', fin: 'bois', brand: IK }],
+  ['lerhyttan', 'Lerhyttan', 'Cadre, teinté noir', { look: 'shaker', c: '#2f2d2b', fin: 'bois', brand: IK }],
 ];
+export const facadeOf = (id) => (FACADES.find((f) => f[0] === id) || FACADES[0])[3];
 export const HANDLES = [['barre', 'Barre'], ['bouton', 'Bouton'], ['coquille', 'Coquille'], ['profil', 'Profilé'], ['cuir', 'Cuir'], ['gorge', 'Gorge / sans poignée']];
 export const HFINS = [['inox', 'Inox brossé', '#c3c8cd'], ['noir', 'Noir mat', '#1f2023'], ['laiton', 'Laiton', '#c9a55a'], ['cuivre', 'Cuivre', '#b87333'], ['chrome', 'Chrome', '#e4e7ea'], ['blanc', 'Blanc', '#f2f2f0'], ['bronze', 'Bronze', '#6d5a45']];
 export const FCOLORS = ['#f4f3ef', '#ebe3d2', '#e1d7c6', '#c8c6c0', '#8f9598', '#4b5359', '#232427', '#9db0a0', '#6f8a7a', '#2f4a5e', '#c8a57a', '#8a6445'];
@@ -30,20 +50,20 @@ function hmat(K, p) {
   const f = HFINS.find((x) => x[0] === p.pf) || HFINS[0];
   return K.m(f[2], { r: f[0] === 'noir' || f[0] === 'blanc' ? 0.5 : f[0] === 'chrome' ? 0.12 : 0.3, m: f[0] === 'noir' || f[0] === 'blanc' ? 0.2 : 0.9 });
 }
-const fmat = (K, p) => (p.fa === 'brillant' ? K.m(p.c1, { r: 0.12 }) : K.body(p.c1));
+const fmat = (K, p) => (facadeOf(p.fa).gloss ? K.m(p.c1, { r: 0.12 }) : K.body(p.c1));
 const dark = (K) => K.m('#2a2a2a', { r: 0.8 });
 
 // panneau de façade (porte, tiroir) : centre (cx, cy), dos en z0, épaisseur TH, sur le parent par
 function panel(K, p, par, w, h, cx, cy, z0, o = {}) {
-  const mt = o.mt || fmat(K, p), zc = z0 + TH / 2, st = o.glass ? 'cadre' : p.fa;
-  if (st === 'oxford' || st === 'shaker' || st === 'cadre') {
-    const s = Math.min(o.glass ? 0.06 : st === 'oxford' ? 0.075 : 0.06, w * 0.22, h * 0.22);
+  const mt = o.mt || fmat(K, p), zc = z0 + TH / 2, st = o.glass ? 'cadre' : facadeOf(p.fa).look;
+  if (st === 'moulure' || st === 'shaker' || st === 'cadre') {
+    const s = Math.min(o.glass ? 0.06 : st === 'moulure' ? 0.075 : 0.06, w * 0.22, h * 0.22);
     K.box(s, h, TH, mt, cx - w / 2 + s / 2, cy, zc, par); K.box(s, h, TH, mt, cx + w / 2 - s / 2, cy, zc, par);
     K.box(w - 2 * s, s, TH, mt, cx, cy - h / 2 + s / 2, zc, par); K.box(w - 2 * s, s, TH, mt, cx, cy + h / 2 - s / 2, zc, par);
     const iw = w - 2 * s, ih = h - 2 * s;
     if (o.glass) K.box(iw, ih, 0.006, K.glass(), cx, cy, zc, par);
     else K.box(iw, ih, TH * 0.55, mt, cx, cy, z0 + TH * 0.28, par);
-    if (st === 'oxford' && !o.glass && iw > 0.06 && ih > 0.06) {   // moulure en relief autour du panneau central
+    if (st === 'moulure' && !o.glass && iw > 0.06 && ih > 0.06) {   // moulure en relief autour du panneau central
       const b = 0.012, zb = z0 + TH * 0.55 + 0.004;
       K.box(b, ih, 0.008, mt, cx - iw / 2 + b / 2, cy, zb, par); K.box(b, ih, 0.008, mt, cx + iw / 2 - b / 2, cy, zb, par);
       K.box(iw - 2 * b, b, 0.008, mt, cx, cy - ih / 2 + b / 2, zb, par); K.box(iw - 2 * b, b, 0.008, mt, cx, cy + ih / 2 - b / 2, zb, par);
@@ -51,6 +71,11 @@ function panel(K, p, par, w, h, cx, cy, z0, o = {}) {
     return;
   }
   K.box(w, h, TH, mt, cx, cy, zc, par);
+  if (st === 'chanfrein') {   // bord relevé étroit tout autour
+    const b = Math.min(0.018, w * 0.1, h * 0.1), zb = z0 + TH + 0.003;
+    K.box(b, h, 0.006, mt, cx - w / 2 + b / 2, cy, zb, par); K.box(b, h, 0.006, mt, cx + w / 2 - b / 2, cy, zb, par);
+    K.box(w - 2 * b, b, 0.006, mt, cx, cy - h / 2 + b / 2, zb, par); K.box(w - 2 * b, b, 0.006, mt, cx, cy + h / 2 - b / 2, zb, par);
+  }
   if (st === 'rainure') {   // rainures verticales tous les 5 cm environ
     const n = Math.max(2, Math.round(w / 0.05)), dm = K.m('#000000', { r: 0.9, op: 0.18 });
     for (let i = 1; i < n; i++) K.box(0.003, h - 0.004, 0.001, dm, cx - w / 2 + (i * w) / n, cy, z0 + TH + 0.0006, par);
@@ -58,7 +83,7 @@ function panel(K, p, par, w, h, cx, cy, z0, o = {}) {
 }
 // poignée : pos = 'top' (meuble bas, tiroir), 'bottom' (meuble haut), 'mid' ; side = côté opposé aux charnières (-1 gauche, 1 droite, 0 centre)
 function handle(K, p, par, w, h, cx, cy, z0, pos, side, horiz) {
-  const hm = hmat(K, p), zf = z0 + TH, kind = p.fa === 'tokyo' ? 'gorge' : p.poi;
+  const hm = hmat(K, p), zf = z0 + TH, kind = facadeOf(p.fa).gorge ? 'gorge' : p.poi;
   const yTop = cy + h / 2, yBot = cy - h / 2;
   if (kind === 'gorge') {   // gorge : rainure sombre + profil métal le long du bord
     const y = pos === 'bottom' ? yBot + 0.012 : yTop - 0.012;
