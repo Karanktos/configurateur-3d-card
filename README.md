@@ -9,8 +9,15 @@ où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'o
 
 1. HACS → ⋮ → **Dépôts personnalisés** → collez l'adresse de ce dépôt, catégorie **Tableau de bord** (Dashboard) → Ajouter.
 2. Installez **Configurateur 3D**, puis rechargez la page (Ctrl+F5). HACS enregistre la ressource tout seul.
-3. Créez un tableau de bord (Paramètres → Tableaux de bord → Ajouter → *Nouveau tableau de bord vide*), ouvrez-le, puis ✏️ → ⋮ → **Éditeur de configuration brute**
-   et remplacez tout le contenu par :
+3. Intégrez la carte dans un tableau de bord (section suivante).
+
+## Intégrer le configurateur dans un tableau de bord
+
+Le configurateur est une carte Home Assistant : `custom:configurateur-3d-card`. Le plus simple est de lui dédier une page entière.
+
+1. **Paramètres → Tableaux de bord → Ajouter un tableau de bord → Nouveau tableau de bord vide**. Donnez-lui un titre (par exemple *Configurateur*).
+2. Ouvrez ce tableau de bord, cliquez sur ✏️ (en haut à droite), puis sur ⋮ → **Éditeur de configuration brute**.
+3. Remplacez tout le contenu par le code suivant, puis **Enregistrer** :
 
 ```yaml
 views:
@@ -22,9 +29,20 @@ views:
         height: calc(100vh - 56px)
 ```
 
-Enregistrez, puis Ctrl+F5 si la carte ne s'affiche pas.
+4. Fermez l'éditeur et cliquez sur **Terminé**. Si la carte reste vide ou affiche « Custom element doesn't exist », faites Ctrl+F5.
 
-Le configurateur s'ouvre avec un petit appartement d'exemple. Les plans sont enregistrés dans les données de votre utilisateur Home Assistant.
+Ce que fait ce code : `type: panel` donne toute la page à une seule carte, `custom:configurateur-3d-card` est la carte du configurateur,
+et `height` règle sa hauteur (`calc(100vh - 56px)` = tout l'écran moins la barre du haut ; vous pouvez mettre une valeur fixe comme `700px`).
+
+**Dans un tableau de bord existant** : ✏️ → **Ajouter une carte** → **Manuel**, puis collez seulement :
+
+```yaml
+type: custom:configurateur-3d-card
+height: 700px
+```
+
+Le configurateur s'ouvre avec un petit appartement d'exemple (lumières et capteurs non reliés : cliquez sur un élément puis choisissez l'entité dans le panneau de droite).
+Les plans sont enregistrés dans les données de votre utilisateur Home Assistant.
 
 ## Publier votre maison
 
