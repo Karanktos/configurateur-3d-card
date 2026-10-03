@@ -6,6 +6,7 @@ import { boxG } from './util.js';
 import { getTexM } from './textures.js';
 import { addPart } from './anim.js';
 import { registerKitchen, KDEF, KSTYLE_KEYS } from './kitchen.js';
+import { registerMore } from './catalog3.js';
 
 export const CATS = ['Chambre', 'Salon', 'Salle à manger', 'Cuisine', 'Électroménager', 'Salle de bain', 'Bureau', 'Éclairage', 'Déco', 'Extérieur'];
 export const FINS = [['mat', 'Laqué mat'], ['bois', 'Bois / décor'], ['brillant', 'Brillant']];
@@ -806,15 +807,15 @@ reg('lampadaire_arc', 'Éclairage', 'Lampadaire arc', 0.5, 1.6, 2.1, 189, [], fi
 // élément de rangement générique : n portes et/ou tiroirs, avec ou sans pieds
 const unit = (o = {}) => (g, p, K) => {
   const { w, d, h } = p, bm = K.body(p.c1), hm = K.m(p.c2, { m: 0.7, r: 0.3 }), lg = o.legs ?? 0, th = 0.018, dr = o.drawers || 0, nd = o.doors || 0;
-  if (lg) K.legs(w, d, lg, 0.02, K.m(p.c2, { r: 0.5 }), 0.05);
+  if (lg) K.legs(w, d, lg, 0.02, K.m(p.c2, { r: 0.5 }), 0.05, g);
   K.carcass(w, h - lg, d, bm, 0, lg, 0, g, th);
   const bodyH = h - lg - 2 * th; let y = lg + th;
   const drH = dr ? bodyH * (o.drawerFrac ?? (nd ? 0.45 : 1)) / dr : 0;
   for (let i = 0; i < dr; i++) { K.drawer(w - 2 * th - 0.004, drH - 0.01, d - 0.08, bm, 0, y + 0.005, d / 2, g, { hm, travel: 0.3 }); y += drH; }
   const rest = lg + th + bodyH - y;
   if (nd && rest > 0.1) { const dw = (w - 2 * th - 0.004) / nd; for (let i = 0; i < nd; i++) K.cdoor(dw, rest - 0.006, o.glass ? K.glass() : bm, -w / 2 + th + (i + 0.5) * dw + 0.002, y + 0.003, d / 2, nd === 1 ? 1 : i < nd / 2 ? 1 : -1, g, { hm }); }
-  else if (!dr) for (let i = 1; i <= (o.shelves ?? 3); i++) K.box(w - 2 * th, th, d - 0.02, bm, 0, lg + (h - lg) * i / ((o.shelves ?? 3) + 1), 0);
-  if (o.shelves && nd) for (let i = 1; i <= o.shelves; i++) K.box(w - 2 * th, th, d - 0.04, bm, 0, y + (rest * i) / (o.shelves + 1), -0.01);
+  else if (!dr) for (let i = 1; i <= (o.shelves ?? 3); i++) K.box(w - 2 * th, th, d - 0.02, bm, 0, lg + (h - lg) * i / ((o.shelves ?? 3) + 1), 0, g);
+  if (o.shelves && nd) for (let i = 1; i <= o.shelves; i++) K.box(w - 2 * th, th, d - 0.04, bm, 0, y + (rest * i) / (o.shelves + 1), -0.01, g);
 };
 const stCols = [['Corps', WHITE], ['Poignées', '#c3c8cd']];
 const woodCols = [['Corps', WOOD], ['Poignées', '#2e3338']];
@@ -936,6 +937,7 @@ const SMALLAPP = (id, name, w, d, h, price, build) => reg(id, 'Électroménager'
 SMALLAPP('cafetiere', 'Machine à café', 0.2, 0.3, 0.35, 89, (g, p, K) => { const bm = K.m(p.c1, { r: 0.3, m: 0.5 }); K.box(p.w, p.h, p.d * 0.5, bm, 0, p.h / 2, -p.d * 0.25); K.box(p.w, 0.04, p.d, bm, 0, 0.02, 0); K.cyl(0.04, 0.04, 0.09, K.black(), 0, 0.09, p.d * 0.15, null, 14); });
 SMALLAPP('bouilloire', 'Bouilloire', 0.2, 0.2, 0.25, 39, (g, p, K) => { K.cyl(0.09, 0.1, p.h * 0.85, K.m(p.c1, { r: 0.3, m: 0.6 }), 0, p.h * 0.43, 0, null, 20); K.box(0.02, p.h * 0.6, 0.04, K.black(), p.w * 0.55, p.h * 0.5, 0); });
 SMALLAPP('grille_pain', 'Grille-pain', 0.3, 0.17, 0.2, 35, (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.04, K.m(p.c1, { r: 0.3, m: 0.5 }), 0, p.h / 2, 0); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, -0.03); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, 0.03); });
+{ const m = registerMore(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, ANTH, OAK, WALNUT }); m.surf.forEach((id) => { DEFS[id].surf = true; }); m.free.forEach((id) => { DEFS[id].free = true; }); }   // meubles inspirés des grandes enseignes (js/catalog3.js)
 const SUBS = {
   Salon: { 'Canapés et fauteuils': ['canape2', 'canape3', 'canape_angle', 'canape_conv', 'fauteuil', 'fauteuil_coque', 'bergere', 'chauffeuse'], 'Tables': ['tablebasse', 'tablebasse_r', 'table_basse_carree', 'gueridon'], 'Meubles TV': ['meubletv', 'meuble_tv_tiroirs', 'tv', 'tv_mur'], 'Rangements': ['biblio', 'biblio_haute', 'enfilade', 'vitrine_salon', 'etagere_cubes', 'etagere_murale', 'console'], 'Chauffage': ['poele'], 'Confort': ['pouf'] },
   'Salle à manger': { 'Tables': ['table', 'table_r', 'table_extensible', 'table_haute'], 'Chaises et bancs': ['chaise', 'chaise_visiteur', 'chaise_bar', 'tabouret', 'banc'], 'Rangements': ['buffet', 'vaisselier'] },

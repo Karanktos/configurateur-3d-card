@@ -134,6 +134,14 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 * `chevet_susp` — Chevet suspendu — 0.4×0.3×0.25 — elev 0.45 — couleurs : Corps, Poignées
 * `dressing_ouvert` — Dressing ouvert — 1.6×0.55×2 — couleurs : Corps, Penderie
 * `tete_de_lit` — Tête de lit capitonnée — 1.8×0.1×1.2 — elev 0.3 — couleurs : Tissu
+* `lit180` — Lit king size 180 × 200 — 1.88×2.1×1.05 — couleurs : Cadre, Linge de lit
+* `lit_coffre` — Lit coffre 160 relevable — 1.7×2.1×1 — couleurs : Tissu, Linge de lit
+* `armoire_miroir` — Dressing 2 m portes miroirs — 2×0.6×2.36 — couleurs : Corps
+* `armoire_angle` — Armoire d'angle — 1.1×1.1×2 — couleurs : Façades
+* `commode4` — Commode 4 tiroirs (type Malm) — 0.8×0.48×1 — couleurs : Corps, Poignées
+* `chevet2` — Chevet 2 tiroirs — 0.4×0.38×0.55 — couleurs : Corps, Poignées
+* `banc_coffre` — Banc coffre — 1×0.4×0.45 — couleurs : Corps, Coussin
+* `fauteuil_chambre` — Fauteuil crapaud — 0.7×0.75×0.8 — couleurs : Tissu, Pieds
 
 ### Salon
 
@@ -162,6 +170,24 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 * `biblio_haute` — Bibliothèque haute 5 niveaux — 0.8×0.3×2 — couleurs : Corps, Poignées
 * `vitrine_salon` — Vitrine — 0.8×0.4×1.8 — couleurs : Corps, Poignées
 * `etagere_murale` — Étagères murales (lot de 3) — 0.8×0.22×0.6 — elev 1.2 — couleurs : Planches
+* `canape_meridienne` — Canapé 3 places avec méridienne — 2.6×1.6×0.85 — couleurs : Tissu, Pieds — `v` : 0 = Méridienne à droite, 1 = Méridienne à gauche
+* `canape_u` — Canapé panoramique en U — 3.3×2×0.85 — couleurs : Tissu, Pieds
+* `canape_velours` — Canapé 3 places velours, pieds dorés — 2.1×0.9×0.8 — couleurs : Velours, Pieds
+* `canape_lit_futon` — Banquette-lit (BZ / clic-clac) — 1.9×0.95×0.9 — couleurs : Tissu, Pieds
+* `fauteuil_relax` — Fauteuil relax (repose-pieds) — 0.9×0.95×1.05 — couleurs : Revêtement, Base
+* `fauteuil_bascule` — Fauteuil cantilever bois courbé — 0.68×0.82×1 — couleurs : Coussin, Bois
+* `table_basse_relevable` — Table basse à plateau relevable — 1.1×0.55×0.42 — couleurs : Plateau, Corps
+* `tables_gigognes` — Tables gigognes (lot de 2) — 0.6×0.5×0.48 — couleurs : Plateaux, Pieds
+* `meuble_tv_suspendu` — Meuble TV suspendu 2 m — 2×0.4×0.4 — elev 0.25 — couleurs : Façades, Poignées
+* `meuble_tv_bois` — Meuble TV bois 2 tiroirs + niche — 1.8×0.45×0.55 — couleurs : Corps, Pieds
+* `etagere_2x4` — Étagère 2 × 4 cases (type Kallax) — 0.77×0.39×1.47 — couleurs : Corps
+* `biblio_etroite` — Bibliothèque étroite 40 (type Billy) — 0.4×0.28×2.02 — couleurs : Corps
+* `bahut` — Bahut 2 portes 2 tiroirs — 1.2×0.45×0.9 — couleurs : Corps, Poignées
+* `vitrine_haute` — Vitrine haute 2 portes vitrées — 0.9×0.4×1.9 — couleurs : Corps, Poignées
+* `cheminee_elec` — Cheminée électrique (meuble) — 1.2×0.35×1 — couleurs : Meuble, Foyer
+* `barre_son` — Barre de son — 0.9×0.1×0.07 — couleurs : Corps
+* `enceinte_colonne` — Enceinte colonne — 0.22×0.28×1 — couleurs : Corps
+* `paravent` — Paravent 3 panneaux — 1.5×0.4×1.7 — couleurs : Panneaux, Cadre
 
 ### Salle à manger
 
@@ -176,6 +202,13 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 * `table_extensible` — Table extensible 2,2 m — 2.2×1×0.75 — couleurs : Plateau, Pieds
 * `chaise_bar` — Chaise de bar — 0.42×0.45×1 — couleurs : Assise, Pieds
 * `chaise_visiteur` — Chaise coque — 0.48×0.52×0.82 — couleurs : Coque, Pieds
+* `table_ovale` — Table ovale 6 places — 2×1×0.75 — couleurs : Plateau, Pieds
+* `table_carree` — Table carrée 4 places — 0.9×0.9×0.75 — couleurs : Plateau, Pieds
+* `table_ronde_pied` — Table ronde pied central — 1.2×1.2×0.75 — couleurs : Plateau, Pied
+* `chaise_scandi` — Chaise scandinave — 0.47×0.53×0.82 — couleurs : Coque, Pieds
+* `chaise_cannee` — Chaise cannée bois — 0.46×0.52×0.86 — couleurs : Bois, Cannage
+* `banc_table` — Banc de table 160 bois — 1.6×0.35×0.45 — couleurs : Bois, Pieds
+* `buffet_haut` — Buffet haut 4 portes (vaisselier) — 1.2×0.45×1.9 — couleurs : Corps, Poignées
 
 ### Cuisine
 
@@ -309,6 +342,10 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `sous_vasque` — Meuble sous vasque 80 — 0.8×0.46×0.85 — couleurs : Meuble, Vasque
 * `porte_serviettes` — Sèche-serviettes — 0.5×0.1×1.2 — elev 0.3 — couleurs : Chrome
 * `panier_linge` — Panier à linge — 0.4×0.3×0.6 — couleurs : Osier
+* `vasque_suspendu60` — Meuble vasque suspendu 60 — 0.6×0.46×0.55 — elev 0.35 — couleurs : Façades, Plan vasque
+* `armoire_toilette` — Armoire de toilette miroir — 0.6×0.15×0.7 — elev 1.25 — couleurs : Corps
+* `colonne_buanderie` — Colonne buanderie (au-dessus du lave-linge) — 0.65×0.6×2.2 — couleurs : Corps, Poignées
+* `pare_baignoire` — Pare-baignoire vitré — 0.8×0.05×1.4 — elev 0.58 — couleurs : Profilés
 
 ### Bureau
 
@@ -319,6 +356,9 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `caisson_roulant` — Caisson à roulettes — 0.42×0.55×0.6 — couleurs : Corps, Poignées
 * `bureau_angle` — Bureau d'angle — 1.6×1.4×0.74 — couleurs : Plateau, Structure
 * `etagere_bureau` — Étagère de bureau — 0.8×0.3×1.2 — couleurs : Corps, Poignées
+* `fauteuil_gamer` — Fauteuil gamer — 0.7×0.7×1.35 — couleurs : Revêtement, Liserés
+* `bureau_gamer` — Bureau gamer 140 — 1.4×0.7×0.76 — couleurs : Plateau, Piètement
+* `secretaire` — Secrétaire à abattant — 0.8×0.4×1.2 — couleurs : Corps, Pieds
 
 ### Déco
 
@@ -333,6 +373,9 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `horloge` — Horloge murale — 0.4×0.04×0.4 — elev 1.7 — couleurs : Cadre
 * `palmier` — Grande plante (palmier) — 0.8×0.8×1.8 — couleurs : Pot, Feuillage
 * `plaid_pouf` — Coussins (lot de 3) — 0.5×0.2×0.4 — elev 0.4 — couleurs : Tissu
+* `etagere_echelle` — Étagère échelle — 0.6×0.35×1.8 — couleurs : Bois
+* `plante_suspendue` — Plante suspendue — 0.35×0.35×0.9 — elev 1.4 — couleurs : Pot, Feuillage
+* `miroir_arche` — Miroir arche sur pied — 0.6×0.05×1.7 — couleurs : Cadre
 
 ### Éclairage
 
@@ -372,6 +415,11 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `portillon` — Portillon — 1×0.05×1.2 — couleurs : Cadre
 * `carport` — Abri voiture (carport) — 3×5.5×2.5 — couleurs : Structure, Toit
 * `trampoline` — Trampoline — 3×3×0.9 — couleurs : Toile, Cadre
+* `salon_jardin` — Salon de jardin (canapé + 2 fauteuils + table) — 3×2.4×0.8 — couleurs : Coussins, Structure
+* `spa` — Spa 4 places — 2×2×0.85 — couleurs : Habillage, Eau
+* `balancelle` — Balancelle 2 places — 1.8×1.2×1.7 — couleurs : Toile, Structure
+* `hamac` — Hamac sur pied — 3×1×1.2 — couleurs : Toile, Pied
+* `plancha` — Plancha sur chariot — 1×0.6×0.9 — couleurs : Chariot
 
 ### Enfant
 
@@ -380,6 +428,11 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `bureau_enfant` — Bureau enfant — 1×0.55×0.62 — couleurs : Plateau, Pieds
 * `rangement_jouets` — Rangement à bacs — 1×0.4×0.7 — couleurs : Cadre, Bacs
 * `tipi` — Tipi de jeu — 1.1×1.1×1.4 — couleurs : Toile, Mâts
+* `lit_mezzanine` — Lit mezzanine 90 + bureau — 1×2.05×1.9 — couleurs : Structure, Linge
+* `lits_superposes` — Lits superposés 90 — 1×2.05×1.65 — couleurs : Structure, Linge
+* `lit_bebe` — Lit bébé à barreaux 60 × 120 — 0.66×1.26×0.9 — couleurs : Bois, Linge
+* `commode_langer` — Commode à langer — 0.9×0.5×0.95 — couleurs : Corps, Matelas
+* `bibliotheque_enfant` — Bibliothèque frontale enfant — 0.6×0.3×0.9 — couleurs : Corps
 
 ### Entrée
 
@@ -388,3 +441,5 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `banc_chaussures` — Banc à chaussures — 1×0.35×0.5 — couleurs : Assise, Structure
 * `miroir_pied` — Miroir sur pied — 0.5×0.4×1.6 — couleurs : Cadre
 * `portant` — Portant à vêtements — 1×0.45×1.65 — couleurs : Structure
+* `vestiaire` — Vestiaire (banc + patères + étagère) — 1×0.4×1.85 — couleurs : Bois, Structure
+* `chaussures_abattants` — Meuble à chaussures 2 abattants — 0.8×0.24×1 — couleurs : Corps

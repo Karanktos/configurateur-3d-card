@@ -227,7 +227,7 @@ function magnet(it, x, z) {
 function magnet0(it, x, z) {
   let rot = it.rot;
   x = gsnap(x, 0.05); z = gsnap(z, 0.05);
-  if (!settings.magnet || FREE.has(it.model)) return { x, z, rot };
+  if (!settings.magnet || FREE.has(it.model) || (defOf(it.model) || {}).free) return { x, z, rot };
   let best = null, bs = 0.4;
   for (const w of S.walls) {
     const i = wallInfo(w), t = (x - w.x1) * i.ux + (z - w.z1) * i.uz; if (t < -0.2 || t > i.L + 0.2) continue;
