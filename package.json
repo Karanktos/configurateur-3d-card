@@ -1,0 +1,12 @@
+{
+  "name": "configurateur-3d-card",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@mdi/js": "^7.4.47",
+    "esbuild": "^0.25.0",
+    "three": "0.170.0"
+  }
+}

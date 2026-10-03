@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Configurateur de plan 3D</title>
+<meta name="description" content="Page test : éditeur de plan 3D façon Sims / IKEA — murs, sols, portes, fenêtres animées et bibliothèque de meubles.">
+<style>
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --panel2:#f6f8fa; --ink:#1d2329; --muted:#66727d; --line:#dde3e8; --accent:#2f7bff; --accent-ink:#ffffff;
+  --accent-soft:#e6f0ff; --hint-bg:rgba(255,255,255,.93); --danger:#d64545; --ok:#2e9d62; --shadow:0 1px 2px rgba(20,30,40,.08),0 4px 14px rgba(20,30,40,.06);
+  --r:10px; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14181c; --panel:#1d2329; --panel2:#232a31; --ink:#e8edf1; --muted:#93a0ab; --line:#2f3841; --accent:#5b9bff; --accent-ink:#0b1320; --accent-soft:#1f3150; --hint-bg:rgba(29,35,41,.93); --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3); color-scheme:dark;}}
+:root[data-theme="dark"]{--bg:#14181c; --panel:#1d2329; --panel2:#232a31; --ink:#e8edf1; --muted:#93a0ab; --line:#2f3841; --accent:#5b9bff; --accent-ink:#0b1320; --accent-soft:#1f3150; --hint-bg:rgba(29,35,41,.93); --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 14px rgba(0,0,0,.3); color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden}
+#modal{position:fixed;inset:0;background:rgba(10,15,20,.55);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
+#modal.show{display:flex}
+#modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);width:min(640px,100%);max-height:100%;display:flex;flex-direction:column;gap:10px;padding:16px}
+#modal textarea{width:100%;min-height:220px;resize:vertical;font:12px ui-monospace,monospace;background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+#modal h2{margin:0}
+button,input,select{font:inherit;color:inherit}
+#app{display:grid;height:100%;grid-template-columns:64px 300px minmax(0,1fr) 300px;grid-template-rows:auto minmax(0,1fr);grid-template-areas:"head head head head" "rail lib stage props"}
+header{grid-area:head;display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;z-index:5}
+.brand{font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:8px;margin-right:6px}
+.brand small{font-weight:500;color:var(--muted);background:var(--panel2);border:1px solid var(--line);padding:1px 7px;border-radius:99px;font-size:11px}
+.sep{width:1px;height:24px;background:var(--line);margin:0 4px}
+.tb{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap}
+.tb:hover{border-color:var(--accent)}
+.tb[disabled]{opacity:.4;pointer-events:none}
+.tb.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.tb.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.grp{display:inline-flex}.grp .tb{border-radius:0;margin-left:-1px}.grp .tb:first-child{border-radius:8px 0 0 8px;margin-left:0}.grp .tb:last-child{border-radius:0 8px 8px 0}
+header select{padding:6px 8px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;font-size:13px}
+header label.chk{display:inline-flex;gap:5px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.spacer{flex:1}
+.present #rail,.present #lib,.present #props,.present .ed,.present #hint,.present header,.present #viewbtns,.present #sunbox,.present #labels{display:none!important}
+.present #app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);grid-template-areas:"stage"}
+html.ro,html.ro body,.ro #stage{background:transparent!important}
+.present:not(.ro) #stage{background:#12161c}
+#rail{grid-area:rail;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:2px;padding:8px 6px;overflow:auto}
+.tool{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border:1px solid transparent;background:none;border-radius:10px;cursor:pointer;font-size:10.5px;color:var(--muted);line-height:1.1;text-align:center}
+.tool svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tool:hover{background:var(--panel2);color:var(--ink)}
+.tool.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.panel{background:var(--panel);overflow:auto;padding:12px;min-width:0}
+#lib{grid-area:lib;border-right:1px solid var(--line)}
+#props{grid-area:props;border-left:1px solid var(--line)}
+h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);font-weight:700}
+h2{margin:0 0 4px;font-size:16px}
+.sub{color:var(--muted);font-size:12px;margin:0 0 10px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:10px;margin-bottom:12px}
+#stage{grid-area:stage;position:relative;min-width:0;min-height:0;background:#dde6ee;touch-action:none}
+#view{position:absolute;inset:0;display:block;touch-action:none;outline:none}
+#view[data-tool="wall"],#view[data-tool="room"],#view[data-tool="floor"]{cursor:crosshair}
+#view[data-tool="erase"]{cursor:not-allowed}
+#view[data-tool="item"],#view[data-tool="door"],#view[data-tool="window"]{cursor:copy}
+#labels,#pins{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;background:rgba(20,30,40,.82);color:#fff;font-size:12px;padding:2px 7px;border-radius:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+#hint{position:absolute;left:10px;right:10px;bottom:10px;background:var(--hint-bg);color:var(--ink);border:1px solid var(--line);padding:6px 10px;border-radius:8px;font-size:12px;pointer-events:none;box-shadow:var(--shadow);max-width:760px}
+#sunbox{position:absolute;left:10px;top:10px;width:260px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px;display:none;z-index:3}
+#sunbox.show{display:block}
+.hast{font-weight:500;font-size:11px;color:var(--muted)}.hast.ok{color:var(--ok)}
+.pin{position:absolute;left:0;top:0;width:calc(34px*var(--k,1));height:calc(34px*var(--k,1));border-radius:50%;background:rgba(18,22,30,.62);backdrop-filter:blur(2px);box-shadow:0 1px 4px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;color:#fff;pointer-events:auto;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transition:color .3s,background .3s;white-space:nowrap}
+.pin .g{display:flex;width:calc(22px*var(--k,1));height:calc(22px*var(--k,1))}.pin .g svg,.cvb svg{width:100%;height:100%;fill:currentColor}
+.pin .t{font-size:max(9px,calc(13px*var(--k,1)));font-weight:500;line-height:1.4;font-variant-numeric:tabular-nums}.pin .t:empty{display:none}
+.pin.val{width:auto;height:auto;border-radius:calc(10px*var(--k,1));padding:0 calc(7px*var(--k,1))}.pin.val .g{display:none}
+.pin.on{color:#ffc107;background:rgba(40,32,10,.7)}.pin.arm{color:#ef5350}.pin.trig{color:#ff9800}
+.pin.off{opacity:.5}.pin.sel{outline:3px solid var(--accent);outline-offset:2px}.pin.hidden{display:none!important}
+.pin.scr{left:auto;top:auto;right:calc((82 + 40*var(--n,0))*var(--k,1)*1px);bottom:calc(22px*var(--k,1));transform:none!important}
+.pin.cv{width:auto;height:auto;flex-direction:column;gap:calc(3px*var(--k,1));background:none;box-shadow:none;backdrop-filter:none;pointer-events:none}
+.cvp{display:flex;gap:calc(4px*var(--k,1));padding:calc(3px*var(--k,1));border-radius:calc(22px*var(--k,1));background:rgba(18,22,30,.72);box-shadow:0 1px 4px rgba(0,0,0,.35);pointer-events:auto}
+.cvb{width:calc(30px*var(--k,1));height:calc(30px*var(--k,1));padding:calc(5px*var(--k,1));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;cursor:pointer;background:rgba(255,255,255,.08);transition:background .2s,color .2s;-webkit-tap-highlight-color:transparent;user-select:none}
+.cvb:hover{background:rgba(255,255,255,.2)}.cvb.mv{color:#ffc107;box-shadow:0 0 0 2px #ffc107 inset}.cvb.sent{background:#ffc107;color:#111}
+.cvl{color:#fff;font-size:max(9px,calc(12px*var(--k,1)));font-weight:500;white-space:nowrap;background:rgba(18,22,30,.72);border-radius:calc(10px*var(--k,1));padding:0 calc(7px*var(--k,1));pointer-events:auto;cursor:pointer}
+#pins.inert .pin{pointer-events:none}
+#selbar{position:absolute;left:10px;top:10px;display:flex;gap:6px;align-items:center;padding:5px 6px 5px 12px;border-radius:12px;background:rgba(14,20,30,.88);color:#fff;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:4;max-width:calc(100% - 20px)}
+#selbar[hidden]{display:none}
+#selbar .sbn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px}
+#selbar button{border:0;border-radius:9px;padding:6px 10px;background:#2a3342;color:#fff;cursor:pointer;white-space:nowrap;font:inherit}
+#selbar .sbd{background:#7a2a2a}
+#view[data-tool="erase"]~#pins .pin{cursor:not-allowed}
+/* groupes de lumières */
+.glist{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.grow{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);background:var(--panel);border-radius:9px;cursor:pointer;text-align:left;font-size:12.5px;color:var(--ink)}
+.grow.on{border-color:var(--accent);background:var(--accent-soft)}
+.grow .gi{display:flex;width:18px;height:18px;color:var(--muted);flex:none}.grow .gi svg{width:100%;height:100%;fill:currentColor}
+.grow .gn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.grow .gc{font-size:11px;color:var(--muted);white-space:nowrap}
+.grow.pt{padding:0;cursor:default}.grow.pt .gb{flex:1;display:flex;align-items:center;gap:8px;padding:6px 8px;background:none;border:0;cursor:pointer;text-align:left;color:inherit;min-width:0}
+.grow .gx{border:0;background:none;color:var(--danger);cursor:pointer;padding:6px 10px}
+.pform .f select,.pform .f input[type=text]{width:100%}.pform .ok{color:var(--ok)}.pform .err{color:var(--danger)}
+#viewbtns{position:absolute;right:10px;top:10px;display:flex;gap:6px;flex-direction:column}
+/* vue maison : barre jour / soir, boussole */
+#pbar{position:absolute;left:10px;bottom:10px;display:none;gap:2px;padding:4px;border-radius:14px;background:rgba(14,20,30,.78);box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:3}
+#pbar .bt{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:calc(52px*var(--k,1));padding:calc(5px*var(--k,1)) calc(6px*var(--k,1));border-radius:10px;color:#cfd8e3;font-size:max(9px,calc(11px*var(--k,1)));cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;white-space:nowrap}
+#pbar .bt svg{width:calc(20px*var(--k,1));height:calc(20px*var(--k,1));fill:currentColor}
+#pbar .bt:hover{background:rgba(255,255,255,.08)}#pbar .bt.act{color:#fff;background:rgba(80,140,255,.28)}
+#cmp{position:absolute;right:12px;bottom:12px;width:calc(54px*var(--k,1));height:calc(54px*var(--k,1));border-radius:50%;background:rgba(14,20,30,.78);box-shadow:0 2px 8px rgba(0,0,0,.4);pointer-events:none;display:none}
+#cmp svg{width:100%;height:100%}
+.present #pbar{display:flex}.present #cmp{display:block}
+#pexit{position:absolute;right:10px;top:10px;z-index:4}
+.present:not(.free) #view{touch-action:pan-y pinch-zoom}
+#boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:#9fb0c6;font-size:14px;pointer-events:none;z-index:60;transition:opacity .4s}
+#boot.gone{opacity:0}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:#1d2329;color:#fff;padding:7px 14px;border-radius:99px;font-size:13px;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+/* panneau Soleil de la vue maison */
+#sunp{position:absolute;left:10px;bottom:calc(10px + 62px*var(--k,1));width:min(300px,calc(100% - 20px));padding:10px 12px;border-radius:14px;background:rgba(14,20,30,.88);color:#fff;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:3}
+#sunp[hidden]{display:none}
+#sunp .h{display:flex;justify-content:space-between;align-items:center;gap:8px}#sunp .r{display:flex;align-items:center;gap:8px;margin-top:8px}
+#sunp input[type=range]{flex:1;min-width:0}#sunp input[type=date]{flex:1;min-width:0;background:#0e1218;color:#fff;border:1px solid #2c3644;border-radius:8px;padding:5px;font:inherit;color-scheme:dark}
+#sunp button{background:#2a3342;color:#fff;border:0;border-radius:9px;padding:6px 10px;cursor:pointer;font:inherit}#sunp button.on{background:#2d6cdf}
+#sunp .i{color:#9fb0c6;font-size:12px}#sunp .sc{cursor:pointer;padding:0 6px}#sunp .st{width:42px}#sunp .ro{min-width:42px;text-align:center}
+#pbar .bt[hidden]{display:none}
+/* mode Configurer de la vue publiée : barre d'outils, panneau (liste ou propriétés) à droite, feuille en bas sur petit écran */
+#cfgbar{position:absolute;left:10px;top:10px;right:10px;display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:5px;border-radius:12px;background:rgba(14,20,30,.88);box-shadow:0 2px 8px rgba(0,0,0,.4);z-index:7;width:max-content;max-width:calc(100% - 20px)}
+#cfgbar[hidden]{display:none}
+#cfgbar button{border:0;border-radius:9px;padding:7px 10px;background:#2a3342;color:#fff;cursor:pointer;font:inherit;font-size:13px;white-space:nowrap}
+#cfgbar button.on{background:#2d6cdf}#cfgbar button.pri{background:#2e7d4f}#cfgbar button.pri.dirty{background:#c27a10}#cfgbar button[disabled]{opacity:.4}
+#cfgbar i{width:1px;align-self:stretch;background:#3a4556;margin:0 2px}
+.cfg #app{position:relative}
+.cfg #lib,.cfg #props{display:block!important;position:absolute;right:0;top:0;bottom:0;width:min(340px,100%);z-index:6;border-left:1px solid var(--line);box-shadow:-4px 0 14px rgba(0,0,0,.18);padding-top:56px}
+.cfg.has-sel #lib,.cfg:not(.has-sel) #props,.cfg.nodock #lib,.cfg.nodock #props{display:none!important}
+.cfg #selbar{top:auto;bottom:calc(10px + 62px*var(--k,1));left:10px}
+.cfg #pexit{display:none}
+.cfg:not(.free) #view{touch-action:none}
+.lkrow{border:1px solid var(--line);border-radius:10px;padding:6px 8px;margin-bottom:8px;background:var(--panel2)}
+.lkt{display:flex;align-items:center;gap:6px;margin-bottom:4px}.lkn{flex:1;text-align:left;border:0;background:none;font-weight:600;font-size:12.5px;cursor:pointer;color:var(--ink);padding:2px 0}
+.lkb{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:3px 8px;cursor:pointer}.lkb.on{background:var(--accent-soft);border-color:var(--accent)}
+.lkrow .f{margin-bottom:6px}
+@media (max-width:700px){
+  .cfg #lib,.cfg #props{top:auto;left:0;right:0;width:auto;max-height:52%;padding-top:12px;border-left:0;border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.18)}
+  #cfgbar{gap:2px;padding:4px}#cfgbar button span{display:none}#cfgbar button{padding:7px 8px}
+  .cfg #selbar{bottom:auto;top:56px}
+}
+/* formulaires */
+.f{display:grid;grid-template-columns:1fr;gap:4px;margin-bottom:10px}
+.f>label,.f>.l{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.f .v{color:var(--ink);font-variant-numeric:tabular-nums}
+.f input[type=range]{width:100%;accent-color:var(--accent)}
+.f select,.f input[type=text],.f input[type=search]{width:100%;padding:6px 8px;border:1px solid var(--line);background:var(--panel);border-radius:8px;font-size:13px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+label.f{font-size:13px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;padding:6px 6px;border:0;border-right:1px solid var(--line);background:var(--panel);cursor:pointer;font-size:12px}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.pal{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer;padding:0}
+.sw.on{box-shadow:0 0 0 2px var(--accent)}
+input[type=color]{width:28px;height:28px;padding:0;border:1px solid var(--line);border-radius:50%;background:none;cursor:pointer;overflow:hidden}
+.mats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.mat{border:2px solid transparent;background:var(--panel);border-radius:9px;padding:4px;cursor:pointer;text-align:center;font-size:11px;line-height:1.15;color:var(--ink)}
+.mat img{width:100%;aspect-ratio:1;border-radius:6px;display:block;margin-bottom:3px;object-fit:cover;background:var(--panel2)}
+.mat.on{border-color:var(--accent);background:var(--accent-soft)}
+.btn{padding:7px 10px;border:1px solid var(--line);background:var(--panel);border-radius:8px;cursor:pointer;font-size:12.5px}
+.btn:hover{border-color:var(--accent)}
+.btn.danger{color:var(--danger)}.btn.danger:hover{border-color:var(--danger)}
+.btn.accent{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.chip{padding:4px 9px;border:1px solid var(--line);border-radius:99px;background:var(--panel);font-size:12px;cursor:pointer}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.prod{border:2px solid transparent;background:var(--panel2);border-radius:var(--r);padding:6px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px;min-width:0}
+.prod:hover{border-color:var(--line)}
+.prod.on{border-color:var(--accent);background:var(--accent-soft)}
+.prod .im{width:100%;aspect-ratio:1;border-radius:7px;background:var(--panel);display:grid;place-items:center;overflow:hidden}
+.prod .im.op{background:#cfe3f1}
+.prod img{width:100%;height:100%;object-fit:contain}
+.prod b{font-size:12px;font-weight:600;line-height:1.2}
+.prod span{font-size:11px;color:var(--muted)}
+.price{color:var(--ink)!important;font-weight:600}
+table.sum{width:100%;border-collapse:collapse;font-size:12px}
+table.sum td{padding:4px 2px;border-bottom:1px solid var(--line);vertical-align:top}
+table.sum td:last-child{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.sum tr.tot td{font-weight:700;border-bottom:0;padding-top:8px;font-size:13px}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.kpi div{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+.kpi b{display:block;font-size:18px;font-variant-numeric:tabular-nums}.kpi span{font-size:11px;color:var(--muted)}
+.help{font-size:12.5px;color:var(--muted);line-height:1.5}
+.help kbd{background:var(--panel2);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;font:11px ui-monospace,monospace;color:var(--ink)}
+.help li{margin-bottom:3px}
+.empty{padding:20px 6px;text-align:center;color:var(--muted);font-size:13px}
+@media (max-width:980px){
+  #app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 56vh auto minmax(0,1fr);grid-template-areas:"head" "stage" "rail" "lib";height:auto;min-height:100%}
+  html,body{overflow:auto}
+  #rail{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}
+  .tool{min-width:62px}
+  #lib{border-right:0}
+  #props{grid-area:lib;border-left:0;border-top:1px solid var(--line)}
+  body.has-sel #lib{display:none}
+  body:not(.has-sel) #props{display:none}
+  header{gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  header>*{flex:none}
+  .brand small{display:none}
+  #hint{display:none}
+}
+</style>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+</script>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">🏠 Configurateur 3D <small>page test</small><span id="ha-st" class="hast">○ hors Home Assistant</span></div>
+    <div class="grp ed"><button class="tb" id="b-undo" title="Annuler (Ctrl+Z)">↶ Annuler</button><button class="tb" id="b-redo" title="Rétablir (Ctrl+Y)">↷</button></div>
+    <div class="sep ed"></div>
+    <div class="grp"><button class="tb on" id="b-3d">Vue 3D</button><button class="tb" id="b-2d">Plan 2D</button></div>
+    <select id="s-walls" title="Affichage des murs"><option value="auto">Murs : coupés auto</option><option value="haut">Murs : hauts</option><option value="bas">Murs : bas</option></select>
+    <select class="ed" id="s-snap" title="Aimantation de la grille"><option value="0.5">Grille 50 cm</option><option value="0.25">Grille 25 cm</option><option value="0.1" selected>Grille 10 cm</option><option value="0.05">Grille 5 cm</option><option value="0">Sans grille</option></select>
+    <label class="chk ed" title="Les meubles se collent aux murs"><input type="checkbox" id="c-magnet" checked> Aimant murs</label>
+    <label class="chk ed" title="Tracer les murs à angle droit (ou maintenir Maj)"><input type="checkbox" id="c-ortho"> Angle droit</label>
+    <div class="spacer"></div>
+    <button class="tb" id="b-live" title="Les éléments liés à une entité suivent son état en direct, un clic les commande">🏠 Mode maison</button>
+    <button class="tb" id="b-sun" title="Soleil réel ou simulé : ombres et lumière du jour">☀ Soleil</button>
+    <button class="tb" id="b-open" title="Ouvrir / fermer toutes les portes, fenêtres et meubles animés">▶ Tout animer</button>
+    <div class="sep"></div>
+    <button class="tb ed" id="b-preview" title="Voir la vue maison telle qu'elle sera publiée (fond transparent, jour / soir, boussole)">👁 Aperçu</button>
+    <button class="tb ed" id="b-publish" title="Publier ce plan sur un tableau de bord Home Assistant : la page est créée automatiquement">⬆ Publier</button>
+    <button class="tb ed" id="b-sample">Exemple</button>
+    <button class="tb ed" id="b-new">Nouveau</button>
+    <button class="tb ed" id="b-save" title="Exporter le plan en fichier JSON">⤓ Enregistrer</button>
+    <button class="tb ed" id="b-load" title="Ouvrir un fichier JSON">⤒ Ouvrir</button>
+    <button class="tb ed" id="b-png" title="Capture d'écran PNG">📷</button>
+    <input type="file" id="f-load" accept="application/json,.json" hidden>
+  </header>
+  <nav id="rail" aria-label="Outils"></nav>
+  <aside id="lib" class="panel"></aside>
+  <main id="stage">
+    <canvas id="view" tabindex="0"></canvas>
+    <div id="labels"></div>
+    <div id="pins"></div>
+    <div id="viewbtns"><button class="tb" id="b-fit" title="Recentrer">⌖ Centrer</button></div>
+    <div id="sunbox"></div>
+    <div id="hint"></div>
+    <div id="toast"></div>
+  </main>
+  <aside id="props" class="panel"></aside>
+</div>
+<div id="modal"><div class="box"></div></div>
+<div id="boot">Chargement du plan 3D…</div>
+<script type="module" src="js/main.js" onerror="document.getElementById('boot').textContent='Impossible de charger la bibliothèque 3D (accès à internet requis).'"></script>
+</body>
+</html>
