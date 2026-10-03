@@ -432,7 +432,7 @@ export function renderPlot() {
   const pr = plotRect();
   if (R.ground) R.ground.position.y = pr ? -0.47 : 0;
   if (!pr) { invalidate(); return; }
-  const w = pr.x1 - pr.x0, d = pr.z1 - pr.z0, cx = (pr.x0 + pr.x1) / 2, cz = (pr.z0 + pr.z1) / 2, col = (S.meta.plot && S.meta.plot.color) || '#a39e7c';
+  const w = pr.x1 - pr.x0, d = pr.z1 - pr.z0, cx = (pr.x0 + pr.x1) / 2, cz = (pr.z0 + pr.z1) / 2, col = (S.meta.plot && S.meta.plot.color) || '#b8ae9a';
   const geo = new THREE.PlaneGeometry(w, d); geo.rotateX(-Math.PI / 2);
   const uv = geo.attributes.uv, pos = geo.attributes.position, sz = TEX_SIZE.gravel;
   for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) + w / 2) / sz[0], (pos.getZ(i) + d / 2) / sz[1]);

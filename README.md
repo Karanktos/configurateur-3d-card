@@ -3,7 +3,7 @@
 Dessinez votre maison en 3D (façon Sims / IKEA : murs, sols, portes, fenêtres, meubles, lumières), puis affichez-la dans un tableau de bord Home Assistant
 où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'ouvrent, lumières qui s'allument, capteurs, soleil réel ou simulé.
 
-**Rendu réaliste** : matières en relief (joints, veinage, briques, travertin), textiles veloutés, plinthes, couleurs fidèles ;
+**Rendu réaliste** : matières « photo » calculées sur place (veinage du parquet, strates et alvéoles du travertin, dallage en pierre irrégulière, murs de pierres, terre cuite, marbre veiné, gravier, béton nuancé) et en relief, textiles veloutés, plinthes, couleurs fidèles ;
 en **Rendu HD** (case de l'éditeur ou bouton **HD** de la vue publiée ; activé d'office sur ordinateur) : ombrage de contact (occlusion ambiante), bords lissés, ombres fines et halo des lampes le soir.
 
 **Cuisine modulaire** façon configurateur de grande surface : meubles bas, hauts, colonnes et demi-colonnes aux dimensions standard (four, micro-ondes, plaque, évier, lave-vaisselle, réfrigérateur intégrés), joues, fileurs et crédence ;
