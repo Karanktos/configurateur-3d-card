@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { boxG } from './util.js';
-import { getTexM } from './textures.js';
+import { getTexM, withBump } from './textures.js';
 import { addPart } from './anim.js';
 import { registerKitchen, KDEF, KSTYLE_KEYS } from './kitchen.js';
 import { registerMore } from './catalog3.js';
@@ -19,12 +19,15 @@ function kit(g, p) {
   const parts = [], cache = new Map();
   const K = { parts, g };
   K.m = (c, o = {}) => {
+    if (!o.map && o.op == null && !o.m && (o.r ?? 0.7) >= 0.93) o = { ...o, map: 'tissu' };   // surfaces très mates = textiles : léger tissage
     const key = c + '|' + (o.r ?? '') + (o.m ?? '') + (o.map ?? '') + (o.op ?? '') + (o.em ?? '');
     if (cache.has(key)) return cache.get(key);
-    const mt = new THREE.MeshStandardMaterial({
+    const P = {
       color: c, roughness: o.r ?? 0.7, metalness: o.m ?? 0, map: o.map ? getTexM(o.map) : null,
       transparent: o.op != null, opacity: o.op ?? 1, depthWrite: o.op == null, side: o.op != null ? THREE.DoubleSide : THREE.FrontSide,
-    });
+    };
+    // textiles : lustre velouté rasant (sheen) comme un vrai tissu
+    const mt = withBump(o.map === 'tissu' ? new THREE.MeshPhysicalMaterial({ ...P, sheen: 0.8, sheenRoughness: 0.55, sheenColor: new THREE.Color(c).lerp(new THREE.Color('#ffffff'), 0.35) }) : new THREE.MeshStandardMaterial(P), o.map);
     cache.set(key, mt); return mt;
   };
   K.body = (c) => (p.fin === 'bois' ? K.m(c, { r: 0.62, map: 'bois' }) : p.fin === 'brillant' ? K.m(c, { r: 0.16 }) : K.m(c, { r: 0.85 }));

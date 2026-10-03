@@ -1,7 +1,7 @@
 // Portes et fenêtres : modèles paramétrables avec animation (battants, coulissants, volet roulant).
 // Repère local : x le long du mur (centré sur l'ouverture), y depuis le bas de l'ouverture, z dans l'épaisseur (+z = côté A).
 import * as THREE from 'three';
-import { getTexM } from './textures.js';
+import { getTexM, withBump } from './textures.js';
 import { boxG } from './util.js';
 import { addPart } from './anim.js';
 
@@ -75,7 +75,7 @@ export function buildOpening(o, t) {
   const prof = o.mat === 'alu' ? { r: 0.3, m: 0.7, fw: 0.045, sfw: 0.04, tex: null }
     : o.mat === 'bois' ? { r: 0.72, m: 0, fw: 0.07, sfw: 0.06, tex: 'bois' } : { r: 0.42, m: 0, fw: 0.065, sfw: 0.055, tex: null };
   const fw = prof.fw, fd = Math.min(t, 0.1);
-  const mk = (c, extra = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: prof.r, metalness: prof.m, map: getTexM(prof.tex), ...extra });
+  const mk = (c, extra = {}) => withBump(new THREE.MeshStandardMaterial({ color: c, roughness: prof.r, metalness: prof.m, map: getTexM(prof.tex), ...extra }), prof.tex);
   const fm = mk(o.frame), lm = o.kind === 'door' ? mk(o.leaf) : fm;
   const gl = GLASS[o.glass] || GLASS.clair;
   const gm = new THREE.MeshStandardMaterial({ color: gl.c, transparent: true, opacity: gl.o, roughness: gl.r, metalness: 0, depthWrite: false, side: THREE.DoubleSide });
@@ -177,7 +177,7 @@ export function buildOpening(o, t) {
       void rail; void lf;
     } else if (mid === 'sectionnelle') {
       // porte sectionnelle : tablier à lames qui s'enroule vers le haut
-      const sm = new THREE.MeshStandardMaterial({ color: o.leaf, roughness: 0.5, metalness: 0.2, map: getTexM('lames') });
+      const sm = new THREE.MeshStandardMaterial({ color: o.leaf, roughness: 0.5, metalness: 0.2, map: getTexM('lames') }); withBump(sm, 'lames');
       const pv = piv(g, 0, H - fw, 0);
       bx(pv, iw, H - fw - y1, 0.04, sm, 0, -(H - fw - y1) / 2, 0, true);
       addPart(parts, pv, { scale: ['y', 1, 0.02] });
@@ -220,7 +220,7 @@ export function buildOpening(o, t) {
   // ---- volet roulant (par défaut côté extérieur = opposé au sens d'ouverture ; shutFlip le passe de l'autre côté du mur) ----
   if (o.shutter) {
     const ss = o.shutFlip ? side : -side, sz = ss * (t / 2 + 0.05);
-    const sm = new THREE.MeshStandardMaterial({ color: o.shutterColor, roughness: 0.5, metalness: 0.2, map: getTexM('lames') });
+    const sm = new THREE.MeshStandardMaterial({ color: o.shutterColor, roughness: 0.5, metalness: 0.2, map: getTexM('lames') }); withBump(sm, 'lames');
     const cm = new THREE.MeshStandardMaterial({ color: o.shutterColor, roughness: 0.55, metalness: 0.1 });
     bx(g, W + 0.06, 0.2, 0.17, cm, 0, H + 0.1, ss * (t / 2 + 0.07));
     const pv = piv(g, 0, H, sz), cur = bx(pv, W - 0.04, H + 0.02, 0.022, sm, 0, -(H + 0.02) / 2, 0);

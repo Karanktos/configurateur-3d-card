@@ -1,8 +1,8 @@
 // Cœur : état du plan, scène three.js, rendu des entités, caméra, historique.
 import * as THREE from 'three';
 import { clamp, rad, disposeTree, r2 } from './util.js';
-import { getTex, floorDef, finishDef, TEX_SIZE, texKey, texSize } from './textures.js';
-import { wallGeometry } from './geom.js';
+import { getTex, floorDef, finishDef, TEX_SIZE, texKey, texSize, withBump } from './textures.js';
+import { wallGeometry, cutWallGeometry } from './geom.js';
 import { buildOpening, modelOf, defaultOpening } from './openings.js';
 import { buildItem, defOf, defaultItem } from './catalog.js';
 import { applyParts, LG } from './anim.js';
@@ -109,7 +109,7 @@ export function initScene(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });   // pas de preserveDrawingBuffer : la capture lit l'image juste après l'avoir dessinée
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; // recalculées à la demande (invalidate)
-  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.95; renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 0.9;   // rendu « Khronos PBR Neutral » : couleurs fidèles, plus naturelles que ACES renderer.setClearColor(0x000000, 0);
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#dde6ee');
   const persp = new THREE.PerspectiveCamera(40, 1, 0.1, 400), ortho = new THREE.OrthographicCamera(-10, 10, 10, -10, -100, 200);
   Object.assign(R, { renderer, scene, persp, ortho, canvas, cam: persp });
@@ -117,9 +117,9 @@ export function initScene(canvas) {
   const pm = new THREE.PMREMGenerator(renderer);
   scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.55; // reflets des métaux (inox, miroir)
   const hemi = new THREE.HemisphereLight('#ffffff', '#b8c0c8', 0.95); scene.add(hemi); R.hemi = hemi;
-  const sun = new THREE.DirectionalLight('#fff6ea', 2.4); sun.position.set(8, 16, 10); sun.castShadow = true;
+  const sun = new THREE.DirectionalLight('#fffaf3', 2.4); sun.position.set(8, 16, 10); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
-  scene.add(sun, sun.target); R.sun = sun;
+  scene.add(sun, sun.target); R.sun = sun; shadowRes();
 
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: '#e7ecef', roughness: 1 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground); R.ground = ground;
@@ -303,7 +303,7 @@ const matCache = new Map();
 export function surfMat(texKey, color, rough = 0.9) {
   const k = texKey + '|' + color;
   if (!matCache.has(k)) {
-    const m = new THREE.MeshStandardMaterial({ color, roughness: rough, map: getTex(texKey) });
+    const m = withBump(new THREE.MeshStandardMaterial({ color, roughness: rough, map: getTex(texKey) }), texKey);
     m.userData.shared = true; matCache.set(k, m);
   }
   return matCache.get(k);
@@ -342,20 +342,42 @@ function clearKind(kind) { for (const id of [...objs[kind].keys()]) disposeEntit
 
 function tagRef(o, kind, id) { o.traverse((c) => { c.userData.ref = { kind, id }; }); }
 
+// ---- vue « maquette » : tous les murs coupés à hauteur d'appui, dessus de coupe sombre (rendu de plan 3D d'architecte) ----
+export const CUT_H = 1.1;
+const cutPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), CUT_H), hidePlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), -1000);
+export const isCut = () => settings.view === '3d' && settings.wallMode === 'coupe';
+let wallsCut = false, cutApplied = null;
+// portes, fenêtres et éléments surélevés (plafonniers, appliques, meubles hauts muraux) coupés au même plan ; leur lumière reste allumée
+// plane : plan de coupe (portes, fenêtres) ou plan qui masque tout (éléments fixés au mur au-dessus de l'appui : TV murale, meubles hauts, appliques, plafonniers)
+function clipTree(g, plane) {
+  g.userData.cut = !!plane;
+  g.traverse((o) => { for (const m of [].concat(o.material || [])) { const cur = m.clippingPlanes && m.clippingPlanes[0]; if (cur !== plane && (cur || plane)) { m.clippingPlanes = plane ? [plane] : null; m.clipShadows = !!plane; m.needsUpdate = true; } } });
+}
+const cutItem = (it) => { const d = defOf(it.model); return (it.elev || 0) >= 0.3 && !(d && d.onTop); };
+function applyCut(force = false) {
+  const on = isCut(); if (!force && cutApplied === on) return; cutApplied = on;
+  R.renderer.localClippingEnabled = true;
+  for (const g of objs.opening.values()) clipTree(g, on ? cutPlane : null);
+  for (const [id, g] of objs.item) { const it = find('item', id); clipTree(g, on && it && cutItem(it) ? hidePlane : null); }
+  invalidate();
+}
+
 export function renderWalls() {
-  clearKind('wall');
+  clearKind('wall'); wallsCut = isCut();
   for (const w of S.walls) {
     const { L, ang } = wallInfo(w), fa = finishDef(w.fa.f), fb = finishDef(w.fb.f);
     const holes = S.openings.filter((o) => o.wall === w.id).map((o) => {
       const x0 = o.s - o.w / 2, y0 = o.kind === 'door' ? Math.max(0.002, o.y0) : o.y0;
       return { x0, x1: o.s + o.w / 2, y0, y1: y0 + o.h, round: !!modelOf(o).round };
     });
-    const geo = wallGeometry(L, w.h, w.t, holes, extension(w, false), extension(w, true), fa.tex, fb.tex);
+    const ea = extension(w, false), eb = extension(w, true);
+    const geo = (wallsCut && w.h > CUT_H && cutWallGeometry(L, CUT_H, w.t, holes, ea, eb, fa.tex, fb.tex)) || wallGeometry(L, w.h, w.t, holes, ea, eb, fa.tex, fb.tex);
     const mesh = new THREE.Mesh(geo, [surfMat(fa.tex, w.fa.c), surfMat(fb.tex, w.fb.c), topMat]);
     mesh.castShadow = mesh.receiveShadow = true;
     const g = new THREE.Group(); g.position.set(w.x1, 0, w.z1); g.rotation.y = -ang; g.add(mesh);
     g.userData.wall = w.id; g.userData.mesh = mesh; tagRef(g, 'wall', w.id);
     const ao = aoStrips(w, L); if (ao) { g.add(ao); g.userData.ao = ao; }
+    const pl = plinths(w, L, fa, fb); if (pl) g.add(pl);
     root.wall.add(g); objs.wall.set(w.id, g);
   }
 }
@@ -379,6 +401,28 @@ function aoStrips(w, L) {
   if (!pos.length) return null;
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
   const m = new THREE.Mesh(geo, aoMat); m.renderOrder = 1; return m;
+}
+
+// plinthes blanches au pied des faces intérieures (peinture, lambris, faïence…), interrompues devant les portes
+const EXT_FIN = new Set(['crepi', 'pierre', 'brique']);
+const plinthMat = (() => { const m = new THREE.MeshStandardMaterial({ color: '#f4f2ee', roughness: 0.45 }); m.userData.shared = true; return m; })();
+function plinths(w, L, fa, fb) {
+  const gaps = S.openings.filter((o) => o.wall === w.id && (o.kind === 'door' || o.y0 < 0.06)).map((o) => [o.s - o.w / 2, o.s + o.w / 2]).sort((a, b) => a[0] - b[0]);
+  const x0 = -extension(w, false), x1 = L + extension(w, true), segs = []; let a = x0;
+  for (const [g0, g1] of gaps) { if (g0 > a + 0.03) segs.push([a, g0]); a = Math.max(a, g1); }
+  if (x1 > a + 0.03) segs.push([a, x1]);
+  const geos = [], H = 0.07, T = 0.012;
+  for (const [side, fin] of [[1, fa], [-1, fb]]) {
+    if (EXT_FIN.has(fin.id)) continue;
+    for (const [s0, s1] of segs) { const g = new THREE.BoxGeometry(s1 - s0, H, T); g.translate((s0 + s1) / 2, H / 2, side * (w.t / 2 + T / 2)); geos.push(g); }
+  }
+  if (!geos.length) return null;
+  const m = new THREE.Mesh(mergeGeos(geos), plinthMat); m.castShadow = false; m.receiveShadow = true; return m;
+}
+function mergeGeos(geos) {   // boîtes simples → une seule géométrie (positions, normales, uv, index)
+  const P = [], N = [], U = [], I = []; let off = 0;
+  for (const g of geos) { P.push(...g.attributes.position.array); N.push(...g.attributes.normal.array); U.push(...g.attributes.uv.array); for (const i of g.index.array) I.push(i + off); off += g.attributes.position.count; g.dispose(); }
+  const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); out.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); out.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); out.setIndex(I); return out;
 }
 
 // terrain : dalle de gravier avec ses flancs de terre (mode « diorama » de la vue maison)
@@ -414,6 +458,7 @@ export function renderOpenings() {
     const b = buildOpening(o, w.t); mergeStatic(b.group, b.parts, b.shutParts);
     const g = new THREE.Group(); g.add(b.group); placeOpening(g, o, w);
     tagRef(g, 'opening', o.id); root.opening.add(g); objs.opening.set(o.id, g); built.set('o' + o.id, k);
+    if (cutApplied) clipTree(g, cutPlane);
     regAnim('o' + o.id, b.parts.filter((p) => !p.grp), o.open); regAnim('p' + o.id, b.parts.filter((p) => p.grp), o.open2);
     regAnim('s' + o.id, b.shutParts, o.shut);
   }
@@ -441,6 +486,7 @@ export function renderItem(it) {
   const b = buildItem(it), g = new THREE.Group(); mergeStatic(b.group, b.parts); g.add(b.group);
   g.position.set(it.x, FLOOR_Y + (it.elev || 0), it.z); g.rotation.y = rad(it.rot || 0);
   tagRef(g, 'item', it.id); g.visible = itemVisible(it); root.item.add(g); objs.item.set(it.id, g); built.set('i' + it.id, keyOf(it, OMIT_I));
+  if (cutApplied && cutItem(it)) clipTree(g, hidePlane);
   regAnim('i' + it.id, b.parts, it.open);
 }
 export function renderItems() {
@@ -533,6 +579,8 @@ function updateLight() {
 // murs coupés (comme dans les Sims)
 // ---------------------------------------------------------------------------------------------
 export function updateCutaway() {
+  if (isCut() !== wallsCut) { renderWalls(); invalidate(); }
+  applyCut();
   if (!objs.wall.size) return;
   const b = structBounds() || bounds(); if (!b) return;
   const cx = (b.minx + b.maxx) / 2, cz = (b.minz + b.maxz) / 2; let changed = false;
@@ -667,11 +715,16 @@ function loop(t) {
   }
 }
 // rendu HD (occlusion ambiante) en 3D seulement ; les aides d'édition et les objets transparents n'y participent pas
-const noAO = (o) => o === R.ui || o === R.grid || o === R.grid5 || (o.isMesh && !Array.isArray(o.material) && o.material.transparent);
-function draw() { renderHD(R.renderer, R.scene, R.cam, settings.hd && settings.view === '3d', noAO); }
+const noAO = (o) => o === R.ui || o === R.grid || o === R.grid5 || o.userData.cut === true || (o.isMesh && !Array.isArray(o.material) && o.material.transparent);
+function draw() { renderHD(R.renderer, R.scene, R.cam, settings.hd && settings.view === '3d', noAO, !!(R.sunInfo && R.sunInfo.t < 0.6)); }   // halo des lampes le soir
 export const isAnimating = () => animating;
 export function snapshotPNG() { R.renderer.shadowMap.needsUpdate = true; draw(); return R.canvas.toDataURL('image/png'); }
-export function setHD(on) { settings.hd = !!on; invalidate(false); }
+export function setHD(on) { settings.hd = !!on; shadowRes(); invalidate(); }
+// carte d'ombre du soleil : 4096 px en rendu HD (ombres plus nettes), 2048 sinon
+function shadowRes() {
+  const n = settings.hd && !SMALLSCREEN ? 4096 : 2048, sh = R.sun && R.sun.shadow; if (!sh || sh.mapSize.x === n) return;
+  sh.mapSize.set(n, n); if (sh.map) { sh.map.dispose(); sh.map = null; }
+}
 
 // ---------------------------------------------------------------------------------------------
 // surface / récapitulatif
@@ -698,8 +751,8 @@ export function applySun() {
   if (!sun) return;
   const bg = (c) => { if (R.scene.background) R.scene.background.set(c); };
   if (sm.mode === 'off') {
-    R.sunDir = null; sun.color.set('#fff6ea'); sun.intensity = 2.4; R.hemi.intensity = 0.95; R.hemi.color.set('#ffffff'); R.hemi.groundColor.set('#b8c0c8');
-    R.scene.environmentIntensity = 0.55; R.renderer.toneMappingExposure = 0.95; bg('#dde6ee'); R.ground.material.color.set('#e7ecef');
+    R.sunDir = null; sun.color.set('#fffaf3'); sun.intensity = 2.4; R.hemi.intensity = 0.95; R.hemi.color.set('#ffffff'); R.hemi.groundColor.set('#b8c0c8');
+    R.scene.environmentIntensity = 0.55; R.renderer.toneMappingExposure = 0.9; bg('#dde6ee'); R.ground.material.color.set('#e7ecef');
     R.grid.material.opacity = 0.9; R.sunInfo = null; setLightGain(1); updateLight(); invalidate(); return;
   }
   let p = SUN.current(sm);
@@ -710,11 +763,11 @@ export function applySun() {
   // repère du plan : x vers la droite (est), z vers le bas (sud) ; nord du plan = z décroissant, décalé de « rot » degrés par rapport au vrai nord
   R.sunDir = new THREE.Vector3(Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)).normalize();
   sun.intensity = L.sun;
-  if (L.useSun) { if (p.el < 8) sun.color.setRGB(1, 0.5, 0.25).lerp(cA.setRGB(1, 0.69, 0.44), cl01(p.el / 8)); else sun.color.setRGB(1, 0.69, 0.44).lerp(cA.set('#fff6dc'), cl01((p.el - 8) / 17)); }
+  if (L.useSun) { if (p.el < 8) sun.color.setRGB(1, 0.5, 0.25).lerp(cA.setRGB(1, 0.69, 0.44), cl01(p.el / 8)); else sun.color.setRGB(1, 0.69, 0.44).lerp(cA.set('#fffaf0'), cl01((p.el - 8) / 17)); }
   else sun.color.set('#8fa6d6');
   R.hemi.intensity = L.hemi; R.hemi.color.copy(cA.set('#3a4a6a')).lerp(cB.set('#f4f7ff'), L.t).lerp(cB.setRGB(1, 0.72, 0.5), 0.28 * L.tw);
   R.hemi.groundColor.copy(cA.set('#141c26')).lerp(cB.set('#b8c0c8'), L.t);
-  R.scene.environmentIntensity = L.env; R.renderer.toneMappingExposure = L.exposure;
+  R.scene.environmentIntensity = L.env; R.renderer.toneMappingExposure = L.exposure * 0.95;
   if (R.scene.background) R.scene.background.copy(cA.set('#0b1220')).lerp(cB.set('#dde6ee'), L.t).lerp(cB.setRGB(1, 0.62, 0.42), 0.25 * L.tw);
   R.ground.material.color.copy(cA.set('#1b232c')).lerp(cB.set('#e7ecef'), L.t);
   R.grid.material.opacity = 0.12 + 0.78 * L.t; R.sunInfo = { el: p.el, az: p.az, night: L.t < 0.35, t: L.t };
@@ -735,16 +788,17 @@ export function setSun(patch) {
 // vue maison (publiée ou aperçu) : fond transparent, caméra orthographique fixe, terrain, jour / soir
 // ---------------------------------------------------------------------------------------------
 let beforePresent = null;
+const savedWalls = () => { try { const v = localStorage.getItem('cfg3d-walls'); return ['coupe', 'haut', 'auto'].includes(v) ? v : null; } catch (e) { return null; } };
 export function setPresent(on) {
   if (on === settings.present) return;
   settings.present = !!on;
   document.body.classList.toggle('present', on);
   if (on) {
     beforePresent = { view: settings.view, camOrtho: settings.camOrtho, wall: settings.wallMode, sun: { ...settings.sun }, bg: R.scene.background, V: { ...V } };
-    settings.view = '3d'; settings.camOrtho = !(S.meta && S.meta.view && S.meta.view.persp); settings.free = false; settings.wallMode = S.meta && S.meta.view && S.meta.view.persp ? 'auto' : 'haut';   // vue de l'éditeur reprise : murs coupés comme dans l'éditeur
+    settings.view = '3d'; settings.camOrtho = !(S.meta && S.meta.view && S.meta.view.persp); settings.free = false; settings.wallMode = savedWalls() || 'coupe';   // vue « maquette » par défaut (murs coupés à 1,10 m), ou le dernier choix fait sur cet appareil
     R.ground.visible = R.grid.visible = R.grid5.visible = false; R.scene.background = null;
     if (!S.meta.plot && S.meta.plot !== false && structBounds()) S.meta.plot = true;
-    topMat.color.set('#6f685e'); renderPlot(); resetView();
+    topMat.color.set('#55585b'); renderPlot(); resetView();
     setSun({ mode: settings.sun.mode === 'sim' ? 'sim' : 'live', force: null });
   } else {
     const b = beforePresent || {};

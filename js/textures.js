@@ -384,6 +384,12 @@ GEN.zellige = () => {   // zellige : carreaux de 10 cm irréguliers et brillants
   }
   noise(x, c, 7, 272); return c;
 };
+GEN.tissu = () => {   // tissage fin (canapés, linge, tapis) : très clair pour ne presque pas changer la couleur, surtout utile en relief
+  const c = cv(256), x = c.getContext('2d', { willReadFrequently: true }), r = rng(301);
+  x.fillStyle = grey(238); x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 256; i += 4) { x.fillStyle = `rgba(0,0,0,${0.035 + r() * 0.03})`; x.fillRect(0, i, 256, 2); x.fillStyle = `rgba(0,0,0,${0.025 + r() * 0.03})`; x.fillRect(i + 2, 0, 2, 256); }
+  noise(x, c, 7, 302); return c;
+};
 GEN.tomette = GEN.hex;
 GEN.tile4 = GEN.tile(4); GEN.tile2 = GEN.tile(2); GEN.tile1 = GEN.tile(1);
 
@@ -398,7 +404,7 @@ for (const [k, o] of Object.entries(SLABS)) TEX_SIZE[k] = slabSize(o);
 // taille d'un carreau / d'une dalle (affichée dans l'éditeur) quand elle est fixe
 export const TILE = { tile4: [0.25, 0.25], tile2: [0.5, 0.5], tile1: [1, 1], checker: [0.25, 0.25], ciment: [0.2, 0.2], zellige: [0.1, 0.1], pavers: [0.25, 0.125] };
 for (const [k, o] of Object.entries(SLABS)) if (o.tw) TILE[k] = [o.tw, o.th];
-TEX_SIZE.ciment = [0.8, 0.8]; TEX_SIZE.zellige = [0.8, 0.8]; TEX_SIZE.tomette = [0.55, 0.476];
+TEX_SIZE.tissu = [0.2, 0.2]; TEX_SIZE.ciment = [0.8, 0.8]; TEX_SIZE.zellige = [0.8, 0.8]; TEX_SIZE.tomette = [0.55, 0.476];
 
 // ---- pose des carreaux : « droit » (alignés), « demi » (quinconce ½), « tiers » (quinconce ⅓) ----
 // une variante s'écrit « matière@pose » et se génère à la demande ; « auto » (ou rien) = calepinage d'origine du modèle
@@ -427,6 +433,13 @@ export function getTex(kind) {
   t.userData = { canvas: c };
   return (cache[kind] = t);
 }
+
+// relief (bump map tirée de la texture elle-même : joints, veinage, alvéoles en creux) ; 0 = surface lisse
+const BUMP = { parquet: 0.6, chevron: 0.6, plank: 0.6, deck: 1.2, tile4: 1, tile2: 1, tile1: 1, checker: 0.4, stone: 1.4, pavers: 1.4, hex: 1, tomette: 1, ciment: 0.5, zellige: 1.2,
+  terrazzo: 0.3, concrete: 0.4, marble: 0.2, carpet: 0.8, grass: 1, gravel: 1.2, granite: 0.3, crepi: 1, brique: 1.6, lambris: 0.9, metro: 1, bois: 0.35, lames: 0.8, ardoise: 1.4, tissu: 0.5 };
+export function bumpFor(key) { const k = (key || '').split('@')[0]; return BUMP[k] ?? (SLABS[k] ? (SLABS[k].style === 'bois' ? 0.6 : 1) : 0); }
+// matériau standard avec relief si la texture en a un
+export function withBump(m, key, k = 3) { const b = bumpFor(key); if (b && m.map) { m.bumpMap = m.map; m.bumpScale = b * k; } return m; }
 
 // variante dont la répétition est en mètres (pour les UV de boxG)
 const cacheM = {};

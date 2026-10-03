@@ -5,6 +5,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 let C = null;   // { composer, render, gtao, w, h }
 const KEY = 'cfg3d-hd';
@@ -26,20 +27,23 @@ function create(renderer, scene, cam, skip) {
   const ov = gtao.overrideVisibility.bind(gtao);
   gtao.overrideVisibility = () => { ov(); scene.traverse((o) => { if (o.visible && skip(o)) o.visible = false; }); };
   composer.setPixelRatio(1); composer.setSize(size.x, size.y);
-  composer.addPass(render); composer.addPass(gtao); composer.addPass(new OutputPass());
-  return { composer, render, gtao, w: size.x, h: size.y };
+  // halo autour des sources lumineuses (lampes, écrans) : seules les valeurs très lumineuses (> seuil, avant exposition) rayonnent
+  const bloom = new UnrealBloomPass(new THREE.Vector2(size.x / 2, size.y / 2), 0.32, 0.22, 0.95); bloom.enabled = false;
+  composer.addPass(render); composer.addPass(gtao); composer.addPass(bloom); composer.addPass(new OutputPass());
+  return { composer, render, gtao, bloom, w: size.x, h: size.y };
 }
 
 // rend la scène : chaîne HD si active, sinon rendu direct ; renvoie true si la chaîne HD a été utilisée
-export function renderHD(renderer, scene, cam, on, skip) {
+export function renderHD(renderer, scene, cam, on, skip, glow = false) {
   if (!on) { renderer.render(scene, cam); return false; }
   if (!C) C = create(renderer, scene, cam, skip);
   const size = renderer.getDrawingBufferSize(new THREE.Vector2());
-  if (size.x !== C.w || size.y !== C.h) { C.composer.setPixelRatio(1); C.composer.setSize(size.x, size.y); C.gtao.setSize(size.x, size.y); C.w = size.x; C.h = size.y; }
+  if (size.x !== C.w || size.y !== C.h) { C.composer.setPixelRatio(1); C.composer.setSize(size.x, size.y); C.gtao.setSize(size.x, size.y); C.bloom.setSize(size.x / 2, size.y / 2); C.w = size.x; C.h = size.y; }
   if (C.render.camera !== cam) {   // passage perspective ↔ orthographique
     C.render.camera = cam; C.gtao.camera = cam;
     C.gtao.gtaoMaterial.defines.PERSPECTIVE_CAMERA = cam.isPerspectiveCamera ? 1 : 0; C.gtao.gtaoMaterial.needsUpdate = true;
   }
+  C.bloom.enabled = glow;
   C.composer.render();
   return true;
 }

@@ -5,6 +5,7 @@ import { svg } from './mdi.js';
 import * as SUN from './sun.js';
 import { isAdmin, onHass } from './ha.js';
 import { enterCfg } from './cfg.js';
+const WALLS = [['coupe', 'Maquette'], ['haut', 'Murs hauts'], ['auto', 'Murs ouverts']];
 
 const MODES = [[null, 'Auto', 'mdi:theme-light-dark'], ['day', 'Jour', 'mdi:white-balance-sunny'], ['night', 'Soir', 'mdi:weather-night']];
 let bar, cmp, nd, exitBtn, sp, playT = 0, rotBase = null;
@@ -23,7 +24,8 @@ export function initPresent(stage) {
   bar.querySelector('[data-c=mode]').onclick = () => { const i = MODES.findIndex((m) => m[0] === (settings.sun.force || null)); setForce(MODES[(i + 1) % MODES.length][0]); sync(); };
   bar.querySelector('[data-c=sun]').onclick = () => { sp.hidden = !sp.hidden; if (!sp.hidden) syncSun(); sync(); };
   bar.querySelector('[data-c=free]').onclick = () => { setFree(!settings.free); sync(); };
-  bar.querySelector('[data-c=walls]').onclick = () => { settings.wallMode = settings.wallMode === 'haut' ? 'auto' : 'haut'; updateCutaway(); sync(); };
+  // murs : maquette (coupés à 1,10 m) → hauts → ouverts côté caméra ; choix mémorisé sur l'appareil
+  bar.querySelector('[data-c=walls]').onclick = () => { const i = WALLS.findIndex((x) => x[0] === settings.wallMode); settings.wallMode = WALLS[(i + 1) % WALLS.length][0]; try { localStorage.setItem('cfg3d-walls', settings.wallMode); } catch (e) { /* ignore */ } updateCutaway(); sync(); };
   bar.querySelector('[data-c=cfg]').onclick = () => enterCfg();
   [bar, cmp, sp].forEach((n) => n.addEventListener('pointerdown', (e) => e.stopPropagation()));
   on('present', () => { if (!settings.present) closeSun(); sync(); }); on('free', sync); on('force', sync); on('sun', syncSun);
@@ -37,7 +39,7 @@ function sync() {
   b.innerHTML = `${svg(m[2])}<span>${m[1]}</span>`; b.classList.toggle('act', !!m[0]);
   bar.querySelector('[data-c=sun]').classList.toggle('act', !sp.hidden || settings.sun.mode === 'sim');
   bar.querySelector('[data-c=free]').classList.toggle('act', settings.free);
-  const w = bar.querySelector('[data-c=walls]'); w.classList.toggle('act', settings.wallMode !== 'haut'); w.querySelector('span').textContent = settings.wallMode === 'haut' ? 'Murs hauts' : 'Murs coupés';
+  const w = bar.querySelector('[data-c=walls]'), wm = WALLS.find((x) => x[0] === settings.wallMode) || WALLS[0]; w.classList.toggle('act', settings.wallMode !== 'haut'); w.querySelector('span').textContent = wm[1];
   // « Configurer » : réservé aux administrateurs, dans la vue publiée (le plan s'enregistre dans le tableau de bord)
   const c = bar.querySelector('[data-c=cfg]'); c.hidden = !(settings.readonly && isAdmin() && !settings.cfg); c.classList.toggle('act', settings.cfg);
   document.body.classList.toggle('free', !!settings.free);
