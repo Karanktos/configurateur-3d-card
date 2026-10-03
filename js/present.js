@@ -1,6 +1,7 @@
 // Vue maison (publiée ou aperçu) : barre en bas à gauche (Auto / Jour / Soir, Soleil, 3D libre, murs, Configurer) et boussole, comme dans la carte plan-3d.
 // Panneau « Soleil » : heure et date simulées (curseur, lecture), retour au direct, orientation du plan par rapport au nord.
-import { settings, S, R, V, on, setForce, setFree, setSun, project, updateCutaway, setPresent, commit } from './core.js';
+import { settings, S, R, V, on, setForce, setFree, setSun, project, updateCutaway, setPresent, commit, setHD } from './core.js';
+import { setHdWanted } from './post.js';
 import { svg } from './mdi.js';
 import * as SUN from './sun.js';
 import { isAdmin, onHass } from './ha.js';
@@ -14,7 +15,7 @@ const RKEY = 'cfg3d-rot';
 
 export function initPresent(stage) {
   bar = document.createElement('div'); bar.id = 'pbar';
-  bar.innerHTML = `<div class="bt" data-c="mode"></div><div class="bt" data-c="sun">${svg('mdi:white-balance-sunny')}<span>Soleil</span></div><div class="bt" data-c="free">${svg('mdi:rotate-3d-variant')}<span>3D libre</span></div><div class="bt" data-c="walls">${svg('mdi:wall')}<span></span></div><div class="bt" data-c="cfg" hidden>${svg('mdi:cog')}<span>Configurer</span></div>`;
+  bar.innerHTML = `<div class="bt" data-c="mode"></div><div class="bt" data-c="sun">${svg('mdi:white-balance-sunny')}<span>Soleil</span></div><div class="bt" data-c="free">${svg('mdi:rotate-3d-variant')}<span>3D libre</span></div><div class="bt" data-c="walls">${svg('mdi:wall')}<span></span></div><div class="bt" data-c="hd" title="Rendu HD : ombrage de contact, bords lissés, halo des lampes (plus gourmand)">${svg('mdi:high-definition')}<span>HD</span></div><div class="bt" data-c="cfg" hidden>${svg('mdi:cog')}<span>Configurer</span></div>`;
   cmp = document.createElement('div'); cmp.id = 'cmp';
   cmp.innerHTML = '<svg viewBox="-50 -50 100 100"><circle r="44" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/><g class="nd"><path d="M0,-34 L9,4 L0,-3 L-9,4 Z" fill="#4da3ff"/><path d="M0,34 L9,-4 L0,3 L-9,-4 Z" fill="rgba(255,255,255,.55)"/><text y="-22" text-anchor="middle" font-size="13" fill="#fff" font-family="sans-serif" dy="-14">N</text></g></svg>';
   exitBtn = document.createElement('button'); exitBtn.id = 'pexit'; exitBtn.className = 'tb'; exitBtn.textContent = '✕ Quitter l\'aperçu';
@@ -26,6 +27,7 @@ export function initPresent(stage) {
   bar.querySelector('[data-c=free]').onclick = () => { setFree(!settings.free); sync(); };
   // murs : maquette (coupés à 1,10 m) → hauts → ouverts côté caméra ; choix mémorisé sur l'appareil
   bar.querySelector('[data-c=walls]').onclick = () => { const i = WALLS.findIndex((x) => x[0] === settings.wallMode); settings.wallMode = WALLS[(i + 1) % WALLS.length][0]; try { localStorage.setItem('cfg3d-walls', settings.wallMode); } catch (e) { /* ignore */ } updateCutaway(); sync(); };
+  bar.querySelector('[data-c=hd]').onclick = () => { setHD(!settings.hd); setHdWanted(settings.hd); sync(); };
   bar.querySelector('[data-c=cfg]').onclick = () => enterCfg();
   [bar, cmp, sp].forEach((n) => n.addEventListener('pointerdown', (e) => e.stopPropagation()));
   on('present', () => { if (!settings.present) closeSun(); sync(); }); on('free', sync); on('force', sync); on('sun', syncSun);
@@ -41,6 +43,7 @@ function sync() {
   bar.querySelector('[data-c=free]').classList.toggle('act', settings.free);
   const w = bar.querySelector('[data-c=walls]'), wm = WALLS.find((x) => x[0] === settings.wallMode) || WALLS[0]; w.classList.toggle('act', settings.wallMode !== 'haut'); w.querySelector('span').textContent = wm[1];
   // « Configurer » : réservé aux administrateurs, dans la vue publiée (le plan s'enregistre dans le tableau de bord)
+  bar.querySelector('[data-c=hd]').classList.toggle('act', !!settings.hd);
   const c = bar.querySelector('[data-c=cfg]'); c.hidden = !(settings.readonly && isAdmin() && !settings.cfg); c.classList.toggle('act', settings.cfg);
   document.body.classList.toggle('free', !!settings.free);
   exitBtn.style.display = settings.present && !settings.readonly ? '' : 'none';
