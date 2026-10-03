@@ -202,7 +202,37 @@ function projBox() {
   return { r, u, amin, amax, bmin, bmax };
 }
 // vue « maison » : caméra orthographique cadrée sur tout le terrain, centrée dans la fenêtre ; renvoie le rapport hauteur / largeur
+// vue maison en perspective (angle de l'éditeur repris tel quel) : distance et centre choisis pour que le terrain tienne dans la fenêtre
+function fitPersp(pad = 0.04) {
+  const pr = plotRect(), sb = structBounds();
+  const b = pr ? { minx: pr.x0, maxx: pr.x1, minz: pr.z0, maxz: pr.z1 } : sb ? { minx: sb.minx - 0.6, maxx: sb.maxx + 0.6, minz: sb.minz - 0.6, maxz: sb.maxz + 0.6 } : null;
+  if (!b || !R.w) return null;
+  const hMax = S.walls.reduce((m, w) => Math.max(m, w.h), 2.4), y0 = pr ? -0.46 : 0, aspect = R.w / R.h;
+  const c = R.persp; c.aspect = aspect; c.fov = 40; c.up.set(0, 1, 0);
+  const pts = []; for (const x of [b.minx, b.maxx]) for (const z of [b.minz, b.maxz]) for (const y of [y0, hMax]) pts.push(new THREE.Vector3(x, y, z));
+  V.tx = (b.minx + b.maxx) / 2; V.tz = (b.minz + b.maxz) / 2;
+  const th = Math.tan((c.fov * Math.PI) / 360), sp = Math.sin(V.pol), cp = Math.cos(V.pol);
+  const ext = (dist) => {
+    c.position.set(V.tx + dist * sp * Math.sin(V.az), dist * cp, V.tz + dist * sp * Math.cos(V.az));
+    c.lookAt(V.tx, 0, V.tz); c.updateProjectionMatrix(); c.updateMatrixWorld(true);
+    let x0 = 1e9, x1 = -1e9, y1 = -1e9, y0n = 1e9;
+    for (const p of pts) { const q = p.clone().project(c); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0n = Math.min(y0n, q.y); y1 = Math.max(y1, q.y); }
+    return { x0, x1, y0: y0n, y1 };
+  };
+  let dist = 30;
+  for (let it = 0; it < 8; it++) {
+    let lo = 4, hi = 400;
+    for (let k = 0; k < 28; k++) { dist = (lo + hi) / 2; const e = ext(dist); if (Math.max(Math.abs(e.x0), Math.abs(e.x1), Math.abs(e.y0), Math.abs(e.y1)) > 1 - pad) lo = dist; else hi = dist; }
+    dist = hi;
+    const e = ext(dist), cx = (e.x0 + e.x1) / 2, cy = (e.y0 + e.y1) / 2;   // recentrage : décalage du centre sur le sol
+    const wx = cx * dist * th * aspect, wy = (cy * dist * th) / Math.max(0.2, cp);
+    V.tx += wx * Math.cos(V.az) - wy * Math.sin(V.az); V.tz += -wx * Math.sin(V.az) - wy * Math.cos(V.az);
+  }
+  V.dist = dist; setupCam();
+  const e = ext(dist); return (e.y1 - e.y0) / ((e.x1 - e.x0) * aspect);
+}
 export function fitView(pad = 0.035) {
+  if (!settings.camOrtho && settings.present && settings.view === '3d' && !settings.free) return fitPersp();
   const p = projBox(); if (!p || !R.w) return null;
   const { r, u } = p, ac = (p.amin + p.amax) / 2, bc = (p.bmin + p.bmax) / 2, det = r.x * u.z - r.z * u.x;
   if (Math.abs(det) > 1e-6) { V.tx = (ac * u.z - r.z * bc) / det; V.tz = (r.x * bc - u.x * ac) / det; }
@@ -643,7 +673,7 @@ export function setPresent(on) {
   document.body.classList.toggle('present', on);
   if (on) {
     beforePresent = { view: settings.view, camOrtho: settings.camOrtho, wall: settings.wallMode, sun: { ...settings.sun }, bg: R.scene.background, V: { ...V } };
-    settings.view = '3d'; settings.camOrtho = true; settings.free = false; settings.wallMode = 'haut';
+    settings.view = '3d'; settings.camOrtho = !(S.meta && S.meta.view && S.meta.view.persp); settings.free = false; settings.wallMode = S.meta && S.meta.view && S.meta.view.persp ? 'auto' : 'haut';   // vue de l'éditeur reprise : murs coupés comme dans l'éditeur
     R.ground.visible = R.grid.visible = R.grid5.visible = false; R.scene.background = null;
     if (!S.meta.plot && S.meta.plot !== false && structBounds()) S.meta.plot = true;
     topMat.color.set('#6f685e'); renderPlot(); resetView();

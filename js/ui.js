@@ -359,9 +359,9 @@ export async function openPublish() {
       if (st.url === '__new__' && !/^[a-z0-9]+(-[a-z0-9]+)+$/.test(url)) throw new Error('Adresse invalide : utilise des minuscules, des chiffres et au moins un tiret (ex. maison-3d)');
       const plan = JSON.parse(exportJSON());
       plan.meta = plan.meta || {};
-      const ang = keep.checked && settings.view === '3d' && !settings.present ? { az: V.az, pol: V.pol, sh: 0 } : homeView();
+      const ang = keep.checked && settings.view === '3d' && !settings.present ? { az: V.az, pol: V.pol, sh: 0, persp: 1 } : homeView();
       plan.meta.view = { az: +ang.az.toFixed(3), pol: +ang.pol.toFixed(3) };
-      if (ang.sh === 0) plan.meta.view.sh = 0;   // angle de l'éditeur repris tel quel : pas de cisaillement de la vue maison
+      if (ang.persp) { plan.meta.view.sh = 0; plan.meta.view.persp = 1; }   // angle de l'éditeur repris tel quel : pas de cisaillement de la vue maison
       if (plan.meta.plot == null) plan.meta.plot = true;
       plan.items.forEach((i) => { if (defOf(i.model) && defOf(i.model).cat === 'Éclairage') i.open = 0; });   // les lumières suivent Home Assistant, pas l'aperçu
       const r = await publishPlan(plan, { url, dashTitle: st.viewTitle, viewTitle: st.viewTitle.trim() || 'Maison 3D' });
