@@ -9,12 +9,20 @@ où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'o
 
 1. HACS → ⋮ → **Dépôts personnalisés** → collez l'adresse de ce dépôt, catégorie **Tableau de bord** (Dashboard) → Ajouter.
 2. Installez **Configurateur 3D**, puis rechargez la page (Ctrl+F5). HACS enregistre la ressource tout seul.
-3. Créez une vue « panneau » avec la carte :
+3. Créez un tableau de bord (Paramètres → Tableaux de bord → Ajouter → *Nouveau tableau de bord vide*), ouvrez-le, puis ✏️ → ⋮ → **Éditeur de configuration brute**
+   et remplacez tout le contenu par :
 
 ```yaml
-type: custom:configurateur-3d-card
-height: calc(100vh - 56px)
+views:
+  - title: Configurateur
+    path: configurateur
+    type: panel
+    cards:
+      - type: custom:configurateur-3d-card
+        height: calc(100vh - 56px)
 ```
+
+Enregistrez, puis Ctrl+F5 si la carte ne s'affiche pas.
 
 Le configurateur s'ouvre avec un petit appartement d'exemple. Les plans sont enregistrés dans les données de votre utilisateur Home Assistant.
 
