@@ -788,17 +788,16 @@ export function setSun(patch) {
 // vue maison (publiée ou aperçu) : fond transparent, caméra orthographique fixe, terrain, jour / soir
 // ---------------------------------------------------------------------------------------------
 let beforePresent = null;
-const savedWalls = () => { try { const v = localStorage.getItem('cfg3d-walls'); return ['coupe', 'haut', 'auto'].includes(v) ? v : null; } catch (e) { return null; } };
 export function setPresent(on) {
   if (on === settings.present) return;
   settings.present = !!on;
   document.body.classList.toggle('present', on);
   if (on) {
     beforePresent = { view: settings.view, camOrtho: settings.camOrtho, wall: settings.wallMode, sun: { ...settings.sun }, bg: R.scene.background, V: { ...V } };
-    settings.view = '3d'; settings.camOrtho = !(S.meta && S.meta.view && S.meta.view.persp); settings.free = false; settings.wallMode = savedWalls() || 'coupe';   // vue « maquette » par défaut (murs coupés à 1,10 m), ou le dernier choix fait sur cet appareil
+    settings.view = '3d'; settings.camOrtho = !(S.meta && S.meta.view && S.meta.view.persp); settings.free = false; settings.wallMode = S.meta && S.meta.view && S.meta.view.persp ? 'auto' : 'haut';   // vue de l'éditeur reprise : murs coupés comme dans l'éditeur
     R.ground.visible = R.grid.visible = R.grid5.visible = false; R.scene.background = null;
     if (!S.meta.plot && S.meta.plot !== false && structBounds()) S.meta.plot = true;
-    topMat.color.set('#55585b'); renderPlot(); resetView();
+    topMat.color.set('#6f685e'); renderPlot(); resetView();
     setSun({ mode: settings.sun.mode === 'sim' ? 'sim' : 'live', force: null });
   } else {
     const b = beforePresent || {};

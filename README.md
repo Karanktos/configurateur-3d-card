@@ -3,9 +3,8 @@
 Dessinez votre maison en 3D (façon Sims / IKEA : murs, sols, portes, fenêtres, meubles, lumières), puis affichez-la dans un tableau de bord Home Assistant
 où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'ouvrent, lumières qui s'allument, capteurs, soleil réel ou simulé.
 
-**Rendu réaliste** : vue publiée en **maquette** façon plan 3D d'architecte (murs coupés à 1,10 m avec dessus de coupe, portes et fenêtres coupées, plafonniers masqués mais allumés),
-matières en relief (joints, veinage, briques, travertin), textiles veloutés, plinthes, couleurs fidèles ; en **Rendu HD** (case de l'éditeur ou bouton **HD** de la vue publiée ; activé d'office sur ordinateur) : ombrage de contact (occlusion ambiante), bords lissés, ombres fines et halo des lampes le soir.
-Le bouton **Maquette / Murs hauts / Murs ouverts** de la vue publiée change l'affichage des murs (choix mémorisé sur l'appareil).
+**Rendu réaliste** : matières en relief (joints, veinage, briques, travertin), textiles veloutés, plinthes, couleurs fidèles ;
+en **Rendu HD** (case de l'éditeur ou bouton **HD** de la vue publiée ; activé d'office sur ordinateur) : ombrage de contact (occlusion ambiante), bords lissés, ombres fines et halo des lampes le soir.
 
 **Cuisine modulaire** façon configurateur de grande surface : meubles bas, hauts, colonnes et demi-colonnes aux dimensions standard (four, micro-ondes, plaque, évier, lave-vaisselle, réfrigérateur intégrés), joues, fileurs et crédence ;
 façades façon Leroy Merlin (Sofia, Tokyo, Oxford…) ou IKEA (Voxtorp, Bodbyn, Axstad, Havstorp, Kungsbacka, Nickebo, Sinarp…), poignées et finitions au choix, plan de travail. Le style choisi est repris pour chaque nouveau meuble, et les meubles se collent bord à bord.
