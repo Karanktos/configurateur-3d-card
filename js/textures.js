@@ -302,6 +302,110 @@ GEN.pavers = () => {   // pavés 25 × 12,5 cm en appareil décalé
   }
   noise(x, c, 9, 92); return c;
 };
+// ---- carrelages et dalles « grand format » (travertin, grès cérame, effet béton / marbre / bois…) ----
+// o : { tw, th, nx, ny, stagger, rows, style, seed, joint, base, vary } ; la période du motif est nx·tw × ny·th (m) — rows = [{ h, ws:[…] }] pour un calepinage libre (opus)
+function slabTex(o) {
+  const rows = o.rows || Array.from({ length: o.ny }, (_, j) => ({ h: o.th, ws: Array(o.nx).fill(o.tw), off: (j % 2) * (o.stagger || 0) * o.tw }));
+  const W = rows[0].ws.reduce((a, b) => a + b, 0), H = rows.reduce((a, r) => a + r.h, 0);
+  return () => {
+    const ppm = Math.min(512 / Math.min(W, H), 1100 / Math.max(W, H)), cw = Math.round(W * ppm), ch = Math.round(H * ppm);
+    const c = cv(cw, ch), x = c.getContext('2d'), r = rng(o.seed || 5), jt = Math.max(1.5, (o.joint ?? 0.004) * ppm), st = o.style || 'gres';
+    x.fillStyle = grey(st === 'travertin' ? 120 : 105); x.fillRect(0, 0, cw, ch);
+    let y = 0;
+    for (const row of rows) {
+      const rh = row.h * ppm; let px = (row.off || 0) * ppm;
+      for (const wv of row.ws) {
+        const tw = wv * ppm, tone = (o.base ?? 222) + (r() - 0.5) * (o.vary ?? 22);
+        for (const ox of [-cw, 0, cw]) {
+          const tx = px + ox + jt / 2, ty = y + jt / 2, w2 = tw - jt, h2 = rh - jt;
+          if (tx > cw || tx + w2 < 0) continue;
+          x.save(); x.beginPath(); x.rect(tx, ty, w2, h2); x.clip();
+          const g = x.createLinearGradient(tx, ty, tx + w2 * 0.4, ty + h2); g.addColorStop(0, grey(tone + 6)); g.addColorStop(1, grey(tone - 8)); x.fillStyle = g; x.fillRect(tx, ty, w2, h2);
+          const rr = rng(Math.floor(r() * 1e9) + 1);   // le même tirage pour les 3 copies d'une dalle
+          if (st === 'travertin') {
+            for (let k = 0; k < 7 + w2 / 60; k++) {   // strates horizontales
+              const yy = ty + rr() * h2, a = 0.05 + rr() * 0.09, dk = rr() < 0.55;
+              x.strokeStyle = dk ? `rgba(70,50,30,${a})` : `rgba(255,255,255,${a * 1.3})`; x.lineWidth = 0.8 + rr() * 3.5; x.beginPath(); x.moveTo(tx, yy);
+              x.bezierCurveTo(tx + w2 * 0.3, yy + (rr() - 0.5) * 9, tx + w2 * 0.65, yy + (rr() - 0.5) * 9, tx + w2, yy + (rr() - 0.5) * 6); x.stroke();
+            }
+            for (let k = 0; k < 10 + (w2 * h2) / 6000; k++) {   // alvéoles allongées
+              const ex = tx + rr() * w2, ey = ty + rr() * h2, rx = 1.5 + rr() * 7, ry = 0.7 + rr() * 1.7;
+              x.fillStyle = `rgba(80,60,40,${0.14 + rr() * 0.22})`; x.beginPath(); x.ellipse(ex, ey, rx, ry, 0, 0, 6.283); x.fill();
+              x.fillStyle = 'rgba(255,255,255,0.12)'; x.beginPath(); x.ellipse(ex, ey + ry * 0.8, rx * 0.9, ry * 0.5, 0, 0, 6.283); x.fill();
+            }
+          } else if (st === 'marbre') {
+            for (let k = 0; k < 3 + rr() * 3; k++) {
+              x.strokeStyle = `rgba(${60 + rr() * 40},${60 + rr() * 40},${70 + rr() * 40},${0.18 + rr() * 0.3})`; x.lineWidth = 0.6 + rr() * 2.2; x.beginPath();
+              let vx = tx + rr() * w2, vy = ty; x.moveTo(vx, vy);
+              for (let s = 0; s < 6; s++) { vx += (rr() - 0.5) * w2 * 0.5; vy += h2 / 6; x.lineTo(vx, vy); } x.stroke();
+            }
+          } else if (st === 'beton') {
+            for (let k = 0; k < 40; k++) { const bx = tx + rr() * w2, by = ty + rr() * h2, br = 8 + rr() * 40, gg = x.createRadialGradient(bx, by, 0, bx, by, br); const dk = rr() < 0.5; gg.addColorStop(0, dk ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)'); gg.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gg; x.fillRect(bx - br, by - br, br * 2, br * 2); }
+          } else if (st === 'bois') {
+            for (let k = 0; k < 16; k++) { const yy = ty + rr() * h2; x.strokeStyle = `rgba(60,40,20,${0.06 + rr() * 0.12})`; x.lineWidth = 0.7 + rr() * 1.6; x.beginPath(); x.moveTo(tx, yy); x.bezierCurveTo(tx + w2 * 0.3, yy + (rr() - 0.5) * 5, tx + w2 * 0.7, yy + (rr() - 0.5) * 5, tx + w2, yy + (rr() - 0.5) * 3); x.stroke(); }
+            if (rr() < 0.4) { const kx = tx + rr() * w2, ky = ty + rr() * h2; x.fillStyle = 'rgba(60,40,20,0.25)'; x.beginPath(); x.ellipse(kx, ky, 5 + rr() * 5, 2.5 + rr() * 2, 0, 0, 6.283); x.fill(); }
+          } else if (st === 'ardoise') {
+            for (let k = 0; k < 22; k++) { const yy = ty + rr() * h2; x.strokeStyle = `rgba(0,0,0,${0.05 + rr() * 0.1})`; x.lineWidth = 0.8 + rr() * 2.5; x.beginPath(); x.moveTo(tx, yy); x.lineTo(tx + w2, yy + (rr() - 0.5) * 12); x.stroke(); }
+            for (let k = 0; k < 400; k++) { x.fillStyle = grey(60 + rr() * 150); x.globalAlpha = 0.35; x.fillRect(tx + rr() * w2, ty + rr() * h2, 1.5, 1.5); } x.globalAlpha = 1;
+          } else {   // grès cérame uni, très légèrement moucheté
+            for (let k = 0; k < 500; k++) { x.fillStyle = grey(tone - 30 + rr() * 60); x.globalAlpha = 0.2; x.fillRect(tx + rr() * w2, ty + rr() * h2, 1.4, 1.4); } x.globalAlpha = 1;
+          }
+          x.restore();
+        }
+        px += tw;
+      }
+      y += rh;
+    }
+    noise(x, c, st === 'ardoise' ? 9 : 5, (o.seed || 5) + 1);
+    return c;
+  };
+}
+const SLABS = {
+  travertin_30x60: { tw: 0.3, th: 0.6, nx: 4, ny: 2, stagger: 0.5, style: 'travertin', seed: 201, base: 226, vary: 18 },
+  travertin_40x40: { tw: 0.4, th: 0.4, nx: 3, ny: 3, style: 'travertin', seed: 202, base: 226, vary: 18 },
+  travertin_60x60: { tw: 0.6, th: 0.6, nx: 2, ny: 2, style: 'travertin', seed: 203, base: 226, vary: 16 },
+  travertin_60x120: { tw: 0.6, th: 1.2, nx: 2, ny: 2, stagger: 0.5, style: 'travertin', seed: 204, base: 226, vary: 16 },
+  travertin_opus: { rows: [{ h: 0.3, ws: [0.6, 0.3, 0.3] }, { h: 0.6, ws: [0.3, 0.6, 0.3] }, { h: 0.3, ws: [0.3, 0.3, 0.6] }], style: 'travertin', seed: 205, base: 226, vary: 20 },
+  gres_30: { tw: 0.3, th: 0.3, nx: 4, ny: 4, seed: 211, joint: 0.003, base: 224, vary: 10 },
+  gres_60: { tw: 0.6, th: 0.6, nx: 2, ny: 2, seed: 212, joint: 0.003, base: 224, vary: 10 },
+  gres_80: { tw: 0.8, th: 0.8, nx: 2, ny: 2, seed: 213, joint: 0.002, base: 224, vary: 10 },
+  gres_60x120: { tw: 0.6, th: 1.2, nx: 2, ny: 2, stagger: 0.5, seed: 214, joint: 0.002, base: 224, vary: 10 },
+  beton_60: { tw: 0.6, th: 0.6, nx: 2, ny: 2, style: 'beton', seed: 221, joint: 0.003, base: 212, vary: 12 },
+  beton_80: { tw: 0.8, th: 0.8, nx: 2, ny: 2, style: 'beton', seed: 222, joint: 0.002, base: 212, vary: 12 },
+  marbre_60: { tw: 0.6, th: 0.6, nx: 2, ny: 2, style: 'marbre', seed: 231, joint: 0.002, base: 238, vary: 8 },
+  marbre_60x120: { tw: 0.6, th: 1.2, nx: 2, ny: 2, stagger: 0.5, style: 'marbre', seed: 232, joint: 0.002, base: 238, vary: 8 },
+  bois_gres: { tw: 1.2, th: 0.2, nx: 1, ny: 6, stagger: 0.37, style: 'bois', seed: 241, joint: 0.002, base: 214, vary: 30 },
+  stratifie: { tw: 1.38, th: 0.19, nx: 1, ny: 6, stagger: 0.33, style: 'bois', seed: 242, joint: 0.0015, base: 216, vary: 26 },
+  vinyle: { tw: 1.22, th: 0.18, nx: 1, ny: 6, stagger: 0.4, style: 'bois', seed: 243, joint: 0.001, base: 220, vary: 20 },
+  ardoise: { tw: 0.4, th: 0.4, nx: 3, ny: 3, style: 'ardoise', seed: 251, joint: 0.004, base: 150, vary: 40 },
+};
+for (const [k, o] of Object.entries(SLABS)) GEN[k] = slabTex(o);
+const slabSize = (o) => { const rows = o.rows || Array.from({ length: o.ny }, () => ({ h: o.th, ws: Array(o.nx).fill(o.tw) })); return [rows[0].ws.reduce((a, b) => a + b, 0), rows.reduce((a, r) => a + r.h, 0)]; };
+GEN.ciment = () => {   // carreaux de ciment 20 × 20 cm, motif géométrique (période 0,8 m)
+  const c = cv(512), x = c.getContext('2d'), r = rng(261), t = 128;
+  x.fillStyle = grey(215); x.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) {
+    const ox = i * t, oy = j * t, rot = (i + j) % 2;
+    x.save(); x.beginPath(); x.rect(ox + 2, oy + 2, t - 4, t - 4); x.clip(); x.translate(ox + t / 2, oy + t / 2); if (rot) x.rotate(Math.PI / 4 * 0);
+    x.fillStyle = grey(228); x.fillRect(-t / 2, -t / 2, t, t);
+    x.fillStyle = grey(110); x.beginPath(); x.moveTo(0, -t * 0.46); x.lineTo(t * 0.46, 0); x.lineTo(0, t * 0.46); x.lineTo(-t * 0.46, 0); x.closePath(); x.fill();
+    x.fillStyle = grey(206); x.beginPath(); x.moveTo(0, -t * 0.32); x.lineTo(t * 0.32, 0); x.lineTo(0, t * 0.32); x.lineTo(-t * 0.32, 0); x.closePath(); x.fill();
+    x.fillStyle = grey(rot ? 90 : 150); x.beginPath(); x.arc(0, 0, t * 0.16, 0, 6.283); x.fill();
+    for (const [qx, qy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { x.fillStyle = grey(120); x.beginPath(); x.arc(qx * t / 2, qy * t / 2, t * 0.2, 0, 6.283); x.fill(); }
+    x.restore();
+  }
+  noise(x, c, 6, 262); void r; return c;
+};
+GEN.zellige = () => {   // zellige : carreaux de 10 cm irréguliers et brillants (période 0,8 m)
+  const c = cv(512), x = c.getContext('2d'), r = rng(271), t = 64;
+  x.fillStyle = grey(150); x.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) {
+    const tone = 205 + (r() - 0.5) * 70, g = x.createLinearGradient(i * t, j * t, i * t + t, j * t + t); g.addColorStop(0, grey(tone + 18)); g.addColorStop(1, grey(tone - 22));
+    x.fillStyle = g; x.beginPath(); x.moveTo(i * t + 2 + r() * 3, j * t + 2 + r() * 3); x.lineTo(i * t + t - 2 - r() * 3, j * t + 2 + r() * 3); x.lineTo(i * t + t - 2 - r() * 3, j * t + t - 2 - r() * 3); x.lineTo(i * t + 2 + r() * 3, j * t + t - 2 - r() * 3); x.closePath(); x.fill();
+  }
+  noise(x, c, 7, 272); return c;
+};
+GEN.tomette = GEN.hex;
 GEN.tile4 = GEN.tile(4); GEN.tile2 = GEN.tile(2); GEN.tile1 = GEN.tile(1);
 
 // taille réelle (m) couverte par un motif
@@ -310,6 +414,9 @@ export const TEX_SIZE = {
   stone: [1.2, 1.2], checker: [1, 1], crepi: [1, 1], brique: [0.88, 0.975], lambris: [0.5, 0.5], metro: [0.4, 0.4], bois: [0.6, 0.6], lames: [0.16, 0.32], gravel: [3, 3],
   granite: [0.6, 0.6], chevron: [1, 1], plank: [1, 1], hex: [1, 0.866], terrazzo: [1, 1], grass: [1, 1], deck: [1, 1], pavers: [1, 1],
 };
+
+for (const [k, o] of Object.entries(SLABS)) TEX_SIZE[k] = slabSize(o);
+TEX_SIZE.ciment = [0.8, 0.8]; TEX_SIZE.zellige = [0.8, 0.8]; TEX_SIZE.tomette = [0.55, 0.476];
 
 const cache = {};
 export function getTex(kind) {
@@ -371,6 +478,26 @@ export const FLOORS = [
   { id: 'terrasse', name: 'Terrasse bois', tex: 'deck', color: '#a47a52', presets: ['#a47a52', '#c49a6c', '#7a5638', '#8d8b86', '#5a4636'] },
   { id: 'paves', name: 'Pavés', tex: 'pavers', color: '#a8a49c', presets: ['#a8a49c', '#c4b5a0', '#8d8b86', '#b98b6c', '#6e7378'] },
   { id: 'pelouse', name: 'Pelouse', tex: 'grass', color: '#6f9a4f', presets: ['#6f9a4f', '#7fae5a', '#5a8040', '#9ab36a', '#a89f5a'] },
+  { id: 'travertin_30x60', name: 'Travertin 30 × 60', tex: 'travertin_30x60', color: '#e3d6bd', presets: ['#e3d6bd', '#efe6d2', '#d6c3a0', '#bda98a', '#b8b1a6', '#d9b8a0'] },
+  { id: 'travertin_40x40', name: 'Travertin 40 × 40', tex: 'travertin_40x40', color: '#e3d6bd', presets: ['#e3d6bd', '#efe6d2', '#d6c3a0', '#bda98a', '#b8b1a6', '#d9b8a0'] },
+  { id: 'travertin_60x60', name: 'Travertin 60 × 60', tex: 'travertin_60x60', color: '#e3d6bd', presets: ['#e3d6bd', '#efe6d2', '#d6c3a0', '#bda98a', '#b8b1a6', '#d9b8a0'] },
+  { id: 'travertin_60x120', name: 'Travertin 60 × 120', tex: 'travertin_60x120', color: '#e3d6bd', presets: ['#e3d6bd', '#efe6d2', '#d6c3a0', '#bda98a', '#b8b1a6', '#d9b8a0'] },
+  { id: 'travertin_opus', name: 'Travertin opus (formats mixtes)', tex: 'travertin_opus', color: '#dccfb4', presets: ['#dccfb4', '#efe6d2', '#c9b693', '#a89677', '#b8b1a6'] },
+  { id: 'gres_30', name: 'Grès cérame 30 × 30', tex: 'gres_30', color: '#d6d3cc', presets: ['#f3f1ec', '#d6d3cc', '#a8a49c', '#6e7378', '#3d4247', '#c9b79c', '#b98b6c'] },
+  { id: 'gres_60', name: 'Grès cérame 60 × 60', tex: 'gres_60', color: '#d6d3cc', presets: ['#f3f1ec', '#d6d3cc', '#a8a49c', '#6e7378', '#3d4247', '#c9b79c', '#b98b6c'] },
+  { id: 'gres_80', name: 'Grès cérame 80 × 80', tex: 'gres_80', color: '#d6d3cc', presets: ['#f3f1ec', '#d6d3cc', '#a8a49c', '#6e7378', '#3d4247', '#c9b79c'] },
+  { id: 'gres_60x120', name: 'Grès cérame 60 × 120', tex: 'gres_60x120', color: '#d6d3cc', presets: ['#f3f1ec', '#d6d3cc', '#a8a49c', '#6e7378', '#3d4247', '#c9b79c'] },
+  { id: 'beton_60', name: 'Effet béton 60 × 60', tex: 'beton_60', color: '#b5b3ad', presets: ['#d4d2cc', '#b5b3ad', '#8d8b86', '#5d5c58', '#c4b5a0'] },
+  { id: 'beton_80', name: 'Effet béton 80 × 80', tex: 'beton_80', color: '#b5b3ad', presets: ['#d4d2cc', '#b5b3ad', '#8d8b86', '#5d5c58', '#c4b5a0'] },
+  { id: 'marbre_60', name: 'Effet marbre 60 × 60', tex: 'marbre_60', color: '#f4f2ee', presets: ['#f4f2ee', '#e8e1d4', '#c9c2b8', '#8fa0a8', '#2e3338'] },
+  { id: 'marbre_60x120', name: 'Effet marbre 60 × 120', tex: 'marbre_60x120', color: '#f4f2ee', presets: ['#f4f2ee', '#e8e1d4', '#c9c2b8', '#8fa0a8', '#2e3338'] },
+  { id: 'bois_gres', name: 'Grès effet bois 20 × 120', tex: 'bois_gres', color: '#c8a57a', presets: ['#c8a57a', '#e0c9a6', '#a4784c', '#7a5638', '#5a4636', '#a4a29d'] },
+  { id: 'stratifie', name: 'Parquet stratifié (lames clipsables)', tex: 'stratifie', color: '#c9a77c', presets: ['#c9a77c', '#e0c9a6', '#b58a5a', '#8a6445', '#5a4636', '#a4a29d'] },
+  { id: 'vinyle', name: 'Sol vinyle lames PVC', tex: 'vinyle', color: '#c4a883', presets: ['#c4a883', '#e0c9a6', '#a98a62', '#7a5638', '#8d8b86', '#d9d4cb'] },
+  { id: 'ciment', name: 'Carreaux de ciment', tex: 'ciment', color: '#c8b49a', presets: ['#c8b49a', '#9fb4c0', '#c97b63', '#8fb08a', '#e8e4dc', '#6e7378'] },
+  { id: 'tomette', name: 'Tomettes hexagonales', tex: 'tomette', color: '#c07a52', presets: ['#c07a52', '#a85a3c', '#d9a07a', '#8d8b86', '#c9b79c'] },
+  { id: 'zellige', name: 'Zellige', tex: 'zellige', color: '#8fb0a8', presets: ['#8fb0a8', '#ffffff', '#6d8fa3', '#7d9a7a', '#d9b44a', '#c97b63'] },
+  { id: 'ardoise', name: 'Ardoise', tex: 'ardoise', color: '#7d848a', presets: ['#7d848a', '#4b5359', '#6a7a6a', '#8a7e6d', '#a8a49c'] },
   { id: 'uni', name: 'Uni (résine)', tex: null, color: '#e8e4dc', presets: ['#f2efe9', '#e8e4dc', '#c8c4bc', '#9aa5a8', '#4b5359'] },
 ];
 export const floorDef = (id) => FLOORS.find((f) => f.id === id) || FLOORS[0];

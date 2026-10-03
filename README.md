@@ -88,7 +88,7 @@ Convertis la description ci-dessous en JSON pour mon logiciel de plan 3D. Répon
 RÈGLES :
 - Unités : mètres. x vers la droite (est), z vers le bas (sud). Origine (0,0) = coin nord-ouest de la maison.
 - "walls" : un mur par segment, numérotés id 1, 2, 3… : {"id":1,"x1":0,"z1":0,"x2":10,"z2":0,"t":0.2,"h":2.5}. Murs extérieurs dans le sens horaire (nord vers l'est, est vers le sud, sud vers l'ouest, ouest vers le nord). Cloisons : t=0.1.
-- "floors" : un rectangle par pièce : {"id":20,"x":0,"z":0,"w":5,"d":4,"mat":"parquet"} (x,z = coin nord-ouest, w = largeur est-ouest, d = profondeur nord-sud). mat : parquet, tile4, tile2, moquette, beton, pierre, marbre.
+- "floors" : un rectangle par pièce : {"id":20,"x":0,"z":0,"w":5,"d":4,"mat":"parquet"} (x,z = coin nord-ouest, w = largeur est-ouest, d = profondeur nord-sud). mat : parquet, planches, chevron, tile4, tile2, moquette, beton, pierre, marbre, travertin_30x60, travertin_40x40, travertin_60x60, travertin_60x120, travertin_opus, gres_30, gres_60, gres_80, gres_60x120, beton_60, marbre_60, bois_gres, stratifie, vinyle, ciment, tomette, zellige, ardoise (liste complète dans docs/IMPORT-IA.md).
 - "openings" : {"id":30,"kind":"door","model":"battant","wall":1,"s":2.0,"w":0.9} ; wall = id du mur, s = distance en mètres depuis le POINT DE DÉPART du mur jusqu'au CENTRE de l'ouverture (entre w/2 et longueur du mur - w/2).
   kind "door" : battant (0.9), vitree (0.9), double (1.4), coulissante (0.9), entree (0.95), passage (1.0, sans porte), sectionnelle (garage 2.8).
   kind "window" : fixe (1.0), battant1 (0.7), battant2 (1.2), coulissant (1.6), baie2 (2.0 de large, jusqu'au sol), baie3 (3.0), baie4 (4.25).
