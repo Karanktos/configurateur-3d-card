@@ -43,11 +43,11 @@ la **face A (`fa`) est alors l'intérieur**, la face B (`fb`) l'extérieur. Les 
 ### Ouvertures (`openings`) : portes et fenêtres
 ```json
 { "id": 20, "kind": "door", "model": "battant", "wall": 1, "s": 2.0, "w": 0.9, "h": 2.04, "y0": 0, "mat": "bois", "frame": "#ffffff", "leaf": "#e9e4da",
-  "glass": "clair", "bars": 0, "handle": "inox", "hinge": "L", "side": 1, "shutter": false, "shutterColor": "#d8d4cc", "open": 0, "shut": 0, "ent": "", "ent2": "", "shutEnt": "" }
+  "glass": "clair", "bars": 0, "handle": "inox", "hinge": "L", "side": 1, "shutter": false, "shutFlip": 0, "shutterColor": "#d8d4cc", "open": 0, "shut": 0, "ent": "", "ent2": "", "shutEnt": "" }
 ```
 `wall` = id du mur ; `s` = distance en mètres, le long du mur, entre son point de départ (x1, z1) et le **centre** de l'ouverture (l'ouverture doit tenir dans le mur : `w/2 <= s <= longueur - w/2`).
 `kind` = `door` ou `window`. `y0` = hauteur de l'allège (bas de l'ouverture), `h` = hauteur. `mat` : `pvc`, `alu`, `bois`. `hinge` : `L` ou `R` (charnière à gauche / à droite) ;
-`side` : 1 ou -1 (sens d'ouverture, de l'intérieur vers l'extérieur ou l'inverse). `shutter: true` ajoute un volet roulant. Laisser `ent`, `ent2`, `shutEnt` vides (entités Home Assistant, à relier ensuite).
+`side` : 1 ou -1 (sens d'ouverture, de l'intérieur vers l'extérieur ou l'inverse). `shutter: true` ajoute un volet roulant, placé du côté opposé au sens d'ouverture (`shutFlip: 1` le met de l'autre côté du mur). Laisser `ent`, `ent2`, `shutEnt` vides (entités Home Assistant, à relier ensuite).
 
 Modèles de **portes** (`model` : nom, largeur × hauteur par défaut) :
 * `battant` — Porte pleine (0.9×2.04 m)

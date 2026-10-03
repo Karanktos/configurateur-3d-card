@@ -393,6 +393,9 @@ export const TEX_SIZE = {
 };
 
 for (const [k, o] of Object.entries(SLABS)) TEX_SIZE[k] = slabSize(o);
+// taille d'un carreau / d'une dalle (affichée dans l'éditeur) quand elle est fixe
+export const TILE = { tile4: [0.25, 0.25], tile2: [0.5, 0.5], tile1: [1, 1], checker: [0.25, 0.25], ciment: [0.2, 0.2], zellige: [0.1, 0.1], pavers: [0.25, 0.125] };
+for (const [k, o] of Object.entries(SLABS)) if (o.tw) TILE[k] = [o.tw, o.th];
 TEX_SIZE.ciment = [0.8, 0.8]; TEX_SIZE.zellige = [0.8, 0.8]; TEX_SIZE.tomette = [0.55, 0.476];
 
 const cache = {};

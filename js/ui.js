@@ -9,7 +9,7 @@ import {
 import { entities, stateOf, nameOf, hasHA, onHass, listDashboards, publishPlan, navigate } from './ha.js';
 import { iconList, refresh as refreshPins } from './pins.js';
 import * as SUN from './sun.js';
-import { FLOORS, FINISHES, PALETTE, floorDef, finishDef, swatch } from './textures.js';
+import { FLOORS, FINISHES, PALETTE, TILE, floorDef, finishDef, swatch } from './textures.js';
 import { CATS, ALL, FINS, buildItem, defOf, defaultItem } from './catalog.js';
 import { DOORS, WINDOWS, MATS, GLASSES, HANDLES, defaultOpening, buildOpening, modelOf } from './openings.js';
 import { wallGeometry } from './geom.js';
@@ -85,9 +85,10 @@ function fText(label, o, k, on, ph = '') {
 const fBtns = (...b) => el('div', { class: 'row', style: { marginBottom: '10px' } }, b);
 const btn = (t, fn, cls = '') => el('button', { class: 'btn ' + cls, onclick: fn }, t);
 
+const prevMat = new Map();   // sol → revêtement qu'il avait avant le changement (pour « appliquer aux autres sols »)
 function fFloorMat(o, on) {
   const wrap = el('div', { class: 'mats' });
-  FLOORS.forEach((f) => wrap.append(el('button', { class: 'mat' + (o.mat === f.id ? ' on' : ''), onclick: () => { o.mat = f.id; o.color = f.color; on(true); refreshPanels(); } },
+  FLOORS.forEach((f) => wrap.append(el('button', { class: 'mat' + (o.mat === f.id ? ' on' : ''), onclick: () => { if (o.id && f.id !== o.mat && !prevMat.has(o.id)) prevMat.set(o.id, o.mat); o.mat = f.id; o.color = f.color; if ('scale' in o) o.scale = 1; on(true); refreshPanels(); } },
     el('img', { src: swatch(f.tex, o.mat === f.id ? o.color : f.color, 72), alt: '' }), f.name)));
   return el('div', { class: 'f' }, el('div', { class: 'l' }, 'Matière du sol'), wrap);
 }
@@ -170,7 +171,7 @@ function openingLibrary(kind) {
   models.forEach((m) => {
     const probe = { ...defaultOpening(kind, m.id), mat: o.mat, frame: o.frame, leaf: o.leaf, glass: o.glass };
     const img = el('img', { alt: m.name });
-    grid.append(el('button', { class: 'prod' + (o.model === m.id ? ' on' : ''), onclick: () => { const keep = { ...o }; Object.assign(o, defaultOpening(kind, m.id), { mat: keep.mat, frame: keep.frame, leaf: keep.leaf, glass: keep.glass, handle: keep.handle, shutter: keep.shutter, shutterColor: keep.shutterColor, bars: keep.bars }); rebuildGhost(); renderLib(); } },
+    grid.append(el('button', { class: 'prod' + (o.model === m.id ? ' on' : ''), onclick: () => { const keep = { ...o }; Object.assign(o, defaultOpening(kind, m.id), { mat: keep.mat, frame: keep.frame, leaf: keep.leaf, glass: keep.glass, handle: keep.handle, shutter: keep.shutter, shutFlip: keep.shutFlip, shutterColor: keep.shutterColor, bars: keep.bars }); rebuildGhost(); renderLib(); } },
       el('div', { class: 'im op' }, img), el('b', {}, m.name), el('span', {}, `${Math.round(m.w * 100)} × ${Math.round(m.h * 100)} cm`)));
     openingThumb(probe, img, `${kind}-${m.id}-${o.mat}-${o.frame}-${o.leaf}`);
   });
@@ -503,8 +504,8 @@ export function openingForm(o, onChg, isDefault = false) {
   if (!round && !['fixe', 'passage', 'battant2', 'double', 'baie3'].includes((m.like || m.id))) out.push(fSeg((m.like || m.id) === 'coulissante' || (m.like || m.id) === 'coulissant' || (m.like || m.id) === 'baie2' ? 'Côté coulissant' : 'Charnières', o, 'hinge', [['L', 'Gauche'], ['R', 'Droite']], ch));
   if (!round && !['fixe', 'passage', 'baie2', 'baie3', 'coulissant'].includes((m.like || m.id))) out.push(fSeg((m.like || m.id) === 'coulissante' ? 'Côté de la porte' : 'S\'ouvre vers', o, 'side', [[1, 'Face A'], [-1, 'Face B']], ch));
   if (o.kind === 'window' && !round) {
-    out.push(fCheck('Volet roulant extérieur', o, 'shutter', (f) => { ch(f); renderProps(); }));
-    if (o.shutter) out.push(fColor('Couleur du volet', o, 'shutterColor', ch));
+    out.push(fCheck('Volet roulant', o, 'shutter', (f) => { ch(f); renderProps(); }));
+    if (o.shutter) out.push(fBtns(btn('⇄ Inverser le côté du volet (intérieur / extérieur)', () => { o.shutFlip = o.shutFlip ? 0 : 1; ch(true); renderProps(); })), fColor('Couleur du volet', o, 'shutterColor', ch));
   }
   if (!isDefault) {
     const bind = () => { syncLive(); commit(); };
@@ -603,11 +604,16 @@ export function renderProps() {
     n.append(fBtns(btn('Copier A → B', () => { e.fb = { ...e.fa }; rebuildStructure(); commit(); renderProps(); }), btn('Inverser les faces', () => { [e.x1, e.x2] = [e.x2, e.x1]; [e.z1, e.z2] = [e.z2, e.z1]; e.s_flip = 1; S.openings.filter((o) => o.wall === e.id).forEach((o) => { o.s = r2(i.L - o.s); o.side = -o.side; if (o.hinge) o.hinge = o.hinge === 'L' ? 'R' : 'L'; }); rebuildStructure(); commit(); renderProps(); }), del));
     n.append(el('p', { class: 'sub' }, 'Astuce : poignées blanches = extrémités (glisse-les). Le mur se déplace en le glissant.'));
   } else if (kind === 'floor') {
-    const ch = (f) => { rebuildFloors(); if (f) commit(); };
+    const tsz = el('p', { class: 'sub' }), showSize = () => { const d = floorDef(e.mat), [tw, th] = (d.tex && TILE[d.tex]) || [0, 0], sc = e.scale || 1, f2 = (v) => (v * sc).toFixed(2).replace('.', ','); tsz.textContent = tw ? `Un carreau mesure ${f2(tw)} × ${f2(th)} m (taille du motif 1 = dimensions réelles)` : ''; };
+    const ch = (f) => { rebuildFloors(); showSize(); if (f) commit(); };
     n.append(el('h2', {}, 'Sol'), el('p', { class: 'sub' }, `${(e.w * e.d).toFixed(1).replace('.', ',')} m² · ${floorDef(e.mat).name}`));
     n.append(fFloorMat(e, ch), fColor('Couleur / teinte', e, 'color', ch, floorDef(e.mat).presets), fRange('Taille du motif (lames, carreaux)', e, 'scale', 0.4, 2.5, 0.05, ch, 'x'));
+    showSize(); n.append(tsz);
     n.append(fRange('Largeur', e, 'w', 0.4, 20, 0.05, ch), fRange('Profondeur', e, 'd', 0.4, 20, 0.05, ch));
-    n.append(fBtns(btn('Dupliquer', duplicateSelected), del));
+    // reporter matière, teinte et taille sur les autres sols qui ont (ou avaient) le même revêtement
+    const was = prevMat.get(e.id) || e.mat, others = S.floors.filter((f) => f !== e && (f.mat === was || f.mat === e.mat));
+    const apply = others.length ? btn(`Appliquer aux ${others.length} autre${others.length > 1 ? 's' : ''} sol${others.length > 1 ? 's' : ''} « ${floorDef(was).name} »${was !== e.mat ? ' / « ' + floorDef(e.mat).name + ' »' : ''}`, () => { others.forEach((f) => { f.mat = e.mat; f.color = e.color; f.scale = e.scale || 1; }); prevMat.delete(e.id); rebuildFloors(); commit(); renderProps(); }) : null;
+    n.append(fBtns(...[apply, btn('Dupliquer', duplicateSelected), del].filter(Boolean)));
   } else if (kind === 'opening') {
     const ch = (f) => { rebuildStructure(); if (f) commit(); };
     const m = modelOf(e), w = find('wall', e.wall);

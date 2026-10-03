@@ -64,7 +64,7 @@ export function defaultOpening(kind, model) {
   const m = (kind === 'door' ? DOORS : WINDOWS).find((x) => x.id === model);
   return {
     kind, model, w: m.w, h: m.h, y0: m.y0, mat: kind === 'door' ? 'bois' : 'pvc', frame: '#ffffff', leaf: kind === 'door' ? '#e9e4da' : '#ffffff',
-    glass: 'clair', bars: 0, handle: 'inox', hinge: 'L', side: 1, shutter: false, shutterColor: '#d8d4cc', open: 0, shut: 0, ent: '', ent2: '', shutEnt: '',
+    glass: 'clair', bars: 0, handle: 'inox', hinge: 'L', side: 1, shutter: false, shutFlip: 0, shutterColor: '#d8d4cc', open: 0, shut: 0, ent: '', ent2: '', shutEnt: '',
   };
 }
 
@@ -217,12 +217,12 @@ export function buildOpening(o, t) {
     }
   }
 
-  // ---- volet roulant (côté extérieur = opposé au sens d'ouverture) ----
+  // ---- volet roulant (par défaut côté extérieur = opposé au sens d'ouverture ; shutFlip le passe de l'autre côté du mur) ----
   if (o.shutter) {
-    const sz = -side * (t / 2 + 0.05);
+    const ss = o.shutFlip ? side : -side, sz = ss * (t / 2 + 0.05);
     const sm = new THREE.MeshStandardMaterial({ color: o.shutterColor, roughness: 0.5, metalness: 0.2, map: getTexM('lames') });
     const cm = new THREE.MeshStandardMaterial({ color: o.shutterColor, roughness: 0.55, metalness: 0.1 });
-    bx(g, W + 0.06, 0.2, 0.17, cm, 0, H + 0.1, -side * (t / 2 + 0.07));
+    bx(g, W + 0.06, 0.2, 0.17, cm, 0, H + 0.1, ss * (t / 2 + 0.07));
     const pv = piv(g, 0, H, sz), cur = bx(pv, W - 0.04, H + 0.02, 0.022, sm, 0, -(H + 0.02) / 2, 0);
     void cur; pv.scale.y = 0.02;
     addPart(shutParts, pv, { scale: ['y', 0.02, 1] });
