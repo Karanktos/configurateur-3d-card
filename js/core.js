@@ -10,6 +10,7 @@ import { mergeStatic } from './merge.js';
 import { levelOf, stateOf, hasHA } from './ha.js';
 import * as SUN from './sun.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { renderHD, hdWanted } from './post.js';
 
 export const FLOOR_Y = 0.01;
 const KEY = 'plan3d-configurateur-v1';
@@ -21,7 +22,7 @@ export const S = { walls: [], openings: [], floors: [], items: [], markers: [], 
 // present = affichage « vue maison » (fond transparent, barre jour/soir, boussole) ; readonly = vue publiée (aucune modification)
 // vue seule (publiée ou aperçu) : rien ne s'édite ; le mode « Configurer » de la vue publiée rouvre l'édition des pastilles, lumières et liaisons
 export const viewOnly = () => (settings.readonly || settings.present) && !settings.cfg;
-export const settings = { wallMode: 'auto', snap: 0.1, magnet: true, view: '3d', ortho: false, camOrtho: false, live: false, present: false, readonly: false, cfg: false, free: false, sun: { mode: 'off', date: '', min: 720, force: null } };
+export const settings = { wallMode: 'auto', snap: 0.1, magnet: true, view: '3d', ortho: false, camOrtho: false, live: false, present: false, readonly: false, cfg: false, free: false, hd: hdWanted(), sun: { mode: 'off', date: '', min: 720, force: null } };
 export const sel = { kind: null, id: null };
 
 const listeners = {};
@@ -654,11 +655,15 @@ function loop(t) {
     for (const f of R.frameHooks || []) f();
     // les ombres ne sont recalculées que si la géométrie, une pièce mobile (porte, tiroir…) ou l'ensemble des lumières allumées a changé : pas pendant un simple fondu de luminosité
     if (shadowDirty || LG.mov || LG.vis) { budgetShadows(); R.renderer.shadowMap.needsUpdate = true; shadowDirty = false; LG.mov = LG.vis = 0; }
-    R.renderer.render(R.scene, R.cam); dirty = false;
+    draw(); dirty = false;
   }
 }
+// rendu HD (occlusion ambiante) en 3D seulement ; les aides d'édition et les objets transparents n'y participent pas
+const noAO = (o) => o === R.ui || o === R.grid || o === R.grid5 || (o.isMesh && !Array.isArray(o.material) && o.material.transparent);
+function draw() { renderHD(R.renderer, R.scene, R.cam, settings.hd && settings.view === '3d', noAO); }
 export const isAnimating = () => animating;
-export function snapshotPNG() { R.renderer.shadowMap.needsUpdate = true; R.renderer.render(R.scene, R.cam); return R.canvas.toDataURL('image/png'); }
+export function snapshotPNG() { R.renderer.shadowMap.needsUpdate = true; draw(); return R.canvas.toDataURL('image/png'); }
+export function setHD(on) { settings.hd = !!on; invalidate(false); }
 
 // ---------------------------------------------------------------------------------------------
 // surface / récapitulatif

@@ -4,7 +4,7 @@ import { r2 } from './util.js';
 import {
   S, sel, settings, find, commit, on, emit, select, summary, rebuildStructure, rebuildFloors, renderItem, wallInfo, setView, setupCam, frameAll,
   openAll, setOpen, setShut, hasAnim, hasShutter, invalidate, updateCutaway, drawSelection, moveItemObj, setLive, syncLive, setSun, R,
-  entOfItem, setPresent, renderPlot, structBounds, V, nid, rebuildAll, exportJSON, homeView, wallPoint,
+  entOfItem, setPresent, renderPlot, setHD, structBounds, V, nid, rebuildAll, exportJSON, homeView, wallPoint,
 } from './core.js';
 import { entities, stateOf, nameOf, hasHA, onHass, listDashboards, publishPlan, navigate } from './ha.js';
 import { iconList, refresh as refreshPins } from './pins.js';
@@ -19,6 +19,7 @@ import {
   T, D, LGRP, setTool, startPlacing, startPlacingLight, setLightModel, setPlacingModel, rebuildGhost, withKitchenStyle, removeEntity, duplicateSelected, rotateSelected, toggleAnim, toggleGroupPreview, validOpeningNow,
 } from './tools.js';
 import { svg } from './mdi.js';
+import { setHdWanted } from './post.js';
 
 const $ = (s) => document.querySelector(s);
 export const toast = (msg) => { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2200); };
@@ -778,6 +779,7 @@ export function initUI() {
   $('#s-walls').onchange = (e) => { settings.wallMode = e.target.value; updateCutaway(); };
   $('#s-snap').onchange = (e) => { settings.snap = +e.target.value; };
   $('#c-magnet').onchange = (e) => { settings.magnet = e.target.checked; };
+  $('#c-hd').checked = settings.hd; $('#c-hd').onchange = (e) => { setHD(e.target.checked); setHdWanted(e.target.checked); };
   $('#c-ortho').onchange = (e) => { settings.ortho = e.target.checked; };
   $('#b-fit').onclick = () => frameAll();
   $('#b-live').onclick = () => { setLive(!settings.live); };
