@@ -142,6 +142,13 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 * `chevet2` — Chevet 2 tiroirs — 0.4×0.38×0.55 — couleurs : Corps, Poignées
 * `banc_coffre` — Banc coffre — 1×0.4×0.45 — couleurs : Corps, Coussin
 * `fauteuil_chambre` — Fauteuil crapaud — 0.7×0.75×0.8 — couleurs : Tissu, Pieds
+* `lit_banquette` — Lit banquette 3 tiroirs (type Hemnes) — 2.11×0.98×0.83 — couleurs : Bois, Linge
+* `lit_rangement` — Lit 140 avec tiroirs (type Brimnes) — 1.46×2.06×0.47 — couleurs : Corps, Linge
+* `lit_slattum` — Lit rembourré 160 (type Slattum) — 1.68×2.13×0.85 — couleurs : Tissu, Linge
+* `penderie_ouverte` — Penderie ouverte bambou (type Nordkisa) — 1.2×0.47×1.86 — couleurs : Bambou, Vêtements
+* `armoire_hauga` — Armoire 2 portes 3 tiroirs (type Hauga) — 1.18×0.55×1.99 — couleurs : Façades
+* `commode_nordli` — Commode basse 6 tiroirs sans poignée (type Nordli) — 1.6×0.47×0.54 — couleurs : Corps
+* `commode_kullen` — Commode 5 tiroirs (type Kullen) — 0.35×0.4×1.12 — couleurs : Corps, Poignées
 
 ### Salon
 
@@ -188,6 +195,17 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 * `barre_son` — Barre de son — 0.9×0.1×0.07 — couleurs : Corps
 * `enceinte_colonne` — Enceinte colonne — 0.22×0.28×1 — couleurs : Corps
 * `paravent` — Paravent 3 panneaux — 1.5×0.4×1.7 — couleurs : Panneaux, Cadre
+* `canape_soderhamn` — Canapé bas modulable 3 places (type Söderhamn) — 2×0.99×0.69 — couleurs : Tissu, Pieds
+* `canape_ektorp` — Canapé 3 places à housse (type Ektorp) — 2.18×0.88×0.88 — couleurs : Housse, Pieds
+* `canape_landskrona` — Canapé cuir pieds métal (type Landskrona) — 2.04×0.89×0.78 — couleurs : Cuir, Pieds
+* `fauteuil_oreilles` — Fauteuil à oreilles (type Strandmon) — 0.82×0.96×1.01 — couleurs : Tissu, Pieds
+* `table_lack` — Table basse légère (type Lack) — 0.9×0.55×0.45 — couleurs : Corps
+* `etagere_ivar` — Étagère pin à montants (type Ivar) — 0.89×0.3×1.79 — couleurs : Pin
+* `etagere_fjallbo` — Étagère métal et bois (type Fjällbo) — 1×0.36×1.36 — couleurs : Bois, Métal
+* `vitrine_havsta` — Vitrine à moulures (type Havsta) — 0.81×0.37×1.34 — couleurs : Corps, Poignées
+* `tv_besta` — Combinaison TV murale (type Bestå) — 2.4×0.42×1.92 — couleurs : Façades, Poignées
+* `symfonisk_etagere` — Enceinte-étagère murale (type Symfonisk) — 0.31×0.15×0.1 — elev 1.2 — couleurs : Corps
+* `desserte_raskog` — Desserte métal 3 niveaux (type Råskog) — 0.35×0.45×0.78 — couleurs : Métal
 
 ### Salle à manger
 
@@ -209,6 +227,13 @@ Colonnes : identifiant — nom — largeur × profondeur × hauteur (m) — sur�
 * `chaise_cannee` — Chaise cannée bois — 0.46×0.52×0.86 — couleurs : Bois, Cannage
 * `banc_table` — Banc de table 160 bois — 1.6×0.35×0.45 — couleurs : Bois, Pieds
 * `buffet_haut` — Buffet haut 4 portes (vaisselier) — 1.2×0.45×1.9 — couleurs : Corps, Poignées
+* `table_norden` — Table pliante à abattants (type Norden) — 0.89×0.8×0.74 — couleurs : Bouleau
+* `table_ekedalen` — Table extensible 120-180 (type Ekedalen) — 1.2×0.8×0.75 — couleurs : Plateau, Pieds
+* `table_ingatorp` — Table ronde style campagne (type Ingatorp) — 1.1×1.1×0.74 — couleurs : Plateau, Pieds
+* `chaise_teodores` — Chaise plastique jaune (type Teodores) — 0.46×0.5×0.8 — couleurs : Coque
+* `chaise_ingolf` — Chaise bois à barreaux (type Ingolf) — 0.43×0.52×0.91 — couleurs : Bois
+* `chaise_odger` — Chaise coque bois-plastique (type Odger) — 0.45×0.51×0.81 — couleurs : Coque
+* `buffet_hemnes` — Buffet 3 tiroirs 2 portes (type Hemnes) — 1.57×0.47×0.88 — couleurs : Corps, Poignées
 
 ### Cuisine
 
@@ -346,6 +371,10 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `armoire_toilette` — Armoire de toilette miroir — 0.6×0.15×0.7 — elev 1.25 — couleurs : Corps
 * `colonne_buanderie` — Colonne buanderie (au-dessus du lave-linge) — 0.65×0.6×2.2 — couleurs : Corps, Poignées
 * `pare_baignoire` — Pare-baignoire vitré — 0.8×0.05×1.4 — elev 0.58 — couleurs : Profilés
+* `vasque_godmorgon` — Meuble vasque 2 tiroirs (type Godmorgon) — 0.8×0.47×0.58 — elev 0.3 — couleurs : Façades, Plan vasque
+* `colonne_hemnes_sdb` — Colonne salle de bain bois (type Hemnes) — 0.42×0.38×1.72 — couleurs : Corps, Poignées
+* `etagere_bambou` — Étagère bambou 3 niveaux (type Rågrund) — 0.37×0.37×1.04 — couleurs : Bambou
+* `miroir_eclaire` — Miroir éclairé rond (LED) — 0.6×0.04×0.6 — elev 1.1 — couleurs : Cadre
 
 ### Bureau
 
@@ -359,6 +388,10 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `fauteuil_gamer` — Fauteuil gamer — 0.7×0.7×1.35 — couleurs : Revêtement, Liserés
 * `bureau_gamer` — Bureau gamer 140 — 1.4×0.7×0.76 — couleurs : Plateau, Piètement
 * `secretaire` — Secrétaire à abattant — 0.8×0.4×1.2 — couleurs : Corps, Pieds
+* `bureau_micke` — Bureau compact passe-câbles (type Micke) — 1.05×0.5×0.75 — couleurs : Corps, Poignées
+* `caisson_helmer` — Caisson métal 6 tiroirs à roulettes (type Helmer) — 0.28×0.43×0.69 — couleurs : Métal
+* `caisson_alex` — Caisson 5 tiroirs (type Alex) — 0.36×0.58×0.7 — couleurs : Corps, Poignées
+* `chaise_markus` — Fauteuil de bureau dossier haut (type Markus) — 0.62×0.6×1.3 — couleurs : Tissu, Base
 
 ### Déco
 
@@ -420,6 +453,9 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `balancelle` — Balancelle 2 places — 1.8×1.2×1.7 — couleurs : Toile, Structure
 * `hamac` — Hamac sur pied — 3×1×1.2 — couleurs : Toile, Pied
 * `plancha` — Plancha sur chariot — 1×0.6×0.9 — couleurs : Chariot
+* `table_applaro` — Table de jardin bois teinté (type Äpplarö) — 1.4×0.78×0.72 — couleurs : Bois
+* `chaise_applaro` — Chaise de jardin pliante bois (type Äpplarö) — 0.45×0.53×0.89 — couleurs : Bois
+* `bain_soleil` — Bain de soleil à roulettes — 0.65×1.95×0.4 — couleurs : Structure, Coussin
 
 ### Enfant
 
@@ -433,6 +469,10 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `lit_bebe` — Lit bébé à barreaux 60 × 120 — 0.66×1.26×0.9 — couleurs : Bois, Linge
 * `commode_langer` — Commode à langer — 0.9×0.5×0.95 — couleurs : Corps, Matelas
 * `bibliotheque_enfant` — Bibliothèque frontale enfant — 0.6×0.3×0.9 — couleurs : Corps
+* `lit_kura` — Lit réversible haut ou bas (type Kura) — 0.99×2.09×1.16 — couleurs : Bois, Toile
+* `lit_sundvik` — Lit évolutif 80 × 200 (type Sundvik) — 0.85×1.66×0.83 — couleurs : Bois, Linge
+* `table_enfant_mammut` — Table enfant + 2 chaises (type Mammut) — 0.77×0.55×0.48 — couleurs : Plateau, Pieds
+* `armoire_enfant` — Armoire enfant (type Busunge) — 0.8×0.52×1.39 — couleurs : Corps, Poignées
 
 ### Entrée
 
@@ -443,3 +483,5 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `portant` — Portant à vêtements — 1×0.45×1.65 — couleurs : Structure
 * `vestiaire` — Vestiaire (banc + patères + étagère) — 1×0.4×1.85 — couleurs : Bois, Structure
 * `chaussures_abattants` — Meuble à chaussures 2 abattants — 0.8×0.24×1 — couleurs : Corps
+* `chaussures_hemnes` — Meuble à chaussures 2 compartiments (type Hemnes) — 0.89×0.3×1.27 — couleurs : Corps
+* `portant_trones` — Range-chaussures mural (type Trones) — 0.52×0.18×0.39 — elev 0.3 — couleurs : Corps

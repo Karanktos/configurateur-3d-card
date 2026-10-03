@@ -7,6 +7,7 @@ import { getTexM } from './textures.js';
 import { addPart } from './anim.js';
 import { registerKitchen, KDEF, KSTYLE_KEYS } from './kitchen.js';
 import { registerMore } from './catalog3.js';
+import { registerIkea } from './catalog4.js';
 
 export const CATS = ['Chambre', 'Salon', 'Salle à manger', 'Cuisine', 'Électroménager', 'Salle de bain', 'Bureau', 'Éclairage', 'Déco', 'Extérieur'];
 export const FINS = [['mat', 'Laqué mat'], ['bois', 'Bois / décor'], ['brillant', 'Brillant']];
@@ -937,7 +938,10 @@ const SMALLAPP = (id, name, w, d, h, price, build) => reg(id, 'Électroménager'
 SMALLAPP('cafetiere', 'Machine à café', 0.2, 0.3, 0.35, 89, (g, p, K) => { const bm = K.m(p.c1, { r: 0.3, m: 0.5 }); K.box(p.w, p.h, p.d * 0.5, bm, 0, p.h / 2, -p.d * 0.25); K.box(p.w, 0.04, p.d, bm, 0, 0.02, 0); K.cyl(0.04, 0.04, 0.09, K.black(), 0, 0.09, p.d * 0.15, null, 14); });
 SMALLAPP('bouilloire', 'Bouilloire', 0.2, 0.2, 0.25, 39, (g, p, K) => { K.cyl(0.09, 0.1, p.h * 0.85, K.m(p.c1, { r: 0.3, m: 0.6 }), 0, p.h * 0.43, 0, null, 20); K.box(0.02, p.h * 0.6, 0.04, K.black(), p.w * 0.55, p.h * 0.5, 0); });
 SMALLAPP('grille_pain', 'Grille-pain', 0.3, 0.17, 0.2, 35, (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.04, K.m(p.c1, { r: 0.3, m: 0.5 }), 0, p.h / 2, 0); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, -0.03); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, 0.03); });
-{ const m = registerMore(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, ANTH, OAK, WALNUT }); m.surf.forEach((id) => { DEFS[id].surf = true; }); m.free.forEach((id) => { DEFS[id].free = true; }); }   // meubles inspirés des grandes enseignes (js/catalog3.js)
+{ const m = registerMore(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, ANTH, OAK, WALNUT }); m.surf.forEach((id) => { DEFS[id].surf = true; }); m.free.forEach((id) => { DEFS[id].free = true; }); }
+registerIkea(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, OAK });   // série inspirée des gammes IKEA (js/catalog4.js)
+for (const id of ['table_lack', 'buffet_hemnes', 'commode_nordli', 'commode_kullen', 'table_norden', 'table_ekedalen', 'table_ingatorp', 'table_applaro', 'bureau_micke', 'vasque_godmorgon', 'chaussures_hemnes', 'table_enfant_mammut']) DEFS[id].surf = true;
+for (const id of ['table_lack', 'fauteuil_oreilles', 'desserte_raskog', 'table_norden', 'table_ekedalen', 'table_ingatorp', 'chaise_teodores', 'chaise_ingolf', 'chaise_odger', 'chaise_markus', 'caisson_helmer', 'table_enfant_mammut', 'table_applaro', 'chaise_applaro', 'bain_soleil']) DEFS[id].free = true;   // meubles inspirés des grandes enseignes (js/catalog3.js)
 const SUBS = {
   Salon: { 'Canapés et fauteuils': ['canape2', 'canape3', 'canape_angle', 'canape_conv', 'fauteuil', 'fauteuil_coque', 'bergere', 'chauffeuse'], 'Tables': ['tablebasse', 'tablebasse_r', 'table_basse_carree', 'gueridon'], 'Meubles TV': ['meubletv', 'meuble_tv_tiroirs', 'tv', 'tv_mur'], 'Rangements': ['biblio', 'biblio_haute', 'enfilade', 'vitrine_salon', 'etagere_cubes', 'etagere_murale', 'console'], 'Chauffage': ['poele'], 'Confort': ['pouf'] },
   'Salle à manger': { 'Tables': ['table', 'table_r', 'table_extensible', 'table_haute'], 'Chaises et bancs': ['chaise', 'chaise_visiteur', 'chaise_bar', 'tabouret', 'banc'], 'Rangements': ['buffet', 'vaisselier'] },
