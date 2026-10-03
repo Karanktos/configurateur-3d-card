@@ -552,6 +552,8 @@ const LP = {
   spot: { spot: 1, i: 3, a: 0.62, pen: 0.8, size: 0.7, sh: 0 }, reglette: { spot: 1, i: 2.6, a: 1.15, pen: 1, size: 1.2, sh: 0 }, plafonnier: { spot: 0, i: 1.5, size: 0.9, sh: 1 },
   applique: { spot: 1, i: 1.8, a: 1.2, pen: 0.75, size: 0.9, sh: 1 }, projecteur: { spot: 1, i: 2.6, a: 0.7, pen: 0.6, size: 0.9, sh: 1 }, potelet: { spot: 0, i: 1, size: 0.7, sh: 1 },
   suspension: { spot: 0, i: 1.6, size: 0.9, sh: 1 },
+  lampe: { spot: 0, i: 1.0, size: 0.8, sh: 0 }, lustre: { spot: 0, i: 1.8, size: 1.1, sh: 1 }, rail: { spot: 1, i: 2.8, a: 0.6, pen: 0.8, size: 0.7, sh: 0 },
+  lanterne: { spot: 0, i: 1.3, size: 0.9, sh: 1 }, liseuse: { spot: 1, i: 1.4, a: 0.8, pen: 0.8, size: 0.6, sh: 0 }, arc: { spot: 0, i: 1.7, size: 1.0, sh: 1 },
 };
 const SMALL = Math.min(screen.width, screen.height) < 700;
 function fixture(type) {
@@ -567,6 +569,24 @@ function fixture(type) {
     else if (type === 'potelet') {
       K.cyl(0.05, 0.05, 0.5, K.m('#908a93', { m: 0.6, r: 0.4 }), 0, 0.25, 0, null, 12);
       body = K.cyl(0.07, 0.07, 0.1, bm, 0, 0.55, 0, null, 16); lp = [0, 0.62, 0];
+    } else if (type === 'lampe') {
+      K.cyl(0.07, 0.09, 0.03, K.m('#c9a24b', { m: 0.7, r: 0.4 }), 0, 0.015, 0, null, 16); K.cyl(0.012, 0.012, p.h * 0.55, K.m('#c9a24b', { m: 0.7, r: 0.4 }), 0, p.h * 0.3, 0, null, 8);
+      body = K.cyl(0.09 * (p.w / 0.25), 0.12 * (p.w / 0.25), p.h * 0.45, bm, 0, p.h * 0.72, 0, null, 24); lp = [0, p.h * 0.7, 0];
+    } else if (type === 'lustre') {
+      K.cyl(0.004, 0.004, 0.25, K.black(), 0, 0.15, 0, null, 6); body = K.cyl(0.05, 0.05, 0.08, bm, 0, 0, 0, null, 16); lp = [0, -0.05, 0];
+      for (let i = 0; i < 5; i++) { const a = (i / 5) * 6.283, r = 0.3 * (p.w / 0.7); K.box(r, 0.012, 0.012, K.m('#c9a24b', { m: 0.8, r: 0.3 }), Math.cos(a) * r / 2, -0.03, Math.sin(a) * r / 2).rotation.y = -a; K.cyl(0.018, 0.018, 0.1, bm, Math.cos(a) * r, 0.02, Math.sin(a) * r, null, 8); }
+    } else if (type === 'rail') {
+      K.box(p.w, 0.03, 0.04, K.black(), 0, 0.045, 0);
+      body = K.box(0.07, 0.07, 0.1, bm, 0, -0.005, 0); body.rotation.x = tilt * 0.6; for (const sx of [-1, 1]) { const s = K.box(0.07, 0.07, 0.1, bm, sx * p.w * 0.35, -0.005, 0); s.rotation.x = tilt * 0.6; }
+      lp = [0, -0.07, 0.05]; tg = [0, -3 * Math.sin(tilt), 3 * Math.cos(tilt)];
+    } else if (type === 'lanterne') {
+      K.box(0.1, 0.16, 0.04, K.black(), 0, 0, -0.1); body = K.box(0.14, 0.22, 0.14, bm, 0, 0, 0); K.cyl(0.0, 0.1, 0.06, K.black(), 0, 0.14, 0, null, 4); lp = [0, 0, 0.05];
+    } else if (type === 'liseuse') {
+      K.box(0.05, 0.12, 0.02, K.black(), 0, 0, -0.03); K.box(0.012, 0.012, 0.2, K.m('#c9a24b', { m: 0.7 }), 0, 0.0, 0.07); body = K.cyl(0.04, 0.06, 0.07, bm, 0, -0.03, 0.18, null, 16); body.rotation.x = Math.PI / 2 - 0.5; lp = [0, -0.07, 0.2]; tg = [0, -Math.sin(tilt) * 1.2, 0.2 + Math.cos(tilt) * 1.2];
+    } else if (type === 'arc') {
+      K.cyl(0.2, 0.22, 0.04, K.m('#2e3338', { m: 0.4, r: 0.5 }), 0, 0.02, -0.1, null, 24); K.cyl(0.012, 0.012, p.h - 0.2, K.m('#2e3338', { m: 0.4, r: 0.5 }), 0, (p.h - 0.2) / 2, -0.1, null, 8);
+      for (let i = 0; i <= 8; i++) { const t = i / 8, z = -0.1 + t * (p.d - 0.3), y = p.h - 0.2 + Math.sin(t * Math.PI * 0.5) * 0.18 - t * t * 0.15; K.sph(0.014, K.m('#2e3338', { m: 0.4, r: 0.5 }), 0, y, z); }
+      body = K.sph(0.16, bm, 0, p.h - 0.37, p.d - 0.3, null, 1, 0.8, 1); lp = [0, p.h - 0.45, p.d - 0.3];
     } else { // suspension
       K.cyl(0.004, 0.004, 0.6, K.black(), 0, 0.3, 0, null, 6);
       body = K.cyl(0.05, 0.22, 0.2, bm, 0, 0, 0, null, 28); lp = [0, -0.05, 0];
@@ -593,6 +613,174 @@ reg('applique', 'Éclairage', 'Applique murale', 0.12, 0.12, 0.2, 35, [], fixtur
 reg('projecteur', 'Éclairage', 'Projecteur', 0.14, 0.26, 0.14, 45, [], fixture('projecteur'), { ...lx, elev: 2.3, fields: [...LFIELDS, { ...TFIELD, def: 40 }] });
 reg('potelet', 'Éclairage', 'Potelet extérieur', 0.14, 0.14, 0.62, 59, [], fixture('potelet'), { ...lx, fields: LFIELDS });
 reg('suspension', 'Éclairage', 'Suspension', 0.44, 0.44, 0.2, 59, [['Abat-jour', '#f1ead8']], fixture('suspension'), { ...lx, elev: 1.85, fields: LFIELDS });
+
+// ======================= CATALOGUE ÉTENDU =======================================================
+const FAB = '#9aa5a8', DARK = '#2e3338', OAK = '#c8a57a', WALNUT = '#7a5638';
+// ---------- Chambre ----------
+reg('lit70', 'Chambre', 'Lit enfant 70×140', 0.78, 1.45, 0.7, 99, bedColors, bed, { anim: 'Défaire / refaire le lit', fin: 'bois' });
+reg('coiffeuse', 'Chambre', 'Coiffeuse avec miroir', 1.0, 0.45, 1.5, 149, [['Corps', WHITE], ['Pieds', OAK]], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1), lm = K.m(p.c2, { r: 0.5 });
+  K.box(w, 0.03, d, bm, 0, 0.74, 0); K.legs(w, d, 0.73, 0.022, lm, 0.04);
+  K.box(w * 0.4, 0.14, d - 0.05, bm, w * 0.28, 0.65, 0);
+  K.drawer(w * 0.4 - 0.02, 0.12, d - 0.1, bm, w * 0.28, 0.585, d / 2 - 0.03, g, { travel: 0.3 });
+  const mr = K.m('#dfe8ec', { r: 0.05, m: 0.6 }); K.rbox(w * 0.7, h - 0.9, 0.02, 0.01, bm, 0, 0.78 + (h - 0.9) / 2 + 0.02, -d / 2 + 0.03);
+  K.box(w * 0.7 - 0.06, h - 0.96, 0.006, mr, 0, 0.78 + (h - 0.9) / 2 + 0.02, -d / 2 + 0.045);
+  K.rbox(0.42, 0.07, 0.34, 0.03, K.m('#d6a69a', { r: 0.9 }), -w * 0.18, 0.43, d * 0.35);
+}, { anim: 'Ouvrir le tiroir' });
+reg('banc_lit', 'Chambre', 'Banc de bout de lit', 1.2, 0.4, 0.45, 69, [['Assise', '#9db4c0'], ['Pieds', WALNUT]], (g, p, K) => {
+  K.legs(p.w, p.d, p.h - 0.1, 0.02, K.m(p.c2, { r: 0.5 }), 0.05); K.rbox(p.w, 0.1, p.d, 0.04, K.m(p.c1, { r: 0.9 }), 0, p.h - 0.05, 0);
+});
+reg('armoire_coulissante', 'Chambre', 'Armoire portes coulissantes', 2.0, 0.62, 2.3, 399, [['Corps', WHITE], ['Portes', '#c9c2b4']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1), dm = K.body(p.c2);
+  K.carcass(w, h, d - 0.03, bm, 0, 0, -0.015, g, 0.02);
+  const n = 2, pw = w / n + 0.02;
+  for (let i = 0; i < n; i++) {
+    const pv = K.piv((i ? 1 : -1) * (w / 4), 0.02, d / 2 - 0.02 - (i ? 0.025 : 0));
+    K.box(pw - 0.01, h - 0.04, 0.02, dm, 0, (h - 0.04) / 2, 0, pv); K.box(0.012, 0.5, 0.012, K.inox(), (i ? -1 : 1) * (pw / 2 - 0.05), 1.0, 0.014, pv);
+    K.add(pv, { slide: [(i ? 1 : -1) * (w / 2 - 0.04), 0, 0] });
+  }
+}, { anim: 'Ouvrir les portes', fin: 'mat' });
+// ---------- Salon ----------
+reg('pouf', 'Salon', 'Pouf', 0.5, 0.5, 0.4, 49, [['Tissu', '#d6a69a']], (g, p, K) => {
+  const t = K.cyl(0.5, 0.48, 1, K.m(p.c1, { r: 0.95 }), 0, p.h / 2, 0, null, 36); t.scale.set(p.w, p.h, p.d);
+}, { fin: null });
+reg('gueridon', 'Salon', 'Table d\'appoint ronde', 0.5, 0.5, 0.55, 59, [['Plateau', WHITE], ['Pied', '#c9a24b']], (g, p, K) => {
+  const t = K.cyl(0.5, 0.5, 0.03, K.body(p.c1), 0, p.h - 0.015, 0, null, 40); t.scale.set(p.w, 1, p.d);
+  K.cyl(0.015, 0.015, p.h - 0.03, K.m(p.c2, { m: 0.8, r: 0.3 }), 0, (p.h - 0.03) / 2, 0, null, 8); const b = K.cyl(0.5, 0.5, 0.015, K.m(p.c2, { m: 0.8, r: 0.3 }), 0, 0.0075, 0, null, 32); b.scale.set(p.w * 0.6, 1, p.d * 0.6);
+});
+reg('console', 'Salon', 'Console d\'entrée', 1.0, 0.3, 0.8, 99, [['Plateau', WOOD], ['Structure', ANTH]], (g, p, K) => {
+  K.box(p.w, 0.03, p.d, K.body(p.c1), 0, p.h - 0.015, 0); K.box(p.w - 0.1, 0.02, p.d - 0.06, K.body(p.c1), 0, 0.22, 0); K.legs(p.w, p.d, p.h - 0.03, 0.015, K.m(p.c2, { m: 0.5, r: 0.4 }), 0.04);
+}, { fin: 'bois' });
+reg('etagere_cubes', 'Salon', 'Étagère à cubes 4×4', 1.5, 0.39, 1.5, 149, [['Corps', WHITE], ['Casiers', '#9db4c0']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1), n = 4, th = 0.018, cw = (w - th) / n, ch = (h - th) / n;
+  for (let i = 0; i <= n; i++) { K.box(w, th, d, bm, 0, i * ch + th / 2, 0); K.box(th, h, d, bm, -w / 2 + th / 2 + i * cw, h / 2, 0); }
+  K.box(w, h, 0.006, bm, 0, h / 2, -d / 2 + 0.003);
+  [[1, 2], [2, 0], [0, 3], [3, 1]].forEach(([cx, cy]) => K.box(cw - th - 0.01, ch - th - 0.01, 0.34, K.m(p.c2, { r: 0.85 }), -w / 2 + th + cw * cx + cw / 2 - 0.005, cy * ch + th + (ch - th) / 2, 0.0));
+}, { fin: 'mat' });
+reg('poele', 'Salon', 'Poêle à bois', 0.5, 0.45, 1.1, 899, [['Corps', '#1b1c1f'], ['Vitre', '#ffb26b']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.m(p.c1, { r: 0.5, m: 0.5 });
+  K.box(w, h * 0.78, d, bm, 0, 0.12 + h * 0.39 * 0.8, 0); K.legs(w, d, 0.12, 0.02, bm, 0.05);
+  K.box(w * 0.58, h * 0.32, 0.01, K.m(p.c2, { r: 0.3, em: 0.4 }), 0, 0.12 + h * 0.3, d / 2 + 0.003);
+  K.cyl(0.07, 0.07, 1.4, bm, 0, h * 0.8 + 0.12 + 0.7, -0.05, null, 16);
+}, { fin: null });
+// ---------- Salle à manger / cuisine ----------
+reg('banc', 'Salle à manger', 'Banc', 1.4, 0.35, 0.45, 69, [['Assise', WOOD], ['Pieds', ANTH]], (g, p, K) => {
+  K.box(p.w, 0.04, p.d, K.body(p.c1), 0, p.h - 0.02, 0); K.legs(p.w, p.d, p.h - 0.04, 0.022, K.m(p.c2, { m: 0.4, r: 0.4 }), 0.06);
+}, { fin: 'bois' });
+reg('vaisselier', 'Salle à manger', 'Vaisselier vitré', 1.2, 0.45, 1.9, 299, [['Corps', '#e9e6df'], ['Poignées', '#c9a24b']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1), hm = K.m(p.c2, { m: 0.8, r: 0.3 });
+  K.carcass(w, h, d, bm, 0, 0, 0, g, 0.02); K.box(w - 0.04, 0.02, d - 0.02, bm, 0, 0.9, 0); K.box(w - 0.04, 0.02, d - 0.04, bm, 0, 1.3, 0);
+  K.cdoor(w / 2 - 0.004, 0.86, bm, -w / 4, 0.02, d / 2 - 0.0, 1, g, { hm }); K.cdoor(w / 2 - 0.004, 0.86, bm, w / 4, 0.02, d / 2, -1, g, { hm });
+  K.cdoor(w / 2 - 0.004, 0.84, K.glass(), -w / 4, 1.05, d / 2, 1, g, { hm }); K.cdoor(w / 2 - 0.004, 0.84, K.glass(), w / 4, 1.05, d / 2, -1, g, { hm });
+}, { anim: 'Ouvrir les portes', fin: 'mat' });
+reg('ilot', 'Cuisine', 'Îlot central', 1.8, 0.9, 0.92, 799, [['Caissons', '#8fa6b8'], ['Plan', '#e8e4dc']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1);
+  K.box(w, h - 0.06, d - 0.1, bm, 0, (h - 0.06) / 2 + 0.03, -0.03); K.box(w, 0.06, d, K.m(p.c2, { r: 0.35 }), 0, h - 0.03, 0.0);
+  K.box(w, 0.03, d - 0.14, K.m('#1b1c1f'), 0, 0.015, -0.03);
+  for (let i = 0; i < 3; i++) K.drawer(w / 3 - 0.02, 0.26, 0.5, bm, -w / 3 + i * (w / 3), 0.08 + 0.0, d / 2 - 0.08, g, { travel: 0.3 });
+}, { anim: 'Ouvrir les tiroirs' });
+reg('colonne_four', 'Cuisine', 'Colonne four + micro-ondes', 0.6, 0.6, 2.1, 499, [['Façades', '#e9e6df']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1);
+  K.carcass(w, h, d, bm, 0, 0, 0, g, 0.018); K.box(w - 0.04, 0.5, d - 0.04, bm, 0, 0.26, 0);
+  K.box(w - 0.02, 0.58, 0.02, bm, 0, 0.29, d / 2 - 0.01);
+  K.box(w - 0.1, 0.45, 0.02, K.black(), 0, 1.0, d / 2 - 0.01); K.box(w - 0.14, 0.3, 0.012, K.glass(), 0, 1.0, d / 2 + 0.003);
+  K.box(w - 0.1, 0.28, 0.02, K.black(), 0, 1.5, d / 2 - 0.01); K.box(w - 0.14, 0.18, 0.012, K.glass(), 0, 1.5, d / 2 + 0.003);
+  K.box(w - 0.02, 0.3, 0.02, bm, 0, 1.92, d / 2 - 0.01);
+}, { fin: 'mat' });
+// ---------- Bureau ----------
+reg('bureau_debout', 'Bureau', 'Bureau assis-debout', 1.4, 0.7, 1.0, 399, [['Plateau', OAK], ['Structure', '#1b1c1f']], (g, p, K) => {
+  const { w, d, h } = p, lm = K.m(p.c2, { m: 0.5, r: 0.4 });
+  K.box(w, 0.03, d, K.body(p.c1), 0, h - 0.015, 0); for (const sx of [-1, 1]) { K.box(0.06, h - 0.03, 0.06, lm, sx * (w / 2 - 0.12), (h - 0.03) / 2, 0); K.box(0.06, 0.04, d - 0.1, lm, sx * (w / 2 - 0.12), 0.02, 0); }
+  K.box(w - 0.2, 0.05, 0.05, lm, 0, h - 0.06, -d / 2 + 0.1);
+}, { fin: 'bois' });
+reg('etagere_livres', 'Bureau', 'Bibliothèque basse', 1.2, 0.3, 0.8, 129, [['Corps', WALNUT]], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1), th = 0.018; K.carcass(w, h, d, bm, 0, 0, 0, g, th);
+  for (let i = 1; i < 3; i++) K.box(w - 2 * th, th, d - 0.02, bm, 0, (h * i) / 3, 0);
+  const cols = ['#c97b63', '#4f7a55', '#d9b44a', '#6d8fa3', '#8a5a3c'];
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 7; k++) K.box(0.03 + (k % 3) * 0.008, h / 3 - 0.07 - (k % 2) * 0.03, d - 0.1, K.m(cols[(r + k) % 5], { r: 0.8 }), -w / 2 + 0.1 + k * 0.045 + r * 0.02, (h * r) / 3 + th + (h / 3 - 0.07 - (k % 2) * 0.03) / 2, 0);
+}, { fin: 'bois' });
+// ---------- Salle de bain ----------
+reg('double_vasque', 'Salle de bain', 'Meuble double vasque', 1.4, 0.5, 0.85, 449, [['Meuble', '#8fa6b8'], ['Vasques', '#ffffff']], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1), wm = K.m(p.c2, { r: 0.12 });
+  K.box(w, h - 0.12, d, bm, 0, (h - 0.12) / 2 + 0.0, 0); K.box(w + 0.02, 0.04, d + 0.02, K.m('#e8e4dc', { r: 0.3 }), 0, h - 0.02, 0);
+  for (const sx of [-1, 1]) { K.rbox(0.44, 0.1, 0.36, 0.05, wm, sx * w * 0.25, h + 0.02, 0.0); K.cyl(0.012, 0.012, 0.14, K.inox(), sx * w * 0.25, h + 0.09, -d * 0.3, null, 10); K.drawer(w / 2 - 0.03, 0.4, d - 0.08, bm, sx * w * 0.25, 0.12, d / 2 - 0.0, g, { travel: 0.35 }); }
+}, { anim: 'Ouvrir les tiroirs' });
+reg('meuble_colonne', 'Salle de bain', 'Colonne de salle de bain', 0.35, 0.3, 1.7, 159, [['Corps', WHITE]], (g, p, K) => {
+  const { w, d, h } = p, bm = K.body(p.c1); K.carcass(w, h, d, bm, 0, 0, 0, g, 0.016);
+  for (let i = 1; i < 4; i++) K.box(w - 0.03, 0.016, d - 0.02, bm, 0, (h * i) / 4, 0);
+  K.cdoor(w - 0.004, h / 2 - 0.01, bm, 0, 0.01, d / 2, 1, g); K.cdoor(w - 0.004, h / 2 - 0.03, bm, 0, h / 2 + 0.01, d / 2, 1, g);
+}, { anim: 'Ouvrir les portes' });
+reg('baignoire_ilot', 'Salle de bain', 'Baignoire îlot', 0.8, 1.7, 0.6, 1290, [['Cuve', '#ffffff']], (g, p, K) => {
+  const wm = K.m(p.c1, { r: 0.1 }); const o = K.cyl(0.5, 0.42, p.h, wm, 0, p.h / 2, 0, null, 40); o.scale.set(p.w, 1, p.d); const w2 = K.cyl(0.5, 0.42, 0.02, K.m('#bfe2f2', { r: 0.05, op: 0.6 }), 0, p.h - 0.1, 0, null, 40); w2.scale.set(p.w * 0.84, 1, p.d * 0.88);
+  K.cyl(0.015, 0.015, 0.8, K.inox(), 0, 0.4, -p.d * 0.35, null, 8);
+}, { fin: null });
+reg('douche_ital', 'Salle de bain', 'Douche à l\'italienne', 1.2, 0.9, 2.0, 549, [['Receveur', '#cfd2d4']], (g, p, K) => {
+  const { w, d, h } = p; K.box(w, 0.02, d, K.m(p.c1, { r: 0.6 }), 0, 0.01, 0); K.box(0.01, h, d * 0.9, K.glass(), -w / 2 + 0.005, h / 2, 0); K.box(w * 0.8, h, 0.01, K.glass(), 0.0, h / 2, d / 2 - 0.005);
+  K.cyl(0.012, 0.012, 1.1, K.inox(), w / 2 - 0.05, 1.5, -d / 2 + 0.05, null, 8); K.cyl(0.11, 0.11, 0.012, K.inox(), w / 2 - 0.05, 2.0, -d / 2 + 0.12, null, 20);
+}, { fin: null });
+// ---------- Déco ----------
+reg('miroir_rond', 'Déco', 'Miroir rond', 0.7, 0.04, 0.7, 59, [['Cadre', '#c9a24b']], (g, p, K) => {
+  const t = K.cyl(0.5, 0.5, 0.03, K.m(p.c1, { m: 0.8, r: 0.3 }), 0, p.h / 2, 0, null, 48); t.scale.set(p.w, 1, p.h); t.rotation.x = Math.PI / 2;
+  const m2 = K.cyl(0.47, 0.47, 0.006, K.m('#dfe8ec', { r: 0.05, m: 0.7 }), 0, p.h / 2, 0.012, null, 48); m2.scale.set(p.w, 1, p.h); m2.rotation.x = Math.PI / 2;
+}, { elev: 1.1, fin: null });
+reg('cadres', 'Déco', 'Trois cadres', 1.0, 0.03, 0.5, 49, [['Cadres', '#2e3338'], ['Images', '#8fa6b8']], (g, p, K) => {
+  for (let i = 0; i < 3; i++) { const w = p.w / 3 - 0.03, x = -p.w / 3 + i * (p.w / 3); K.box(w, p.h * (i === 1 ? 1 : 0.8), p.d, K.m(p.c1, { r: 0.6 }), x, p.h / 2, 0); K.box(w - 0.04, p.h * (i === 1 ? 1 : 0.8) - 0.04, 0.004, K.m(tone(p.c2, (i - 1) * 0.25), { r: 0.9 }), x, p.h / 2, p.d / 2 + 0.001); }
+}, { elev: 1.4, fin: null });
+reg('vase', 'Déco', 'Vase avec fleurs', 0.25, 0.25, 0.7, 29, [['Vase', '#d9c3a5'], ['Fleurs', '#c97b63']], (g, p, K) => {
+  K.cyl(0.35 * p.w, 0.28 * p.w, p.h * 0.4, K.m(p.c1, { r: 0.3 }), 0, p.h * 0.2, 0, null, 24);
+  for (let i = 0; i < 7; i++) { const a = (i / 7) * 6.283, r = 0.1 * p.w * 2; K.cyl(0.004, 0.004, p.h * 0.5, K.m('#4f7a55'), Math.cos(a) * r * 0.5, p.h * 0.62, Math.sin(a) * r * 0.5, null, 5); K.sph(0.05, K.m(p.c2, { r: 0.8 }), Math.cos(a) * r, p.h * 0.88, Math.sin(a) * r); }
+}, { fin: null });
+reg('rideau', 'Déco', 'Rideau', 1.6, 0.12, 2.4, 79, [['Tissu', '#e8dccb']], (g, p, K) => {
+  const n = 14, mt = K.m(p.c1, { r: 0.95 }); for (let i = 0; i < n; i++) K.box(p.w / n + 0.01, p.h, 0.04, mt, -p.w / 2 + (i + 0.5) * (p.w / n), p.h / 2, (i % 2) * 0.04 - 0.02);
+  K.cyl(0.012, 0.012, p.w + 0.1, K.m('#c9a24b', { m: 0.8 }), 0, p.h + 0.02, 0, null, 8).rotation.z = Math.PI / 2;
+}, { fin: null });
+// ---------- Extérieur ----------
+reg('table_jardin', 'Extérieur', 'Table de jardin', 1.6, 0.9, 0.74, 189, [['Plateau', '#8a5a3c'], ['Pieds', '#2e3338']], (g, p, K) => {
+  K.box(p.w, 0.04, p.d, K.body(p.c1), 0, p.h - 0.02, 0); K.legs(p.w, p.d, p.h - 0.04, 0.03, K.m(p.c2, { m: 0.5, r: 0.5 }), 0.07);
+}, { fin: 'bois' });
+reg('chaise_jardin', 'Extérieur', 'Chaise de jardin', 0.55, 0.58, 0.85, 59, [['Assise', '#4b5359'], ['Pieds', '#2e3338']], (g, p, K) => {
+  const lm = K.m(p.c2, { m: 0.5, r: 0.5 }), sh = p.h * 0.52; K.legs(p.w, p.d * 0.9, sh, 0.017, lm, 0.04); K.box(p.w, 0.03, p.d * 0.9, K.m(p.c1, { r: 0.8 }), 0, sh, 0.02);
+  for (const sx of [-1, 1]) K.box(0.025, p.h - sh, 0.025, lm, sx * (p.w / 2 - 0.04), sh + (p.h - sh) / 2, -p.d * 0.4); K.rbox(p.w - 0.06, 0.28, 0.025, 0.01, K.m(p.c1, { r: 0.8 }), 0, p.h - 0.2, -p.d * 0.4);
+});
+reg('transat', 'Extérieur', 'Transat', 0.6, 1.6, 0.85, 129, [['Toile', '#d9c3a5'], ['Structure', '#8a5a3c']], (g, p, K) => {
+  const lm = K.m(p.c2, { r: 0.6 }), tm = K.m(p.c1, { r: 0.95 }); for (const sx of [-1, 1]) { K.box(0.03, 0.03, p.d * 0.95, lm, sx * (p.w / 2 - 0.02), 0.3, 0); K.box(0.03, 0.4, 0.03, lm, sx * (p.w / 2 - 0.02), 0.15, p.d * 0.35); K.box(0.03, 0.4, 0.03, lm, sx * (p.w / 2 - 0.02), 0.15, -p.d * 0.35); }
+  K.box(p.w - 0.1, 0.03, p.d * 0.55, tm, 0, 0.34, p.d * 0.2); const b = K.box(p.w - 0.1, 0.03, p.d * 0.4, tm, 0, 0.55, -p.d * 0.33); b.rotation.x = 0.7;
+});
+reg('parasol', 'Extérieur', 'Parasol', 2.6, 2.6, 2.5, 189, [['Toile', '#e8dccb'], ['Mât', '#2e3338']], (g, p, K) => {
+  K.cyl(0.02, 0.025, p.h, K.m(p.c2, { m: 0.5, r: 0.5 }), 0, p.h / 2, 0, null, 10); K.cyl(0.25, 0.25, 0.05, K.m('#8d8b86', { r: 0.8 }), 0, 0.025, 0, null, 20);
+  const c = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.4, 16, 1, true), K.m(p.c1, { r: 0.9 })); c.material = K.m(p.c1, { r: 0.9 }); c.scale.set(p.w, p.h * 0.18, p.d); c.position.set(0, p.h - 0.2 * p.h * 0.18 * 1.2, 0); c.castShadow = true; g.add(c);
+}, { fin: null });
+reg('barbecue', 'Extérieur', 'Barbecue', 1.2, 0.6, 1.05, 249, [['Corps', '#1b1c1f'], ['Plan', '#8a5a3c']], (g, p, K) => {
+  const bm = K.m(p.c1, { r: 0.5, m: 0.5 }); K.box(p.w * 0.6, 0.35, p.d, bm, -p.w * 0.2, 0.7, 0); K.legs(p.w * 0.6, p.d, 0.55, 0.02, bm, 0.05); const s = K.cyl(0.5, 0.5, 0.2, bm, -p.w * 0.2, 0.95, 0, null, 24); s.scale.set(p.w * 0.55, 1, p.d * 0.85);
+  K.box(p.w * 0.3, 0.03, p.d, K.m(p.c2, { r: 0.7 }), p.w * 0.32, 0.8, 0); K.box(p.w * 0.3, 0.3, p.d - 0.05, bm, p.w * 0.32, 0.6, 0);
+}, { fin: null });
+reg('arbre', 'Extérieur', 'Arbre', 2.5, 2.5, 4.0, 0, [['Feuillage', '#4f7a55'], ['Tronc', '#5a4636']], (g, p, K) => {
+  K.cyl(0.05 * p.w / 2.5 * 1.5, 0.09 * p.w / 2.5 * 1.5, p.h * 0.45, K.m(p.c2, { r: 0.9 }), 0, p.h * 0.225, 0, null, 10);
+  const lm = K.m(p.c1, { r: 0.9 }); [[0, 0.68, 0, 0.4], [0.25, 0.58, 0.1, 0.28], [-0.25, 0.6, -0.1, 0.3], [0.05, 0.85, 0.05, 0.28], [-0.1, 0.55, 0.25, 0.26]].forEach(([x, y, z, r]) => K.sph(r * p.w, lm, x * p.w, y * p.h, z * p.w, null, 1, p.h / p.w * 0.45, 1));
+}, { fin: null });
+reg('haie', 'Extérieur', 'Haie', 3.0, 0.6, 1.4, 0, [['Feuillage', '#4f7a55']], (g, p, K) => {
+  K.rbox(p.w, p.h, p.d, 0.15, K.m(p.c1, { r: 0.95 }), 0, p.h / 2, 0);
+}, { fin: null });
+reg('piscine', 'Extérieur', 'Piscine', 6.0, 3.0, 0.3, 0, [['Eau', '#6fb7d6'], ['Margelle', '#e8e4dc']], (g, p, K) => {
+  K.box(p.w + 0.5, 0.05, p.d + 0.5, K.m(p.c2, { r: 0.8 }), 0, 0.025, 0); K.box(p.w, 0.06, p.d, K.m(p.c1, { r: 0.05, op: 0.8 }), 0, 0.06, 0);
+}, { fin: null, lock: false });
+reg('pergola', 'Extérieur', 'Pergola', 3.0, 3.0, 2.5, 899, [['Structure', '#4b5359'], ['Lames', '#8a5a3c']], (g, p, K) => {
+  const lm = K.m(p.c1, { m: 0.4, r: 0.5 }); for (const sx of [-1, 1]) for (const sz of [-1, 1]) K.box(0.1, p.h, 0.1, lm, sx * (p.w / 2 - 0.05), p.h / 2, sz * (p.d / 2 - 0.05));
+  K.box(p.w, 0.1, 0.1, lm, 0, p.h - 0.05, p.d / 2 - 0.05); K.box(p.w, 0.1, 0.1, lm, 0, p.h - 0.05, -p.d / 2 + 0.05);
+  const n = 12; for (let i = 0; i < n; i++) K.box(p.w - 0.1, 0.05, 0.06, K.m(p.c2, { r: 0.7 }), 0, p.h - 0.12, -p.d / 2 + 0.15 + (i * (p.d - 0.3)) / (n - 1));
+}, { fin: null });
+reg('abri_jardin', 'Extérieur', 'Abri de jardin', 2.0, 1.6, 2.2, 599, [['Murs', '#8a5a3c'], ['Toit', '#4b5359']], (g, p, K) => {
+  K.box(p.w, p.h - 0.2, p.d, K.m(p.c1, { r: 0.8, map: 'bois' }), 0, (p.h - 0.2) / 2, 0); K.box(p.w + 0.2, 0.08, p.d + 0.2, K.m(p.c2, { r: 0.7 }), 0, p.h - 0.1, 0);
+  K.box(0.7, 1.7, 0.03, K.m(tone(p.c1, -0.2), { r: 0.8 }), 0, 0.85, p.d / 2 + 0.005);
+}, { fin: null });
+
+// ---------- Éclairage supplémentaire ----------
+reg('lampe_poser', 'Éclairage', 'Lampe à poser', 0.25, 0.25, 0.45, 49, [['Abat-jour', '#f1ead8']], fixture('lampe'), { ...lx, fields: LFIELDS });
+reg('lustre', 'Éclairage', 'Lustre à 5 branches', 0.7, 0.7, 0.5, 149, [], fixture('lustre'), { ...lx, elev: 2.0, fields: LFIELDS });
+reg('rail', 'Éclairage', 'Rail de 3 spots', 1.0, 0.1, 0.12, 79, [], fixture('rail'), { ...lx, elev: 2.3, fields: [...LFIELDS, { ...TFIELD, def: 30 }] });
+reg('lanterne', 'Éclairage', 'Lanterne murale extérieure', 0.18, 0.2, 0.3, 45, [], fixture('lanterne'), { ...lx, elev: 2.0, fields: LFIELDS });
+reg('liseuse', 'Éclairage', 'Liseuse de chevet', 0.1, 0.25, 0.1, 35, [], fixture('liseuse'), { ...lx, elev: 1.2, fields: [...LFIELDS, TFIELD] });
+reg('lampadaire_arc', 'Éclairage', 'Lampadaire arc', 0.5, 1.6, 2.1, 189, [], fixture('arc'), { ...lx, fields: LFIELDS });
 
 for (const k of Object.keys(DEFS)) { DEFS[k].fin = DEFS[k].fin === undefined ? 'mat' : DEFS[k].fin; DEFS[k].colors = DEFS[k].colors || []; }
 export const ALL = Object.values(DEFS);

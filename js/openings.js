@@ -13,6 +13,15 @@ export const DOORS = [
   { id: 'entree', name: "Porte d'entrée", w: 0.95, h: 2.15, y0: 0 },
   { id: 'passage', name: 'Passage (sans porte)', w: 1.0, h: 2.1, y0: 0 },
   { id: 'sectionnelle', name: 'Porte de garage', w: 2.8, h: 2.25, y0: 0 },
+  { id: 'porte_fenetre', name: 'Porte-fenêtre vitrée', w: 0.9, h: 2.15, y0: 0, like: 'vitree' },
+  { id: 'double_vitree', name: 'Double porte vitrée', w: 1.4, h: 2.15, y0: 0, like: 'double', glazed: true },
+  { id: 'coulissante_vitree', name: 'Porte coulissante vitrée', w: 1.0, h: 2.15, y0: 0, like: 'coulissante', glazed: true },
+  { id: 'blindee', name: 'Porte blindée', w: 0.9, h: 2.04, y0: 0, like: 'entree' },
+  { id: 'service', name: 'Porte de service', w: 0.83, h: 2.04, y0: 0, like: 'battant' },
+  { id: 'cave', name: 'Porte basse (cave)', w: 0.7, h: 1.8, y0: 0, like: 'battant' },
+  { id: 'grande_ouverture', name: 'Grande ouverture', w: 1.8, h: 2.1, y0: 0, like: 'passage' },
+  { id: 'garage_simple', name: 'Porte de garage simple', w: 2.4, h: 2.1, y0: 0, like: 'sectionnelle' },
+  { id: 'garage_double', name: 'Porte de garage double', w: 4.8, h: 2.25, y0: 0, like: 'sectionnelle' },
 ];
 export const WINDOWS = [
   { id: 'fixe', name: 'Fenêtre fixe', w: 1.0, h: 1.0, y0: 0.9 },
@@ -24,6 +33,16 @@ export const WINDOWS = [
   { id: 'baie3', name: 'Baie 3 vantaux', w: 3.0, h: 2.15, y0: 0, groups: 2 },
   { id: 'baie4', name: 'Baie 4 vantaux', w: 4.25, h: 2.15, y0: 0, groups: 2 },
   { id: 'rond', name: 'Œil-de-bœuf', w: 0.7, h: 0.7, y0: 1.4, round: true },
+  { id: 'bandeau', name: 'Bandeau haut', w: 1.2, h: 0.45, y0: 1.9, like: 'fixe' },
+  { id: 'bandeau_long', name: 'Bandeau long', w: 2.4, h: 0.5, y0: 1.9, like: 'fixe' },
+  { id: 'fixe_grande', name: 'Grande fenêtre fixe', w: 1.6, h: 1.3, y0: 0.8, like: 'fixe' },
+  { id: 'vitrage_plein', name: 'Vitrage plein pied', w: 2.4, h: 2.15, y0: 0, like: 'fixe' },
+  { id: 'petite', name: 'Petite fenêtre (WC, cellier)', w: 0.5, h: 0.6, y0: 1.5, like: 'battant1' },
+  { id: 'pf1', name: 'Porte-fenêtre 1 vantail', w: 0.9, h: 2.15, y0: 0, like: 'battant1' },
+  { id: 'pf2', name: 'Porte-fenêtre 2 vantaux', w: 1.4, h: 2.15, y0: 0, like: 'battant2' },
+  { id: 'battant2_large', name: '2 vantaux large', w: 1.8, h: 1.25, y0: 0.9, like: 'battant2' },
+  { id: 'coulissant_petit', name: 'Coulissante 1 m', w: 1.0, h: 1.0, y0: 1.0, like: 'coulissant' },
+  { id: 'coulissant_grand', name: 'Coulissante 2,4 m', w: 2.4, h: 1.25, y0: 0.9, like: 'coulissant' },
 ];
 export const modelOf = (o) => (o.kind === 'door' ? DOORS : WINDOWS).find((m) => m.id === o.model) || (o.kind === 'door' ? DOORS : WINDOWS)[0];
 
@@ -51,7 +70,7 @@ export function defaultOpening(kind, model) {
 
 // retourne { group, parts, shutParts }
 export function buildOpening(o, t) {
-  const m = modelOf(o), g = new THREE.Group(), parts = [], shutParts = [];
+  const m = modelOf(o), mid = m.like || m.id, g = new THREE.Group(), parts = [], shutParts = [];
   const W = o.w, H = o.h, side = o.side || 1, hs = o.hinge === 'R' ? -1 : 1;
   const prof = o.mat === 'alu' ? { r: 0.3, m: 0.7, fw: 0.045, sfw: 0.04, tex: null }
     : o.mat === 'bois' ? { r: 0.72, m: 0, fw: 0.07, sfw: 0.06, tex: 'bois' } : { r: 0.42, m: 0, fw: 0.065, sfw: 0.055, tex: null };
@@ -108,7 +127,7 @@ export function buildOpening(o, t) {
   const leaf = (p, sw, sh, x, y, z, freeRight) => {
     const s = piv(p, x, y, z), th = 0.042, mid = lm;
     const dark = lm.clone(); dark.color = lm.color.clone().multiplyScalar(0.9);
-    if (m.id === 'vitree') {
+    if (mid === 'vitree' || m.glazed) {
       const f = 0.1, gy0 = sh * 0.36, gy1 = sh - 0.13;
       bx(s, f, sh, th, mid, f / 2, sh / 2, 0); bx(s, f, sh, th, mid, sw - f / 2, sh / 2, 0);
       bx(s, sw - 2 * f, 0.13, th, mid, sw / 2, sh - 0.065, 0);
@@ -118,7 +137,7 @@ export function buildOpening(o, t) {
       const n = o.bars || 0; for (let k = 1; k < n; k++) { bx(s, 0.016, gy1 - gy0 - 0.05, 0.012, mid, f + ((sw - 2 * f) * k) / n, (gy0 + 0.05 + gy1) / 2, 0); }
     } else {
       bx(s, sw, sh, th, mid, sw / 2, sh / 2, 0);
-      if (m.id === 'entree') {
+      if (mid === 'entree') {
         const gx = freeRight ? sw * 0.28 : sw * 0.72;
         glassBox(s, 0.11, sh * 0.5, gx, sh * 0.66, 0);
         bx(s, 0.14, sh * 0.53, th + 0.006, fm, gx, sh * 0.66, 0).material = fm;
@@ -142,21 +161,21 @@ export function buildOpening(o, t) {
   // ================= PORTES =================
   if (o.kind === 'door') {
     const lh = H - fw - y1;
-    if (m.id === 'passage') {
+    if (mid === 'passage') {
       // simple encadrement
-    } else if (m.id === 'double') {
+    } else if (mid === 'double') {
       for (const k of [0, 1]) {
         const h2 = k ? -1 : 1, sw = iw / 2 - 0.002, pv = piv(g, k ? W / 2 - fw : -W / 2 + fw, y1, 0);
         leaf(pv, sw, lh, h2 > 0 ? 0 : -sw, 0, 0, h2 > 0);
         addPart(parts, pv, { rot: ['y', -h2 * side * ANG_DOOR] });
       }
-    } else if (m.id === 'coulissante') {
+    } else if (mid === 'coulissante') {
       const sw = W + 0.12, zz = side * (t / 2 + 0.04), dirx = hs > 0 ? -1 : 1;
       const pv = piv(g, 0, 0.02, zz), lf = leaf(pv, sw, H + 0.02, -sw / 2, 0, 0, hs < 0);
       addPart(parts, pv, { slide: [dirx * (sw - 0.08), 0, 0] });
       const rail = bx(g, sw * 2 - 0.1, 0.035, 0.035, hm, dirx * (sw / 2 - 0.04), H + 0.07, zz);
       void rail; void lf;
-    } else if (m.id === 'sectionnelle') {
+    } else if (mid === 'sectionnelle') {
       // porte sectionnelle : tablier à lames qui s'enroule vers le haut
       const sm = new THREE.MeshStandardMaterial({ color: o.leaf, roughness: 0.5, metalness: 0.2, map: getTexM('lames') });
       const pv = piv(g, 0, H - fw, 0);
@@ -172,25 +191,25 @@ export function buildOpening(o, t) {
 
   // ================= FENÊTRES =================
   const sd = fd * 0.7;
-  if (m.id === 'fixe') {
+  if (mid === 'fixe') {
     sash(g, iw, ih, -W / 2 + fw, y1, 0, fd * 0.55, null);
-  } else if (m.id === 'battant1') {
+  } else if (mid === 'battant1') {
     const pv = piv(g, hs > 0 ? -W / 2 + fw : W / 2 - fw, y1, 0);
     sash(pv, iw - 0.004, ih, hs > 0 ? 0 : -(iw - 0.004), 0, 0, sd, hs > 0 ? iw - 0.06 : -(iw - 0.004) + 0.06);
     addPart(parts, pv, { rot: ['y', -hs * side * ANG_WIN] });
-  } else if (m.id === 'battant2') {
+  } else if (mid === 'battant2') {
     for (const k of [0, 1]) {
       const h2 = k ? -1 : 1, sw = iw / 2 - 0.002, pv = piv(g, k ? W / 2 - fw : -W / 2 + fw, y1, 0);
       sash(pv, sw, ih, h2 > 0 ? 0 : -sw, 0, 0, sd, k ? null : sw - 0.05);
       addPart(parts, pv, { rot: ['y', -h2 * side * ANG_WIN] });
     }
-  } else if (['coulissant', 'baie2', 'baie2d', 'baie3', 'baie4'].includes(m.id)) {
-    const n = m.id === 'baie4' ? 4 : m.id === 'baie3' ? 3 : 2, L = iw / n;
+  } else if (['coulissant', 'baie2', 'baie2d', 'baie3', 'baie4'].includes(mid)) {
+    const n = mid === 'baie4' ? 4 : mid === 'baie3' ? 3 : 2, L = iw / n;
     const rails = n === 4 ? [-0.03, 0.03, 0.03, -0.03] : n === 3 ? [-0.04, 0, 0.04] : [-0.025, 0.025];
     const thick = n >= 3 ? 0.034 : 0.04;
     // sens de glissement et groupe (0 = 1er capteur, 1 = 2e capteur) de chaque vantail
-    const mv = n === 4 ? [0, -1, 1, 0] : n === 3 ? [1, 0, -1] : m.id === 'baie2d' ? [1, -1] : (hs > 0 ? [1, 0] : [0, -1]);
-    const grp = n === 4 ? [0, 0, 1, 0] : n === 3 ? [0, 0, 1] : m.id === 'baie2d' ? [0, 1] : [0, 0];
+    const mv = n === 4 ? [0, -1, 1, 0] : n === 3 ? [1, 0, -1] : mid === 'baie2d' ? [1, -1] : (hs > 0 ? [1, 0] : [0, -1]);
+    const grp = n === 4 ? [0, 0, 1, 0] : n === 3 ? [0, 0, 1] : mid === 'baie2d' ? [0, 1] : [0, 0];
     for (let i = 0; i < n; i++) {
       const pv = piv(g, -W / 2 + fw + i * L - 0.015, y1, rails[i]), slide = mv[i];
       sash(pv, L + 0.03, ih, 0, 0, 0, thick, slide ? (slide > 0 ? L - 0.01 : 0.04) : null);

@@ -489,17 +489,17 @@ export function openingForm(o, onChg, isDefault = false) {
   if (!isDefault) out.push(fSelect('Modèle', o, 'model', models.map((x) => [x.id, x.name]), () => {
     const d = defaultOpening(o.kind, o.model); Object.assign(o, { w: d.w, h: d.h, y0: d.y0 }); ch(true); renderProps();
   }));
-  out.push(fRange(round ? 'Diamètre' : 'Largeur', o, 'w', 0.5, o.kind === 'door' ? 3 : 4, 0.05, (f) => { if (round) o.h = o.w; ch(f); }, 'm'));
-  if (!round) out.push(fRange('Hauteur', o, 'h', 0.5, 2.6, 0.05, ch, 'm'));
+  out.push(fRange(round ? 'Diamètre' : 'Largeur', o, 'w', 0.5, o.kind === 'door' ? 5 : 4.5, 0.05, (f) => { if (round) o.h = o.w; ch(f); }, 'm'));
+  if (!round) out.push(fRange('Hauteur', o, 'h', 0.4, 3, 0.05, ch, 'm'));
   if (o.kind === 'window') out.push(fRange('Hauteur d\'allège', o, 'y0', 0, 1.6, 0.05, ch, 'm'));
   out.push(fSeg('Matière', o, 'mat', MATS, ch));
   out.push(fColor(o.kind === 'door' ? 'Couleur du cadre' : 'Couleur de la menuiserie', o, 'frame', ch));
-  if (o.kind === 'door' && m.id !== 'passage') out.push(fColor('Couleur de la porte', o, 'leaf', ch));
-  if ((o.kind === 'window' && !round) || m.id === 'vitree' || round) out.push(fSelect('Vitrage', o, 'glass', GLASSES, ch));
-  if ((o.kind === 'window' || m.id === 'vitree') && m.id !== 'passage') out.push(fSeg('Petits bois', o, 'bars', [[0, 'Aucun'], [2, '2×2'], [3, '3×3']], ch));
-  if (o.kind === 'door' && m.id !== 'passage' || ['battant1', 'battant2', 'coulissant', 'baie2', 'baie3'].includes(m.id)) out.push(fSelect('Poignée', o, 'handle', HANDLES, ch));
-  if (!round && !['fixe', 'passage', 'battant2', 'double', 'baie3'].includes(m.id)) out.push(fSeg(m.id === 'coulissante' || m.id === 'coulissant' || m.id === 'baie2' ? 'Côté coulissant' : 'Charnières', o, 'hinge', [['L', 'Gauche'], ['R', 'Droite']], ch));
-  if (!round && !['fixe', 'passage', 'baie2', 'baie3', 'coulissant'].includes(m.id)) out.push(fSeg(m.id === 'coulissante' ? 'Côté de la porte' : 'S\'ouvre vers', o, 'side', [[1, 'Face A'], [-1, 'Face B']], ch));
+  if (o.kind === 'door' && (m.like || m.id) !== 'passage') out.push(fColor('Couleur de la porte', o, 'leaf', ch));
+  if ((o.kind === 'window' && !round) || (m.like || m.id) === 'vitree' || m.glazed || round) out.push(fSelect('Vitrage', o, 'glass', GLASSES, ch));
+  if ((o.kind === 'window' || (m.like || m.id) === 'vitree') && (m.like || m.id) !== 'passage') out.push(fSeg('Petits bois', o, 'bars', [[0, 'Aucun'], [2, '2×2'], [3, '3×3']], ch));
+  if (o.kind === 'door' && (m.like || m.id) !== 'passage' || ['battant1', 'battant2', 'coulissant', 'baie2', 'baie3'].includes((m.like || m.id))) out.push(fSelect('Poignée', o, 'handle', HANDLES, ch));
+  if (!round && !['fixe', 'passage', 'battant2', 'double', 'baie3'].includes((m.like || m.id))) out.push(fSeg((m.like || m.id) === 'coulissante' || (m.like || m.id) === 'coulissant' || (m.like || m.id) === 'baie2' ? 'Côté coulissant' : 'Charnières', o, 'hinge', [['L', 'Gauche'], ['R', 'Droite']], ch));
+  if (!round && !['fixe', 'passage', 'baie2', 'baie3', 'coulissant'].includes((m.like || m.id))) out.push(fSeg((m.like || m.id) === 'coulissante' ? 'Côté de la porte' : 'S\'ouvre vers', o, 'side', [[1, 'Face A'], [-1, 'Face B']], ch));
   if (o.kind === 'window' && !round) {
     out.push(fCheck('Volet roulant extérieur', o, 'shutter', (f) => { ch(f); renderProps(); }));
     if (o.shutter) out.push(fColor('Couleur du volet', o, 'shutterColor', ch));
