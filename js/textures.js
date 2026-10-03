@@ -38,31 +38,36 @@ function blotches(c, x, n, seed, a) {
   }
 }
 
-const GEN = {
-  // lames de parquet : 8 rangées de 12,5 cm sur 1 m
-  parquet() {
-    const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(7);
-    x.fillStyle = grey(150); x.fillRect(0, 0, 512, 512);
-    for (let i = 0; i < 8; i++) {
-      const off = r() * 512;
-      for (let k = 0; k < 2; k++) {
-        const x0 = (off + k * 256) % 512, tone = 205 + r() * 40;
-        wrapDraw(c, (dx, dy) => {
-          const px = x0 + dx, py = i * 64 + dy;
-          const g = x.createLinearGradient(0, py, 0, py + 64);
-          g.addColorStop(0, grey(tone + 6)); g.addColorStop(1, grey(tone - 8));
-          x.fillStyle = g; x.fillRect(px + 1, py + 1, 254, 62);
-          x.strokeStyle = 'rgba(60,40,20,0.10)'; x.lineWidth = 1;
-          for (let j = 0; j < 7; j++) {
-            const yy = py + 4 + r() * 56; x.beginPath(); x.moveTo(px + 2, yy);
-            x.bezierCurveTo(px + 80, yy + (r() - 0.5) * 6, px + 170, yy + (r() - 0.5) * 6, px + 254, yy + (r() - 0.5) * 3); x.stroke();
-          }
-        });
+// rangées de lames qui couvrent exactement la période du motif (aucun vide, raccord parfait d'un bord à l'autre)
+// W × H : période en mètres ; rows : nombre de rangées ; minL / maxL : longueur des lames (m) ; joint : joint en px ; bg : teinte des joints
+function boards(o) {
+  const cw = Math.round(o.W * o.ppm), ch = Math.round(o.H * o.ppm), c = cv(cw, ch), x = c.getContext('2d', { willReadFrequently: true }), r = rng(o.seed), rh = ch / o.rows, j = o.joint;
+  x.fillStyle = grey(o.bg); x.fillRect(0, 0, cw, ch);
+  for (let i = 0; i < o.rows; i++) {
+    const ls = []; let tot = 0;   // longueurs tirées puis ajustées pour que leur somme fasse exactement la largeur du motif
+    while (tot < cw) { const l = (o.minL + r() * (o.maxL - o.minL)) * o.ppm; ls.push(l); tot += l; }
+    const k = cw / tot; let px = r() * cw;
+    for (const l0 of ls) {
+      const len = l0 * k, tone = (o.base ?? 210) + (r() - 0.5) * (o.vary ?? 40), rr = rng(Math.floor(r() * 1e9) + 1), y0 = i * rh;
+      const grain = Array.from({ length: Math.max(4, Math.round(rh / 9)) }, () => [j + rr() * (rh - 2 * j), (rr() - 0.5) * 6, (rr() - 0.5) * 6, (rr() - 0.5) * 3, 0.05 + rr() * 0.08]);
+      const knot = rr() < 0.25 ? [rr() * len, j + rr() * (rh - 2 * j), 3 + rr() * 5] : null;
+      for (const ox of [-cw, 0]) {
+        const x0 = px + ox; if (x0 > cw || x0 + len < 0) continue;
+        const g = x.createLinearGradient(0, y0, 0, y0 + rh); g.addColorStop(0, grey(tone + 6)); g.addColorStop(1, grey(tone - 8));
+        x.fillStyle = g; x.fillRect(x0 + j / 2, y0 + j / 2, len - j, rh - j);
+        for (const [yy, a, b, e, al] of grain) { x.strokeStyle = `rgba(60,40,20,${al})`; x.lineWidth = 1; x.beginPath(); x.moveTo(x0 + j, y0 + yy); x.bezierCurveTo(x0 + len / 3, y0 + yy + a, x0 + 2 * len / 3, y0 + yy + b, x0 + len - j, y0 + yy + e); x.stroke(); }
+        if (knot) { x.fillStyle = 'rgba(60,40,20,0.22)'; x.beginPath(); x.ellipse(x0 + knot[0], y0 + knot[1], knot[2], knot[2] * 0.45, 0, 0, 6.283); x.fill(); }
       }
+      px += len;
     }
-    noise(x, c, 6, 3);
-    return c;
-  },
+  }
+  noise(x, c, 6, o.seed + 1);
+  return c;
+}
+
+const GEN = {
+  // parquet classique : lames de 12,5 cm de large et 0,6 à 1,2 m de long (motif 2 × 1 m)
+  parquet: () => boards({ W: 2, H: 1, rows: 8, ppm: 512, minL: 0.6, maxL: 1.2, joint: 2, bg: 150, seed: 7 }),
   tile(n) {
     return () => {
       const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(11 + n), s = 512 / n;
@@ -174,10 +179,10 @@ const GEN = {
     const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(101);
     x.fillStyle = grey(222); x.fillRect(0, 0, 512, 512);
     for (let i = 0; i < 90; i++) {
-      const y0 = r() * 512, a = 0.05 + r() * 0.12, len = 140 + r() * 360, x0 = r() * 512;
+      const y0 = r() * 512, a = 0.05 + r() * 0.12, len = 140 + r() * 360, x0 = r() * 512, lw = 0.6 + r() * 1.6, d1 = (r() - 0.5) * 8, d2 = (r() - 0.5) * 8, d3 = (r() - 0.5) * 4;
       wrapDraw(c, (dx, dy) => {
-        x.strokeStyle = `rgba(70,45,20,${a})`; x.lineWidth = 0.6 + r() * 1.6; x.beginPath(); x.moveTo(x0 + dx, y0 + dy);
-        x.bezierCurveTo(x0 + len / 3 + dx, y0 + (r() - 0.5) * 8 + dy, x0 + 2 * len / 3 + dx, y0 + (r() - 0.5) * 8 + dy, x0 + len + dx, y0 + (r() - 0.5) * 4 + dy); x.stroke();
+        x.strokeStyle = `rgba(70,45,20,${a})`; x.lineWidth = lw; x.beginPath(); x.moveTo(x0 + dx, y0 + dy);
+        x.bezierCurveTo(x0 + len / 3 + dx, y0 + d1 + dy, x0 + 2 * len / 3 + dx, y0 + d2 + dy, x0 + len + dx, y0 + d3 + dy); x.stroke();
       });
     }
     noise(x, c, 5, 102);
@@ -209,40 +214,27 @@ GEN.chevron = () => {   // parquet en chevron : lames à 45° qui se rejoignent 
   for (const half of [0, 1]) {
     x.save(); x.beginPath(); x.rect(half ? 256 : 0, 0, 256, 512); x.clip();
     if (half) { x.translate(512, 0); x.scale(-1, 1); }
+    const tones = Array.from({ length: 8 }, () => 200 + r() * 42), gr = Array.from({ length: 8 }, () => Array.from({ length: 6 }, () => 6 + r() * 48));
     for (let n = -9; n <= 9; n++) {
-      const c0 = n * 64, tone = 200 + r() * 42, g = x.createLinearGradient(0, 0, 256, 256);
+      const c0 = n * 64, m = ((n % 8) + 8) % 8, tone = tones[m], g = x.createLinearGradient(0, 0, 256, 256);
       g.addColorStop(0, grey(tone + 8)); g.addColorStop(1, grey(tone - 10));
       x.fillStyle = g; x.beginPath(); x.moveTo(0, c0 + 2); x.lineTo(260, c0 + 262); x.lineTo(260, c0 + 262 + 60); x.lineTo(0, c0 + 62); x.closePath(); x.fill();
       x.strokeStyle = 'rgba(60,40,20,0.12)'; x.lineWidth = 1;
-      for (let j = 0; j < 6; j++) { const o = 6 + r() * 48; x.beginPath(); x.moveTo(0, c0 + o); x.lineTo(256, c0 + 256 + o); x.stroke(); }
+      for (const o of gr[m]) { x.beginPath(); x.moveTo(0, c0 + o); x.lineTo(256, c0 + 256 + o); x.stroke(); }
     }
     x.restore();
   }
   noise(x, c, 6, 32); return c;
 };
-GEN.plank = () => {   // parquet à larges lames (4 rangées de 25 cm par mètre)
-  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(41);
-  x.fillStyle = grey(110); x.fillRect(0, 0, 512, 512);
-  for (let i = 0; i < 4; i++) {
-    let px = r() * 200;
-    for (let k = 0; k < 3; k++) {
-      const len = 180 + r() * 150, tone = 205 + r() * 38, g = x.createLinearGradient(0, i * 128, 0, i * 128 + 128);
-      g.addColorStop(0, grey(tone + 6)); g.addColorStop(1, grey(tone - 8)); x.fillStyle = g;
-      for (const off of [-512, 0]) x.fillRect(px + off + 1, i * 128 + 2, len - 2, 124);
-      x.strokeStyle = 'rgba(60,40,20,0.10)';
-      for (let j = 0; j < 9; j++) { const yy = i * 128 + 6 + r() * 116; x.beginPath(); x.moveTo(px + 2, yy); x.bezierCurveTo(px + len / 3, yy + (r() - 0.5) * 8, px + 2 * len / 3, yy + (r() - 0.5) * 8, px + len - 2, yy + (r() - 0.5) * 4); x.stroke(); }
-      px += len; if (px > 512) break;
-    }
-  }
-  noise(x, c, 6, 42); return c;
-};
+GEN.plank = () => boards({ W: 3, H: 1, rows: 5, ppm: 400, minL: 1.2, maxL: 2.2, joint: 2, bg: 120, seed: 41 });   // larges lames : 20 cm × 1,2 à 2,2 m (motif 3 × 1 m)
 GEN.hex = () => {   // carreaux hexagonaux (carreaux de ciment), motif de 1 m × 0,866 m
-  const c = cv(512, 443), x = c.getContext('2d', { willReadFrequently: true }), r = rng(51), R = 128 / Math.sqrt(3);
+  const c = cv(512, 443), x = c.getContext('2d', { willReadFrequently: true }), r = rng(51), R = 443 / 6, Rh = 128 / Math.sqrt(3);   // 4 rangées exactement sur la hauteur du motif
+  const tones = Array.from({ length: 16 }, () => 205 + r() * 40);
   x.fillStyle = grey(95); x.fillRect(0, 0, 512, 443);
   for (let row = -1; row <= 5; row++) for (let col = -1; col <= 5; col++) {
-    const cx = col * 128 + (row & 1 ? 64 : 0), cy = row * R * 1.5, tone = 205 + r() * 40;
+    const cx = col * 128 + (row & 1 ? 64 : 0), cy = row * R * 1.5, tone = tones[(((row % 4) + 4) % 4) * 4 + (((col % 4) + 4) % 4)];
     x.fillStyle = grey(tone); x.beginPath();
-    for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + (k * Math.PI) / 3; x.lineTo(cx + (R - 2.2) * Math.cos(a), cy + (R - 2.2) * Math.sin(a)); }
+    for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + (k * Math.PI) / 3; x.lineTo(cx + (Rh - 2.2) * Math.cos(a), cy + (R - 2.2) * Math.sin(a)); }
     x.closePath(); x.fill();
   }
   noise(x, c, 5, 52); return c;
@@ -277,23 +269,7 @@ GEN.grass = () => {
   }
   x.globalAlpha = 1; noise(x, c, 6, 73); return c;
 };
-GEN.deck = () => {   // terrasse en lames de bois espacées (rangées de 14 cm)
-  const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(81);
-  x.fillStyle = grey(60); x.fillRect(0, 0, 512, 512);
-  const rows = 7, h = 512 / rows;
-  for (let i = 0; i < rows; i++) {
-    let px = r() * 300;
-    for (let k = 0; k < 4; k++) {
-      const len = 240 + r() * 160, tone = 195 + r() * 50, g = x.createLinearGradient(0, i * h, 0, i * h + h);
-      g.addColorStop(0, grey(tone + 8)); g.addColorStop(1, grey(tone - 10)); x.fillStyle = g;
-      for (const off of [-512, 0]) x.fillRect(px + off + 1.5, i * h + 3, len - 3, h - 6);
-      x.strokeStyle = 'rgba(40,25,10,0.12)';
-      for (let j = 0; j < 5; j++) { const yy = i * h + 6 + r() * (h - 12); x.beginPath(); x.moveTo(px + 3, yy); x.lineTo(px + len - 3, yy + (r() - 0.5) * 3); x.stroke(); }
-      px += len; if (px > 512) break;
-    }
-  }
-  noise(x, c, 6, 82); return c;
-};
+GEN.deck = () => boards({ W: 3, H: 0.98, rows: 7, ppm: 400, minL: 1.5, maxL: 3, joint: 9, bg: 60, base: 205, vary: 46, seed: 81 });   // terrasse : lames de 14 cm espacées (motif 3 × 0,98 m)
 GEN.pavers = () => {   // pavés 25 × 12,5 cm en appareil décalé
   const c = cv(512), x = c.getContext('2d', { willReadFrequently: true }), r = rng(91);
   x.fillStyle = grey(80); x.fillRect(0, 0, 512, 512);
@@ -411,9 +387,9 @@ GEN.tile4 = GEN.tile(4); GEN.tile2 = GEN.tile(2); GEN.tile1 = GEN.tile(1);
 
 // taille réelle (m) couverte par un motif
 export const TEX_SIZE = {
-  parquet: [1, 1], tile4: [1, 1], tile2: [1, 1], tile1: [1, 1], concrete: [1, 1], carpet: [0.5, 0.5], marble: [1.2, 1.2],
+  parquet: [2, 1], tile4: [1, 1], tile2: [1, 1], tile1: [1, 1], concrete: [1, 1], carpet: [0.5, 0.5], marble: [1.2, 1.2],
   stone: [1.2, 1.2], checker: [1, 1], crepi: [1, 1], brique: [0.88, 0.975], lambris: [0.5, 0.5], metro: [0.4, 0.4], bois: [0.6, 0.6], lames: [0.16, 0.32], gravel: [3, 3],
-  granite: [0.6, 0.6], chevron: [1, 1], plank: [1, 1], hex: [1, 0.866], terrazzo: [1, 1], grass: [1, 1], deck: [1, 1], pavers: [1, 1],
+  granite: [0.6, 0.6], chevron: [1, 1], plank: [3, 1], hex: [1, 0.866], terrazzo: [1, 1], grass: [1, 1], deck: [3, 0.98], pavers: [1, 1],
 };
 
 for (const [k, o] of Object.entries(SLABS)) TEX_SIZE[k] = slabSize(o);

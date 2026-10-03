@@ -49,7 +49,7 @@ function normalize(o) {
     const kind = x.kind === 'door' ? 'door' : 'window'; let base; try { base = defaultOpening(kind, x.model); } catch (e) { base = defaultOpening(kind, kind === 'door' ? 'battant' : 'battant2'); }
     return ensure({ ...base, ...x, kind, model: base.model, w: num(x.w, base.w), h: num(x.h, base.h), y0: num(x.y0, base.y0), s: num(x.s, 1) });
   });
-  o.floors = (o.floors || []).filter((f) => num(f.w, 0) > 0 && num(f.d, 0) > 0).map((f) => ensure({ mat: 'parquet', scale: 1, ...f, color: f.color || floorDef(f.mat).color }));
+  o.floors = (o.floors || []).filter((f) => num(f.w, 0) > 0 && num(f.d, 0) > 0).map((f) => ensure({ mat: 'parquet', ...f, scale: Math.min(2.5, Math.max(0.4, num(f.scale, 1))), color: f.color || floorDef(f.mat).color }));
   o.items = (o.items || []).filter((i) => defOf(i.model)).map((i) => ensure({ ...defaultItem(i.model), ...i, x: num(i.x, 0), z: num(i.z, 0), rot: num(i.rot, 0) }));
   o.markers = (o.markers || []).map((m) => ensure({ ent: '', ic: 'mdi:gesture-tap', h: 2, title: '', action: 'auto', ...m, x: num(m.x, 0), z: num(m.z, 0) }));
   o.lights = (o.lights || []).map((l) => ensure({ name: 'Lumière', ent: '', ic: 'mdi:ceiling-light', h: 2, ...l, x: num(l.x, 0), z: num(l.z, 0) }));
@@ -420,7 +420,8 @@ export function renderFloors() {
     const fd = floorDef(f.mat), size = fd.tex ? TEX_SIZE[fd.tex] : [1, 1], sc = f.scale || 1;
     const geo = new THREE.PlaneGeometry(f.w, f.d); geo.rotateX(-Math.PI / 2);
     const uv = geo.attributes.uv, pos = geo.attributes.position;
-    for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) + f.w / 2) / (size[0] * sc), (pos.getZ(i) + f.d / 2) / (size[1] * sc));
+    // motif ancré sur l'origine de la maison (et non sur le coin du sol) : deux sols voisins de même matière se raccordent sans décalage
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, (f.x + f.w / 2 + pos.getX(i)) / (size[0] * sc), (f.z + f.d / 2 + pos.getZ(i)) / (size[1] * sc));
     const m = new THREE.Mesh(geo, surfMat(fd.tex, f.color, fd.tex === 'marble' || fd.id === 'uni' ? 0.35 : 0.7));
     m.receiveShadow = true; m.position.set(f.x + f.w / 2, FLOOR_Y + Math.min(idx, 40) * 0.0004, f.z + f.d / 2);
     const g = new THREE.Group(); g.add(m); tagRef(g, 'floor', f.id); root.floor.add(g); objs.floor.set(f.id, g);
