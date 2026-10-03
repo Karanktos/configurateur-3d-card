@@ -50,6 +50,11 @@ Dans le configurateur, bouton **Publier** : le plan est copié dans une carte en
 La vue publiée a un fond transparent, une barre Auto / Jour / Soir / 3D libre, un panneau **Soleil** (heure, date, direct, orientation, boussole) et, pour les administrateurs,
 un mode **⚙ Configurer** (ajouter, déplacer, supprimer capteurs et lumières, relier fenêtres, portes, volets et meubles animés à vos entités, enregistrer dans le tableau de bord).
 
+## Créer un plan à partir d'une photo ou d'un croquis (avec une IA)
+
+Donne à une IA (ChatGPT, Claude, Gemini…) le fichier [`docs/IMPORT-IA.md`](docs/IMPORT-IA.md), ta photo ou ton croquis et quelques cotes : elle te renvoie un fichier `plan.json`.
+Vérifie-le avec `node tools/valider-plan.mjs plan.json`, puis ouvre-le dans le configurateur avec le bouton **Ouvrir**. Un plan d'exemple est fourni : [`docs/exemple-plan.json`](docs/exemple-plan.json).
+
 ## Remarques
 
 * three.js est chargé depuis jsDelivr (version épinglée) : un accès internet est nécessaire au navigateur.
