@@ -81,6 +81,7 @@ export function defaultItem(model) {
   const d = DEFS[model], o = { model, x: 0, z: 0, rot: 0, elev: d.elev || 0, w: d.w, d: d.d, h: d.h, fin: d.fin || 'mat', v: 0, open: 0 };
   (d.colors || []).forEach((c, i) => { o['c' + (i + 1)] = c[1]; });
   (d.fields || []).forEach((f) => { o[f.k] = f.def; });
+  (d.selects || []).forEach((s) => { o[s.k] = s.def; });
   o.ent = '';
   return o;
 }
@@ -235,13 +236,28 @@ reg('tabouret', 'Salle à manger', 'Tabouret de bar', 0.38, 0.38, 0.75, 59, [['A
 });
 
 // ---------- CUISINE ----------
+// plan de travail : matière au choix (liste « plan » de l'élément), teinte = couleur « Plan de travail » pour le stratifié, le granit et le quartz
+const WT = [['strat', 'Stratifié'], ['bois', 'Bois massif'], ['pierre', 'Pierre naturelle'], ['granit', 'Granit'], ['marbre', 'Marbre'], ['quartz', 'Quartz / céramique'], ['beton', 'Béton ciré'], ['inox', 'Inox']];
+const WTSEL = { k: 'plan', l: 'Matière du plan de travail', list: WT, def: 'strat' };
+function wt(K, p) {
+  switch (p.plan) {
+    case 'bois': return K.m('#d9b58a', { r: 0.55, map: 'bois' });
+    case 'pierre': return K.m('#cdbfa6', { r: 0.7, map: 'stone' });
+    case 'granit': return K.m(p.c2, { r: 0.22, map: 'granite' });
+    case 'marbre': return K.m('#ffffff', { r: 0.15, map: 'marble' });
+    case 'quartz': return K.m(p.c2, { r: 0.12 });
+    case 'beton': return K.m('#b8b6b0', { r: 0.85, map: 'concrete' });
+    case 'inox': return K.m('#c3c8cd', { r: 0.25, m: 0.9 });
+    default: return K.m(p.c2, { r: 0.4 });
+  }
+}
 const kCols = [['Façades', '#e6e2da'], ['Plan de travail', '#6e6a64']];
 function kBase(nd, drawers) {
   return (g, p, K) => {
     const { w, d } = p, h = 0.85, bm = K.body(p.c1), n = nd ?? (w > 0.7 ? 2 : 1), pl = 0.1, bh = h - 0.04 - pl;
     K.box(w - 0.04, pl, d - 0.06, K.black(), 0, pl / 2, -0.02);
     K.carcass(w, bh, d - 0.02, bm, 0, pl, -0.01, g, 0.018);
-    K.box(w + 0.002, 0.04, d + 0.02, K.m(p.c2, { r: 0.35 }), 0, h - 0.02, 0.0);
+    K.box(w + 0.002, 0.04, d + 0.02, wt(K, p), 0, h - 0.02, 0.0);
     if (drawers) { const dh = bh / 3; for (let i = 0; i < 3; i++) K.drawer(w - 0.02, dh - 0.01, d - 0.05, bm, 0, pl + i * dh + 0.01, d / 2 - 0.01, g, { travel: 0.3 }); }
     else { const dw = (w - 0.004) / n; for (let i = 0; i < n; i++) K.cdoor(dw, bh - 0.01, bm, -w / 2 + (i + 0.5) * dw, pl + 0.005, d / 2 - 0.01, n === 1 ? 1 : i === 0 ? 1 : -1, g, { hy: bh - 0.12, hlen: 0.18 }); }
   };
@@ -257,7 +273,7 @@ reg('khaut', 'Cuisine', 'Meuble haut 60', 0.6, 0.35, 0.7, 69, [['Façades', '#e6
 reg('kevier', 'Cuisine', 'Évier 120 + meuble', 1.2, 0.6, 0.85, 249, kCols, (g, p, K) => {
   const { w, d } = p, h = 0.85, bm = K.body(p.c1), pl = 0.1, bh = h - 0.04 - pl, ix = K.inox();
   K.box(w - 0.04, pl, d - 0.06, K.black(), 0, pl / 2, -0.02); K.carcass(w, bh, d - 0.02, bm, 0, pl, -0.01, g, 0.018);
-  const cm = K.m(p.c2, { r: 0.35 }), bx0 = -w / 2 + 0.12, bw = 0.5, bd = 0.4, zb = -0.02;
+  const cm = wt(K, p), bx0 = -w / 2 + 0.12, bw = 0.5, bd = 0.4, zb = -0.02;
   // plan de travail percé d'une cuve
   K.box(bx0 - -w / 2, 0.04, d, cm, (-w / 2 + bx0) / 2, h - 0.02, 0);
   K.box(w / 2 - (bx0 + bw), 0.04, d, cm, (bx0 + bw + w / 2) / 2, h - 0.02, 0);
@@ -675,7 +691,7 @@ reg('vaisselier', 'Salle à manger', 'Vaisselier vitré', 1.2, 0.45, 1.9, 299, [
 }, { anim: 'Ouvrir les portes', fin: 'mat' });
 reg('ilot', 'Cuisine', 'Îlot central', 1.8, 0.9, 0.92, 799, [['Caissons', '#8fa6b8'], ['Plan', '#e8e4dc']], (g, p, K) => {
   const { w, d, h } = p, bm = K.body(p.c1);
-  K.box(w, h - 0.06, d - 0.1, bm, 0, (h - 0.06) / 2 + 0.03, -0.03); K.box(w, 0.06, d, K.m(p.c2, { r: 0.35 }), 0, h - 0.03, 0.0);
+  K.box(w, h - 0.06, d - 0.1, bm, 0, (h - 0.06) / 2 + 0.03, -0.03); K.box(w, 0.06, d, wt(K, p), 0, h - 0.03, 0.0);
   K.box(w, 0.03, d - 0.14, K.m('#1b1c1f'), 0, 0.015, -0.03);
   for (let i = 0; i < 3; i++) K.drawer(w / 3 - 0.02, 0.26, 0.5, bm, -w / 3 + i * (w / 3), 0.08 + 0.0, d / 2 - 0.08, g, { travel: 0.3 });
 }, { anim: 'Ouvrir les tiroirs' });
@@ -855,7 +871,7 @@ reg('kbas40', 'Cuisine', 'Meuble bas 40', 0.4, 0.6, 0.85, 69, kCols, kBase(1, fa
 reg('kbas120', 'Cuisine', 'Meuble bas 120 (4 tiroirs / portes)', 1.2, 0.6, 0.85, 189, kCols, kBase(3, false), A_P);
 reg('kbas_four', 'Cuisine', 'Meuble bas pour four', 0.6, 0.6, 0.85, 129, kCols, (g, p, K) => {
   const { w, d } = p, h = 0.85, bm = K.body(p.c1), pl = 0.1;
-  K.box(w - 0.04, pl, d - 0.06, K.black(), 0, pl / 2, -0.02); K.carcass(w, h - 0.04 - pl, d - 0.02, bm, 0, pl, -0.01, g, 0.018); K.box(w + 0.002, 0.04, d + 0.02, K.m(p.c2, { r: 0.35 }), 0, h - 0.02, 0);
+  K.box(w - 0.04, pl, d - 0.06, K.black(), 0, pl / 2, -0.02); K.carcass(w, h - 0.04 - pl, d - 0.02, bm, 0, pl, -0.01, g, 0.018); K.box(w + 0.002, 0.04, d + 0.02, wt(K, p), 0, h - 0.02, 0);
   K.box(w - 0.06, 0.52, 0.02, K.black(), 0, 0.42, d / 2 - 0.02); K.box(w - 0.12, 0.34, 0.012, K.glass(), 0, 0.42, d / 2 - 0.008); K.box(w - 0.06, 0.02, 0.02, K.inox(), 0, 0.72, d / 2 + 0.0);
 }, { fin: 'mat' });
 reg('khaut40', 'Cuisine', 'Meuble haut 40', 0.4, 0.35, 0.7, 49, [['Façades', '#e6e2da']], (g, p, K) => { const bm = K.body(p.c1); K.carcass(p.w, p.h, p.d - 0.02, bm, 0, 0, -0.01, g, 0.018); K.cdoor(p.w - 0.004, p.h - 0.01, bm, 0, 0.005, p.d / 2 - 0.01, 1, g, { hy: 0.12, hlen: 0.15 }); }, { elev: 1.45, anim: 'Ouvrir la porte' });
@@ -863,7 +879,7 @@ reg('khaut80', 'Cuisine', 'Meuble haut 80', 0.8, 0.35, 0.7, 79, [['Façades', '#
 reg('khaut_vitre', 'Cuisine', 'Meuble haut vitré 60', 0.6, 0.35, 0.7, 89, [['Cadre', '#e6e2da']], (g, p, K) => { const bm = K.body(p.c1); K.carcass(p.w, p.h, p.d - 0.02, bm, 0, 0, -0.01, g, 0.018); K.box(p.w - 0.04, 0.016, p.d - 0.06, bm, 0, p.h / 2, -0.02); K.cdoor(p.w - 0.004, p.h - 0.01, K.glass(), 0, 0.005, p.d / 2 - 0.01, 1, g, { hy: 0.12, hlen: 0.15 }); }, { elev: 1.45, anim: 'Ouvrir la porte' });
 reg('colonne_frigo', 'Cuisine', 'Colonne pour réfrigérateur', 0.6, 0.6, 2.1, 189, kCols, (g, p, K) => { const { w, d, h } = p, bm = K.body(p.c1); K.carcass(w, h, d, bm, 0, 0, 0, g, 0.018); K.cdoor(w - 0.004, 0.4, bm, 0, h - 0.41, d / 2, 1, g); K.box(w - 0.1, h - 0.5, d - 0.1, K.m('#f3f3f1', { r: 0.4 }), 0, (h - 0.5) / 2 + 0.02, -0.02); }, A_P);
 reg('colonne_rangement', 'Cuisine', 'Colonne de rangement', 0.6, 0.6, 2.1, 229, kCols, unit({ doors: 2, shelves: 3 }), A_P);
-reg('plan_travail', 'Cuisine', 'Plan de travail seul', 1.2, 0.6, 0.04, 59, [['Plan', '#6e6a64']], (g, p, K) => { K.box(p.w, p.h, p.d, K.m(p.c1, { r: 0.35 }), 0, p.h / 2, 0); }, { elev: 0.85, fin: null });
+reg('plan_travail', 'Cuisine', 'Plan de travail seul', 1.2, 0.6, 0.04, 59, [['Teinte', '#6e6a64']], (g, p, K) => { K.box(p.w, p.h, p.d, wt(K, p), 0, p.h / 2, 0); }, { elev: 0.85, fin: null });
 reg('desserte', 'Cuisine', 'Desserte à roulettes', 0.6, 0.4, 0.85, 89, [['Plateaux', OAK], ['Structure', '#1b1c1f']], (g, p, K) => { const lm = K.m(p.c2, { m: 0.5, r: 0.4 }); for (const y of [0.15, 0.5, p.h - 0.015]) K.box(p.w, 0.03, p.d, K.body(p.c1), 0, y, 0); K.legs(p.w, p.d, p.h - 0.03, 0.015, lm, 0.03); }, { fin: 'bois' });
 reg('hotte_ilot', 'Cuisine', 'Hotte îlot', 0.9, 0.5, 1.1, 449, [['Inox', '#c3c8cd']], (g, p, K) => { K.box(p.w, 0.06, p.d, K.inox(), 0, 0.03, 0); K.box(0.3, p.h - 0.06, 0.3, K.inox(), 0, 0.06 + (p.h - 0.06) / 2, 0); }, { elev: 1.55, fin: null });
 // ---------- Entrée ----------
@@ -884,7 +900,7 @@ reg('porte_serviettes', 'Salle de bain', 'Sèche-serviettes', 0.5, 0.1, 1.2, 189
 reg('panier_linge', 'Salle de bain', 'Panier à linge', 0.4, 0.3, 0.6, 29, [['Osier', '#c8a57a']], (g, p, K) => { const t = K.cyl(0.5, 0.45, 1, K.m(p.c1, { r: 0.95 }), 0, p.h / 2, 0, null, 24); t.scale.set(p.w, p.h, p.d); const c = K.cyl(0.5, 0.5, 0.03, K.m(tone(p.c1, 0.15), { r: 0.9 }), 0, p.h + 0.01, 0, null, 24); c.scale.set(p.w * 1.02, 1, p.d * 1.02); }, { fin: null });
 // ---------- Électroménager ----------
 reg('congelateur', 'Électroménager', 'Congélateur coffre', 1.0, 0.65, 0.85, 349, [['Corps', '#f3f3f1']], (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.02, K.m(p.c1, { r: 0.35 }), 0, p.h / 2, 0); const pv = K.piv(0, p.h, -p.d / 2); K.rbox(p.w + 0.01, 0.04, p.d + 0.01, 0.015, K.m(p.c1, { r: 0.35 }), 0, 0.02, p.d / 2, pv); K.add(pv, { rot: ['x', -1.1] }); }, { anim: 'Ouvrir le couvercle', fin: null });
-reg('plaque_induction', 'Électroménager', 'Plaque de cuisson', 0.6, 0.52, 0.01, 299, [['Verre', '#1b1c1f']], (g, p, K) => { K.box(p.w, p.h, p.d, K.m(p.c1, { r: 0.1 }), 0, p.h / 2, 0); for (const [x, z, r] of [[-0.15, -0.12, 0.09], [0.15, -0.12, 0.07], [-0.15, 0.12, 0.07], [0.15, 0.12, 0.09]]) { const c = K.cyl(r, r, 0.002, K.m('#555a60', { r: 0.4 }), x, p.h + 0.001, z, null, 24); void c; } }, { elev: 0.85, fin: null });
+reg('plaque_induction', 'Électroménager', 'Plaque de cuisson', 0.6, 0.52, 0.01, 299, [['Verre', '#1b1c1f']], (g, p, K) => { K.box(p.w, p.h, p.d, K.m(p.c1, { r: 0.1 }), 0, p.h / 2, 0); for (const [x, z, r] of [[-0.15, -0.12, 0.09], [0.15, -0.12, 0.07], [-0.15, 0.12, 0.07], [0.15, 0.12, 0.09]]) { const c = K.cyl(r, r, 0.002, K.m('#555a60', { r: 0.4 }), x, p.h + 0.001, z, null, 24); void c; } }, { onTop: true, fin: null });
 reg('cave_vin', 'Électroménager', 'Cave à vin', 0.6, 0.6, 0.85, 399, [['Corps', '#1b1c1f']], (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.02, K.m(p.c1, { r: 0.4 }), 0, p.h / 2, 0); K.box(p.w - 0.08, p.h - 0.1, 0.012, K.glass(), 0, p.h / 2, p.d / 2 + 0.002); for (let i = 0; i < 4; i++) K.box(p.w - 0.1, 0.01, 0.03, K.m('#c8a57a'), 0, 0.15 + i * 0.18, p.d / 2 - 0.01); }, { fin: null });
 // ---------- Déco ----------
 reg('horloge', 'Déco', 'Horloge murale', 0.4, 0.04, 0.4, 29, [['Cadre', '#1b1c1f']], (g, p, K) => { const c = K.cyl(0.5, 0.5, 0.04, K.m(p.c1, { r: 0.5 }), 0, p.h / 2, 0, null, 36); c.scale.set(p.w, 1, p.h); c.rotation.x = Math.PI / 2; const f = K.cyl(0.45, 0.45, 0.005, K.m('#f3f1ec', { r: 0.6 }), 0, p.h / 2, 0.02, null, 36); f.scale.set(p.w, 1, p.h); f.rotation.x = Math.PI / 2; K.box(0.012, p.h * 0.32, 0.006, K.black(), 0, p.h / 2 + p.h * 0.14, 0.026); K.box(p.w * 0.26, 0.012, 0.006, K.black(), p.w * 0.1, p.h / 2, 0.028); }, { elev: 1.7, fin: null });
@@ -900,16 +916,32 @@ reg('carport', 'Extérieur', 'Abri voiture (carport)', 3.0, 5.5, 2.5, 1290, [['S
 reg('trampoline', 'Extérieur', 'Trampoline', 3.0, 3.0, 0.9, 249, [['Toile', '#1b1c1f'], ['Cadre', '#4f7a55']], (g, p, K) => { const t = K.cyl(0.5, 0.5, 0.02, K.m(p.c1, { r: 0.9 }), 0, p.h * 0.7, 0, null, 40); t.scale.set(p.w, 1, p.d); const r = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.012, 8, 40), K.m(p.c2, { r: 0.7 })); r.rotation.x = Math.PI / 2; r.scale.set(p.w, p.d, 1); r.position.y = p.h * 0.7; g.add(r); for (let i = 0; i < 6; i++) { const a = (i / 6) * 6.283; K.cyl(0.015, 0.015, p.h * 0.7, K.m('#8d8b86', { m: 0.6 }), Math.cos(a) * p.w * 0.5, p.h * 0.35, Math.sin(a) * p.d * 0.5, null, 8); } }, { fin: null });
 
 // ---------- sous-catégories (comme les rayons d'un catalogue) ----------
+// éléments avec plan de travail : choix de la matière
+for (const id of ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four', 'kevier', 'ilot', 'plan_travail']) if (DEFS[id]) DEFS[id].selects = [WTSEL];
+// surfaces qui portent d'autres éléments, et éléments qui se posent dessus (hauteur calculée automatiquement)
+for (const id of ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four', 'kevier', 'ilot', 'plan_travail', 'desserte', 'table', 'table_r', 'table_extensible', 'table_haute', 'bureau', 'bureau_debout', 'bureau_angle', 'buffet', 'commode', 'commode6', 'chiffonnier', 'console', 'enfilade', 'meuble_tv_tiroirs', 'meubletv', 'tablebasse', 'table_basse_carree', 'gueridon', 'chevet', 'lavelinge', 'seche', 'lavevaisselle', 'sous_vasque', 'double_vasque']) if (DEFS[id]) DEFS[id].surf = true;
+reg('evier_pose', 'Cuisine', 'Évier à poser (1 bac + égouttoir)', 0.8, 0.5, 0.2, 189, [['Inox', '#c3c8cd']], (g, p, K) => {
+  const ix = K.m(p.c1, { m: 0.9, r: 0.25 }), { w, d } = p, bw = w * 0.55;
+  K.box(w, 0.02, d, ix, 0, 0.01, 0); K.box(w, 0.04, 0.02, ix, 0, 0.04, d / 2 - 0.01); K.box(w, 0.04, 0.02, ix, 0, 0.04, -d / 2 + 0.01); K.box(0.02, 0.04, d, ix, -w / 2 + 0.01, 0.04, 0); K.box(0.02, 0.04, d, ix, w / 2 - 0.01, 0.04, 0);
+  K.box(bw, 0.001, d - 0.1, K.m('#8f979d', { m: 0.8, r: 0.35 }), -w / 2 + bw / 2 + 0.03, 0.045, 0);
+  for (let i = 0; i < 6; i++) K.box(w - bw - 0.12, 0.004, 0.012, ix, w / 2 - (w - bw) / 2 + 0.03, 0.049, -d / 2 + 0.08 + i * ((d - 0.16) / 5));
+  K.cyl(0.012, 0.012, 0.22, ix, -w / 2 + bw + 0.06, 0.13, -d / 2 + 0.05, null, 10); const sp = K.box(0.012, 0.012, 0.14, ix, -w / 2 + bw + 0.06, 0.24, -d / 2 + 0.12); void sp;
+}, { onTop: true, fin: null });
+if (DEFS.micro) DEFS.micro.onTop = true;
+const SMALLAPP = (id, name, w, d, h, price, build) => reg(id, 'Électroménager', name, w, d, h, price, [['Corps', '#d5d8db']], build, { onTop: true, fin: null });
+SMALLAPP('cafetiere', 'Machine à café', 0.2, 0.3, 0.35, 89, (g, p, K) => { const bm = K.m(p.c1, { r: 0.3, m: 0.5 }); K.box(p.w, p.h, p.d * 0.5, bm, 0, p.h / 2, -p.d * 0.25); K.box(p.w, 0.04, p.d, bm, 0, 0.02, 0); K.cyl(0.04, 0.04, 0.09, K.black(), 0, 0.09, p.d * 0.15, null, 14); });
+SMALLAPP('bouilloire', 'Bouilloire', 0.2, 0.2, 0.25, 39, (g, p, K) => { K.cyl(0.09, 0.1, p.h * 0.85, K.m(p.c1, { r: 0.3, m: 0.6 }), 0, p.h * 0.43, 0, null, 20); K.box(0.02, p.h * 0.6, 0.04, K.black(), p.w * 0.55, p.h * 0.5, 0); });
+SMALLAPP('grille_pain', 'Grille-pain', 0.3, 0.17, 0.2, 35, (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.04, K.m(p.c1, { r: 0.3, m: 0.5 }), 0, p.h / 2, 0); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, -0.03); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, 0.03); });
 const SUBS = {
   Salon: { 'Canapés et fauteuils': ['canape2', 'canape3', 'canape_angle', 'canape_conv', 'fauteuil', 'fauteuil_coque', 'bergere', 'chauffeuse'], 'Tables': ['tablebasse', 'tablebasse_r', 'table_basse_carree', 'gueridon'], 'Meubles TV': ['meubletv', 'meuble_tv_tiroirs', 'tv', 'tv_mur'], 'Rangements': ['biblio', 'biblio_haute', 'enfilade', 'vitrine_salon', 'etagere_cubes', 'etagere_murale', 'console'], 'Chauffage': ['poele'], 'Confort': ['pouf'] },
   'Salle à manger': { 'Tables': ['table', 'table_r', 'table_extensible', 'table_haute'], 'Chaises et bancs': ['chaise', 'chaise_visiteur', 'chaise_bar', 'tabouret', 'banc'], 'Rangements': ['buffet', 'vaisselier'] },
-  Cuisine: { 'Meubles bas': ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four'], 'Meubles hauts': ['khaut40', 'khaut', 'khaut80', 'khaut_vitre'], 'Colonnes': ['colonne_frigo', 'colonne_four', 'colonne_rangement'], 'Évier, plans et îlots': ['kevier', 'plan_travail', 'ilot', 'desserte', 'hotte_ilot'] },
+  Cuisine: { 'Meubles bas': ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four'], 'Meubles hauts': ['khaut40', 'khaut', 'khaut80', 'khaut_vitre'], 'Colonnes': ['colonne_frigo', 'colonne_four', 'colonne_rangement'], 'Évier, plans et îlots': ['kevier', 'evier_pose', 'plan_travail', 'ilot', 'desserte', 'hotte_ilot'] },
   Chambre: { 'Lits': ['lit90', 'lit140', 'lit160', 'tete_de_lit'], 'Armoires et dressings': ['armoire2', 'armoire3', 'armoire_coulissante', 'dressing_ouvert'], 'Commodes et chevets': ['commode', 'commode6', 'chiffonnier', 'chevet', 'chevet_susp'], 'Coiffeuses et bancs': ['coiffeuse', 'banc_lit'] },
   Enfant: { 'Lits': ['lit70', 'lit_cabane'], 'Bureau et jeux': ['bureau_enfant', 'tipi'], 'Rangements': ['rangement_jouets'] },
   'Salle de bain': { 'Sanitaires': ['wc', 'wc_suspendu', 'vasque', 'lave_mains'], 'Meubles': ['sous_vasque', 'double_vasque', 'meuble_colonne', 'miroir', 'panier_linge'], 'Bain et douche': ['baignoire', 'baignoire_ilot', 'douche', 'douche_ital'], 'Accessoires': ['porte_serviettes', 'seche_serv'] },
   Bureau: { 'Bureaux': ['bureau', 'bureau_angle', 'bureau_debout'], 'Sièges': ['chaise_bureau'], 'Rangements': ['caisson_roulant', 'etagere_bureau', 'etagere_livres'] },
   'Entrée': { 'Rangements': ['meuble_chaussures', 'banc_chaussures', 'portant'], 'Accessoires': ['porte_manteaux', 'miroir_pied'] },
-  'Électroménager': { 'Froid': ['frigo', 'frigo_us', 'congelateur', 'cave_vin'], 'Cuisson': ['cuisiniere', 'four', 'micro', 'hotte', 'plaque_induction'], 'Lavage': ['lavelinge', 'seche', 'lavevaisselle'], 'Chauffage et eau': ['radiateur', 'chauffeeau', 'clim'] },
+  'Électroménager': { 'Froid': ['frigo', 'frigo_us', 'congelateur', 'cave_vin'], 'Cuisson': ['cuisiniere', 'four', 'micro', 'hotte', 'plaque_induction'], 'Petit électroménager': ['cafetiere', 'bouilloire', 'grille_pain'], 'Lavage': ['lavelinge', 'seche', 'lavevaisselle'], 'Chauffage et eau': ['radiateur', 'chauffeeau', 'clim'] },
   'Éclairage': { 'Plafond': ['plafonnier', 'spot', 'reglette', 'suspension', 'lustre', 'rail'], 'Murales': ['applique', 'liseuse', 'lanterne'], 'À poser et sur pied': ['lampadaire', 'lampadaire_arc', 'lampe_poser'], 'Extérieur': ['projecteur', 'potelet'] },
   'Déco': { 'Tapis': ['tapis', 'tapis_r'], 'Plantes': ['plante', 'palmier', 'vase'], 'Murs': ['tableau', 'cadres', 'miroir_rond', 'horloge'], 'Textile': ['rideau', 'plaid_pouf'] },
   'Extérieur': { 'Mobilier de jardin': ['table_jardin', 'chaise_jardin', 'banc_jardin', 'transat', 'parasol', 'barbecue'], 'Végétation': ['arbre', 'haie', 'bac_potager', 'jardiniere'], 'Aménagements': ['piscine', 'pergola', 'abri_jardin', 'carport', 'trampoline', 'cloture', 'portillon'], 'Véhicules': ['voiture1', 'voiture2'] },

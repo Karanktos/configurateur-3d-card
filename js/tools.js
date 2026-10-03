@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { clamp, rad, deg, r2, disposeTree } from './util.js';
 import {
   S, R, V, settings, sel, nid, find, select, commit, emit, on, setupCam, groundPoint, pick, pickHandle, project, entityBox, wireBox,
-  rebuildStructure, rebuildFloors, rebuildAll, renderItem, moveItemObj, wallInfo, wallPoint, invalidate, setOpen, hasAnim, entityObj, updateCutaway, FLOOR_Y, bounds,
+  rebuildStructure, rebuildFloors, rebuildAll, renderItem, moveItemObj, supportTop, wallInfo, wallPoint, invalidate, setOpen, hasAnim, entityObj, updateCutaway, FLOOR_Y, bounds,
   undo, redo, frameAll, entOfItem, isOrtho, viewOnly,
 } from './core.js';
 import { buildItem, defaultItem, defOf } from './catalog.js';
@@ -205,7 +205,7 @@ function moveGhost(cx, cy) {
   if (placing(t) && ghost && D.item) {
     const g = groundPoint(cx, cy); if (!g) { ghost.visible = false; return; }
     const p = magnet(D.item, g.x, g.z); cursor = { ...p, ok: true };
-    ghost.visible = true; ghost.position.set(p.x, FLOOR_Y + (D.item.elev || 0), p.z); ghost.rotation.y = rad(p.rot);
+    ghost.visible = true; ghost.position.set(p.x, FLOOR_Y + (defOf(D.item.model).onTop ? (supportTop(p.x, p.z, null) ?? 0) : (D.item.elev || 0)), p.z); ghost.rotation.y = rad(p.rot);
     D.item.rot = p.rot;
   } else if (t === 'marker' && ghost) {
     const g = groundPoint(cx, cy); if (!g) return;
@@ -490,6 +490,7 @@ function placeNow(tool) {
   }
   if (placing(tool) && D.item) {
     const it = { ...D.item, id: nid(), x: cursor.x, z: cursor.z, rot: cursor.rot ?? D.item.rot };
+    if (defOf(it.model).onTop) it.elev = supportTop(it.x, it.z, null) ?? 0;   // se pose sur le plan de travail / la table sous le curseur
     if (tool === 'light') {
       let g = find('light', LGRP.id);
       if (!g) { g = { id: nid(), name: 'Lumière ' + (S.lights.length + 1), ent: '', ic: 'mdi:ceiling-light', x: cursor.x, z: cursor.z, h: 2 }; S.lights.push(g); LGRP.id = g.id; }

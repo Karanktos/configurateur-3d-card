@@ -528,6 +528,7 @@ export function itemForm(it, onChg, isDefault = false) {
   out.push(fRange('Surélévation (mural / posé)', it, 'elev', 0, 2.4, 0.05, ch));
   (d.colors || []).forEach((c, i) => out.push(fColor(c[0], it, 'c' + (i + 1), ch)));
   if (d.fin !== null) out.push(fSelect('Finition', it, 'fin', FINS, ch));
+  (d.selects || []).forEach((s) => out.push(fSelect(s.l, it, s.k, s.list, ch)));
   if (d.variants) out.push(fSeg('Variante', it, 'v', d.variants.map((t, i) => [i, t]), ch));
   (d.fields || []).forEach((f) => out.push(fRange(f.l, it, f.k, f.min, f.max, f.step, ch, f.unit || '')));
   if (!isDefault) {

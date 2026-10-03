@@ -566,7 +566,18 @@ export function pickHandle(cx, cy) {
   return hits.length ? hits[0].object.userData.handle : null;
 }
 export const entityObj = (kind, id) => objs[kind].get(id);
-export function moveItemObj(it) { const g = objs.item.get(it.id); if (g) { g.position.set(it.x, FLOOR_Y + (it.elev || 0), it.z); g.rotation.y = rad(it.rot || 0); } drawSelection(); invalidate(); }
+// hauteur de la surface qui porte un élément posé (plan de travail, table, commode…) à cet endroit, ou null
+export function supportTop(x, z, self) {
+  let best = null;
+  for (const o of S.items) {
+    if (o === self || o.grp) continue;
+    const d = defOf(o.model); if (!d || !d.surf) continue;
+    const r = ((o.rot || 0) * Math.PI) / 180, dx = x - o.x, dz = z - o.z, lx = dx * Math.cos(r) - dz * Math.sin(r), lz = dx * Math.sin(r) + dz * Math.cos(r);
+    if (Math.abs(lx) <= o.w / 2 + 0.02 && Math.abs(lz) <= o.d / 2 + 0.02) { const top = (o.elev || 0) + o.h; if (best == null || top > best) best = top; }
+  }
+  return best;
+}
+export function moveItemObj(it) { const d0 = defOf(it.model); if (d0 && d0.onTop) it.elev = supportTop(it.x, it.z, it) ?? 0; const g = objs.item.get(it.id); if (g) { g.position.set(it.x, FLOOR_Y + (it.elev || 0), it.z); g.rotation.y = rad(it.rot || 0); } drawSelection(); invalidate(); }
 export function moveFloorObj() { rebuildFloors(); }
 
 // ---------------------------------------------------------------------------------------------

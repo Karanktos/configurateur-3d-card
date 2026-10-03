@@ -247,6 +247,12 @@ GEN.hex = () => {   // carreaux hexagonaux (carreaux de ciment), motif de 1 m ×
   }
   noise(x, c, 5, 52); return c;
 };
+GEN.granite = () => {   // granit : fond moucheté fin (motif de 60 cm)
+  const c = cv(256), x = c.getContext('2d'), r = rng(101);
+  x.fillStyle = grey(190); x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 5200; i++) { x.fillStyle = grey(70 + r() * 185); const s = 0.8 + r() * 2.2, px = r() * 256, py = r() * 256; for (const [ox, oy] of [[0, 0], [256, 0], [-256, 0], [0, 256], [0, -256]]) x.fillRect(px + ox, py + oy, s, s); }
+  noise(x, c, 10, 102); return c;
+};
 GEN.terrazzo = () => {
   const c = cv(512), x = c.getContext('2d'), r = rng(61);
   x.fillStyle = grey(232); x.fillRect(0, 0, 512, 512);
@@ -302,7 +308,7 @@ GEN.tile4 = GEN.tile(4); GEN.tile2 = GEN.tile(2); GEN.tile1 = GEN.tile(1);
 export const TEX_SIZE = {
   parquet: [1, 1], tile4: [1, 1], tile2: [1, 1], tile1: [1, 1], concrete: [1, 1], carpet: [0.5, 0.5], marble: [1.2, 1.2],
   stone: [1.2, 1.2], checker: [1, 1], crepi: [1, 1], brique: [0.88, 0.975], lambris: [0.5, 0.5], metro: [0.4, 0.4], bois: [0.6, 0.6], lames: [0.16, 0.32], gravel: [3, 3],
-  chevron: [1, 1], plank: [1, 1], hex: [1, 0.866], terrazzo: [1, 1], grass: [1, 1], deck: [1, 1], pavers: [1, 1],
+  granite: [0.6, 0.6], chevron: [1, 1], plank: [1, 1], hex: [1, 0.866], terrazzo: [1, 1], grass: [1, 1], deck: [1, 1], pavers: [1, 1],
 };
 
 const cache = {};
