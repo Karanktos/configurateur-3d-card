@@ -1,0 +1,1258 @@
+{
+ "version": 1,
+ "generator": "Claude + Blender, textures Poly Haven (CC0)",
+ "conventions": {
+  "color": "albedo sRGB RECENTRE : couleur moyenne ramenee a un gris neutre (0.80). La couleur reelle d'origine est dans 'avg'. Teinte du moteur = couleur utilisateur x color.jpg ; 'colorDefault' est la couleur a utiliser par defaut pour retrouver l'aspect Poly Haven.",
+  "normal": "carte de normales OpenGL (+Y), espace Non-Color. Couper la bumpMap quand une normalMap est presente.",
+  "arm": "R = occlusion ambiante, V = rugosite, B = metal (0). Non-Color. Brancher R sur aoMap, V sur roughnessMap (multiplier par 'roughness').",
+  "size": "metres couverts par UNE repetition de la texture (u = x_monde / size[0], v = z_monde / size[1])",
+  "pose": "true = le calepinage (dalles + joints) est deja dans l'image : desactiver quinconce/pose du moteur pour cette matiere. Rotation 'sens' et echelle restent possibles.",
+  "res": "1k par defaut (dir) ; variante mobile 512 px dans dir512 (memes noms de fichiers)"
+ },
+ "floors": {
+  "parquet": "floor-parquet",
+  "tile4": "floor-tile4",
+  "tile2": "floor-tile2",
+  "tile1": "floor-tile1",
+  "marbre": "floor-marbre",
+  "beton": "floor-beton",
+  "moquette": "floor-moquette",
+  "pierre": "floor-pierre",
+  "damier": "floor-damier",
+  "chevron": "floor-chevron",
+  "planches": "floor-planches",
+  "hexa": "floor-hexa",
+  "terrazzo": "floor-terrazzo",
+  "terrasse": "floor-terrasse",
+  "paves": "floor-paves",
+  "pelouse": "floor-pelouse",
+  "travertin_30x60": "floor-travertin_30x60",
+  "travertin_40x40": "floor-travertin_40x40",
+  "travertin_60x60": "floor-travertin_60x60",
+  "travertin_90x60": "floor-travertin_90x60",
+  "travertin_60x120": "floor-travertin_60x120",
+  "travertin_opus": "floor-travertin_opus",
+  "gres_30": "floor-gres_30",
+  "gres_60": "floor-gres_60",
+  "gres_80": "floor-gres_80",
+  "gres_60x120": "floor-gres_60x120",
+  "beton_60": "floor-beton_60",
+  "beton_80": "floor-beton_80",
+  "marbre_60": "floor-marbre_60",
+  "marbre_60x120": "floor-marbre_60x120",
+  "bois_gres": "floor-bois_gres",
+  "stratifie": "floor-stratifie",
+  "vinyle": "floor-vinyle",
+  "ciment": "floor-ciment",
+  "tomette": "floor-tomette",
+  "zellige": "floor-zellige",
+  "terre_cuite": "floor-terre_cuite",
+  "terre_cuite_rect": "floor-terre_cuite_rect",
+  "ardoise": "floor-ardoise",
+  "uni": null
+ },
+ "walls": {
+  "peinture": null,
+  "crepi": "wall-crepi",
+  "brique": "wall-brique",
+  "lambris": "wall-lambris",
+  "beton": "wall-beton",
+  "pierre": "wall-pierre",
+  "faience": "wall-faience"
+ },
+ "misc": {
+  "bois": "misc-bois",
+  "tissu": "misc-tissu",
+  "laine": "misc-laine",
+  "lames": "misc-lames",
+  "granite": "misc-granite"
+ },
+ "textures": {
+  "floor-parquet": {
+   "dir": "textures/floor-parquet",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-parquet/512",
+   "size": [
+    2.25,
+    2.25
+   ],
+   "tint": "multiply",
+   "colorDefault": "#977542",
+   "avg": "#775c33",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "rectangular_parquet"
+  },
+  "floor-travertin_90x60": {
+   "dir": "textures/floor-travertin_90x60",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-travertin_90x60/512",
+   "size": [
+    1.8,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#e5d4bf",
+   "avg": "#c6a780",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.9,
+    0.6
+   ],
+   "layout": "half",
+   "joint_mm": 3,
+   "source": "sandstone_blocks_04",
+   "px": [
+    1229,
+    819
+   ]
+  },
+  "floor-planches": {
+   "dir": "textures/floor-planches",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-planches/512",
+   "size": [
+    1.98,
+    1.98
+   ],
+   "tint": "multiply",
+   "colorDefault": "#c17f1c",
+   "avg": "#9a6414",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "plank_flooring_02"
+  },
+  "floor-chevron": {
+   "dir": "textures/floor-chevron",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-chevron/512",
+   "size": [
+    3.4,
+    3.4
+   ],
+   "tint": "multiply",
+   "colorDefault": "#b88d63",
+   "avg": "#93704d",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "herringbone_parquet"
+  },
+  "floor-stratifie": {
+   "dir": "textures/floor-stratifie",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-stratifie/512",
+   "size": [
+    1.7,
+    1.7
+   ],
+   "tint": "multiply",
+   "colorDefault": "#c3a27e",
+   "avg": "#9b8064",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "laminate_floor_02"
+  },
+  "floor-vinyle": {
+   "dir": "textures/floor-vinyle",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-vinyle/512",
+   "size": [
+    2.08,
+    2.08
+   ],
+   "tint": "multiply",
+   "colorDefault": "#c2905c",
+   "avg": "#9a7248",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "laminate_floor_03"
+  },
+  "floor-bois_gres": {
+   "dir": "textures/floor-bois_gres",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-bois_gres/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#533020",
+   "avg": "#412417",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "plank_flooring_04"
+  },
+  "floor-terrasse": {
+   "dir": "textures/floor-terrasse",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-terrasse/512",
+   "size": [
+    1.8,
+    1.8
+   ],
+   "tint": "multiply",
+   "colorDefault": "#8c4414",
+   "avg": "#6e340e",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "wood_floor_deck"
+  },
+  "floor-beton": {
+   "dir": "textures/floor-beton",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-beton/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#8b8986",
+   "avg": "#766b59",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "concrete_floor_01"
+  },
+  "floor-moquette": {
+   "dir": "textures/floor-moquette",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-moquette/512",
+   "size": [
+    0.315,
+    0.39
+   ],
+   "tint": "multiply",
+   "colorDefault": "#958a7b",
+   "avg": "#766d61",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "wool_boucle"
+  },
+  "floor-pierre": {
+   "dir": "textures/floor-pierre",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-pierre/512",
+   "size": [
+    1.9,
+    1.9
+   ],
+   "tint": "multiply",
+   "colorDefault": "#91806b",
+   "avg": "#78644c",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "mixed_rock_tiles"
+  },
+  "floor-hexa": {
+   "dir": "textures/floor-hexa",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-hexa/512",
+   "size": [
+    1.6,
+    1.6
+   ],
+   "tint": "multiply",
+   "colorDefault": "#cec2af",
+   "avg": "#a99a84",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "hexagonal_concrete_paving"
+  },
+  "floor-tomette": {
+   "dir": "textures/floor-tomette",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-tomette/512",
+   "size": [
+    2.152,
+    2.152
+   ],
+   "tint": "multiply",
+   "colorDefault": "#7a462e",
+   "avg": "#603623",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "patterned_terracotta_tiling"
+  },
+  "floor-terrazzo": {
+   "dir": "textures/floor-terrazzo",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-terrazzo/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#a68a75",
+   "avg": "#896d57",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "terrazzo_tiles"
+  },
+  "floor-paves": {
+   "dir": "textures/floor-paves",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-paves/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#7b6f65",
+   "avg": "#64574b",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "stone_pavers"
+  },
+  "floor-pelouse": {
+   "dir": "textures/floor-pelouse",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-pelouse/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#bea571",
+   "avg": "#978359",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "leafy_grass"
+  },
+  "floor-damier": {
+   "dir": "textures/floor-damier",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-damier/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#6c6054",
+   "avg": "#574b3f",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "checkered_pavement_tiles"
+  },
+  "floor-ciment": {
+   "dir": "textures/floor-ciment",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-ciment/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#86765e",
+   "avg": "#6a5d4a",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "old_mosaic_floor"
+  },
+  "floor-zellige": {
+   "dir": "textures/floor-zellige",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-zellige/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#9f8b7a",
+   "avg": "#7e6e60",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "square_tiled_wall"
+  },
+  "floor-ardoise": {
+   "dir": "textures/floor-ardoise",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-ardoise/512",
+   "size": [
+    2.29,
+    2.29
+   ],
+   "tint": "multiply",
+   "colorDefault": "#342929",
+   "avg": "#2a1e1e",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "slate_floor"
+  },
+  "floor-terre_cuite": {
+   "dir": "textures/floor-terre_cuite",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-terre_cuite/512",
+   "size": [
+    2.08,
+    2.08
+   ],
+   "tint": "multiply",
+   "colorDefault": "#623323",
+   "avg": "#4d271a",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "terracotta_floor_tiles"
+  },
+  "floor-terre_cuite_rect": {
+   "dir": "textures/floor-terre_cuite_rect",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-terre_cuite_rect/512",
+   "size": [
+    1.7,
+    1.7
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ac8b6b",
+   "avg": "#896e54",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "brown_floor_tiles"
+  },
+  "floor-travertin_30x60": {
+   "dir": "textures/floor-travertin_30x60",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-travertin_30x60/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#e0ceb9",
+   "avg": "#c3a27d",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.3,
+    0.6
+   ],
+   "layout": "half",
+   "joint_mm": 3,
+   "source": "sandstone_blocks_04",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-travertin_40x40": {
+   "dir": "textures/floor-travertin_40x40",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-travertin_40x40/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#e7d4bf",
+   "avg": "#c9a780",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.4,
+    0.4
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "sandstone_blocks_04",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-travertin_60x60": {
+   "dir": "textures/floor-travertin_60x60",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-travertin_60x60/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#e4d1bc",
+   "avg": "#c6a47e",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    0.6
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "sandstone_blocks_04",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-travertin_60x120": {
+   "dir": "textures/floor-travertin_60x120",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-travertin_60x120/512",
+   "size": [
+    1.2,
+    2.4
+   ],
+   "tint": "multiply",
+   "colorDefault": "#e9d8c2",
+   "avg": "#c9ab83",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    1.2
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "sandstone_blocks_04",
+   "px": [
+    819,
+    1638
+   ]
+  },
+  "floor-travertin_opus": {
+   "dir": "textures/floor-travertin_opus",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-travertin_opus/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#e6d3be",
+   "avg": "#c7a680",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    1.2,
+    1.2
+   ],
+   "layout": "opus",
+   "joint_mm": 3,
+   "source": "sandstone_blocks_04",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-gres_30": {
+   "dir": "textures/floor-gres_30",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-gres_30/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#c1b5a4",
+   "avg": "#9e8f7c",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.3,
+    0.3
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "floor_tiles_02",
+   "px": [
+    614,
+    614
+   ]
+  },
+  "floor-gres_60": {
+   "dir": "textures/floor-gres_60",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-gres_60/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#b7ae9e",
+   "avg": "#948a78",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    0.6
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "floor_tiles_02",
+   "px": [
+    614,
+    614
+   ]
+  },
+  "floor-gres_80": {
+   "dir": "textures/floor-gres_80",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-gres_80/512",
+   "size": [
+    1.6,
+    1.6
+   ],
+   "tint": "multiply",
+   "colorDefault": "#c4b8a8",
+   "avg": "#a0927f",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.8,
+    0.8
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "floor_tiles_02",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-gres_60x120": {
+   "dir": "textures/floor-gres_60x120",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-gres_60x120/512",
+   "size": [
+    1.2,
+    2.4
+   ],
+   "tint": "multiply",
+   "colorDefault": "#beb1a1",
+   "avg": "#9b8d79",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    1.2
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "floor_tiles_02",
+   "px": [
+    614,
+    1229
+   ]
+  },
+  "floor-beton_60": {
+   "dir": "textures/floor-beton_60",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-beton_60/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#949494",
+   "avg": "#777573",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    0.6
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "large_floor_tiles_02",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-beton_80": {
+   "dir": "textures/floor-beton_80",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-beton_80/512",
+   "size": [
+    1.6,
+    1.6
+   ],
+   "tint": "multiply",
+   "colorDefault": "#909190",
+   "avg": "#72736e",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.8,
+    0.8
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "large_floor_tiles_02",
+   "px": [
+    1092,
+    1092
+   ]
+  },
+  "floor-marbre": {
+   "dir": "textures/floor-marbre",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-marbre/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ddcca9",
+   "avg": "#b3a37f",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    1.2,
+    1.2
+   ],
+   "layout": "grid",
+   "joint_mm": 2,
+   "source": "marble_01",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-marbre_60": {
+   "dir": "textures/floor-marbre_60",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-marbre_60/512",
+   "size": [
+    1.2,
+    1.2
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ddc7a5",
+   "avg": "#b59e7b",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    0.6
+   ],
+   "layout": "grid",
+   "joint_mm": 2,
+   "source": "marble_01",
+   "px": [
+    819,
+    819
+   ]
+  },
+  "floor-marbre_60x120": {
+   "dir": "textures/floor-marbre_60x120",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-marbre_60x120/512",
+   "size": [
+    1.2,
+    2.4
+   ],
+   "tint": "multiply",
+   "colorDefault": "#d3c09f",
+   "avg": "#ac9877",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.6,
+    1.2
+   ],
+   "layout": "grid",
+   "joint_mm": 2,
+   "source": "marble_01",
+   "px": [
+    819,
+    1638
+   ]
+  },
+  "floor-tile4": {
+   "dir": "textures/floor-tile4",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-tile4/512",
+   "size": [
+    1.0,
+    1.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#929292",
+   "avg": "#747471",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.25,
+    0.25
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "large_floor_tiles_02",
+   "px": [
+    683,
+    683
+   ]
+  },
+  "floor-tile2": {
+   "dir": "textures/floor-tile2",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-tile2/512",
+   "size": [
+    1.0,
+    1.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#8a8a8a",
+   "avg": "#6d6e6b",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    0.5,
+    0.5
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "large_floor_tiles_02",
+   "px": [
+    683,
+    683
+   ]
+  },
+  "floor-tile1": {
+   "dir": "textures/floor-tile1",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/floor-tile1/512",
+   "size": [
+    1.0,
+    1.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#949493",
+   "avg": "#72776e",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": true,
+   "tile": [
+    1.0,
+    1.0
+   ],
+   "layout": "grid",
+   "joint_mm": 3,
+   "source": "large_floor_tiles_02",
+   "px": [
+    683,
+    683
+   ]
+  },
+  "wall-crepi": {
+   "dir": "textures/wall-crepi",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/wall-crepi/512",
+   "size": [
+    1.0,
+    1.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#9d8f6f",
+   "avg": "#7c7157",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "white_plaster_rough_01"
+  },
+  "wall-brique": {
+   "dir": "textures/wall-brique",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/wall-brique/512",
+   "size": [
+    1.0,
+    1.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#866a60",
+   "avg": "#6a544b",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "red_brick_03"
+  },
+  "wall-lambris": {
+   "dir": "textures/wall-lambris",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/wall-lambris/512",
+   "size": [
+    1.0,
+    1.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#55423a",
+   "avg": "#43332d",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "wood_plank_wall"
+  },
+  "wall-beton": {
+   "dir": "textures/wall-beton",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/wall-beton/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#91908f",
+   "avg": "#767363",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "concrete_wall_004"
+  },
+  "wall-pierre": {
+   "dir": "textures/wall-pierre",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/wall-pierre/512",
+   "size": [
+    2.055,
+    2.055
+   ],
+   "tint": "multiply",
+   "colorDefault": "#625a4f",
+   "avg": "#4e463b",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "stone_wall_05"
+  },
+  "wall-faience": {
+   "dir": "textures/wall-faience",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/wall-faience/512",
+   "size": [
+    1.27,
+    1.27
+   ],
+   "tint": "multiply",
+   "colorDefault": "#fff7e3",
+   "avg": "#cdc6b6",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "long_white_tiles"
+  },
+  "misc-bois": {
+   "dir": "textures/misc-bois",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/misc-bois/512",
+   "size": [
+    1.83,
+    1.83
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ffffff",
+   "avg": "#a17e57",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "oak_veneer_01"
+  },
+  "misc-tissu": {
+   "dir": "textures/misc-tissu",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/misc-tissu/512",
+   "size": [
+    0.271,
+    0.271
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ffffff",
+   "avg": "#91abcd",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "rough_linen"
+  },
+  "misc-laine": {
+   "dir": "textures/misc-laine",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/misc-laine/512",
+   "size": [
+    0.266,
+    0.27
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ffffff",
+   "avg": "#554c3f",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "knitted_fleece"
+  },
+  "misc-lames": {
+   "dir": "textures/misc-lames",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/misc-lames/512",
+   "size": [
+    2.0,
+    2.0
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ffffff",
+   "avg": "#808386",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "painted_metal_shutter"
+  },
+  "misc-granite": {
+   "dir": "textures/misc-granite",
+   "maps": {
+    "color": "color.jpg",
+    "normal": "normal.jpg",
+    "arm": "arm.jpg"
+   },
+   "dir512": "textures/misc-granite/512",
+   "size": [
+    1.9,
+    1.9
+   ],
+   "tint": "multiply",
+   "colorDefault": "#ffffff",
+   "avg": "#725f49",
+   "roughness": 1,
+   "normalScale": 1,
+   "pose": false,
+   "source": "granite_wall"
+  }
+ },
+ "models": {},
+ "hdri": {
+  "file": "hdri/white_studio_05_1k.hdr",
+  "intensity": 0.55,
+  "source": "white_studio_05"
+ }
+}
