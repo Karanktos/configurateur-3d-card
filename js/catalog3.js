@@ -1,7 +1,7 @@
 // Meubles supplémentaires inspirés des catalogues des grandes enseignes (IKEA, BUT, Conforama…) : noms génériques,
 // dimensions courantes. Même repère que catalog.js : origine au sol au centre, +x largeur, +z face avant, +y hauteur.
 export function registerMore(reg, H) {
-  const { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, ANTH, OAK, WALNUT } = H;
+  const { unit, sofaParts, bed, wardrobe, tone, rnd, WOOD, WHITE, ANTH, OAK, WALNUT } = H;
   const A_P = { anim: 'Ouvrir les portes' }, A_T = { anim: 'Ouvrir les tiroirs' };
   const sofaCols = [['Tissu', '#9aa5a8'], ['Pieds', '#5a4636']];
   const R = (id, cat, sub, name, w, d, h, price, colors, build, ex = {}) => reg(id, cat, name, w, d, h, price, colors, build, { sub, ...ex });
@@ -280,9 +280,15 @@ export function registerMore(reg, H) {
     K.sph(0.08, K.m('#4f7a55', { r: 0.9 }), 0.1, 1.2, -0.05); K.cyl(0.05, 0.04, 0.1, K.m('#e9e6df', { r: 0.6 }), 0.1, 1.11, -0.05, null, 12);
   }, { fin: null });
   R('plante_suspendue', DE, 'Plantes', 'Plante suspendue', 0.35, 0.35, 0.9, 25, [['Pot', '#e9e6df'], ['Feuillage', '#4f7a55']], (g, p, K) => {
-    const pot = K.m(p.c1, { r: 0.6 }), lf = K.m(p.c2, { r: 0.9 }); K.cyl(0.12, 0.09, 0.14, pot, 0, 0.3, 0, null, 16);
+    // pothos retombant : lianes souples garnies de petites feuilles en cœur
+    const pot = K.m(p.c1, { r: 0.6 }), R = rnd(31), vine = K.m('#5f7a3f', { r: 0.8 }), L = []; K.cyl(0.12, 0.09, 0.14, pot, 0, 0.3, 0, null, 16);
     for (const a of [0, 2.1, 4.2]) K.cyl(0.002, 0.002, 0.55, K.m('#8a6445', { r: 0.9 }), Math.cos(a) * 0.08, 0.62, Math.sin(a) * 0.08, null, 4);
-    for (let i = 0; i < 6; i++) { const a = i * 1.05; K.sph(0.07, lf, Math.cos(a) * 0.12, 0.25 - (i % 3) * 0.08, Math.sin(a) * 0.12, null, 0.8, 1.6, 0.8); }
+    for (let v = 0; v < 8; v++) {
+      const a = v * 0.785 + R() * 0.4, r0 = 0.1, r1 = 0.16 + R() * 0.06, drop = 0.15 + R() * 0.3, P = (u) => [Math.cos(a) * (r0 + (r1 - r0) * Math.sqrt(u)), 0.37 - drop * u * u - 0.05 * u, Math.sin(a) * (r0 + (r1 - r0) * Math.sqrt(u))];
+      K.tube([P(0), P(0.33), P(0.66), P(1)], 0.003, vine);
+      for (let i = 0; i < 7; i++) { const [x, y, z] = P(i / 6); L.push({ x, y, z, yaw: a + (R() - 0.5) * 2.4, el: (R() - 0.2) * 0.9, len: 0.07, wid: 0.06, bend: 0.1, sh: 0.8 + R() * 0.35, hue: 0.06 * (R() - 0.3) }); }
+    }
+    K.leaves(L, p.c2);
   }, { elev: 1.4, fin: null });
   R('miroir_arche', DE, 'Murs', 'Miroir arche sur pied', 0.6, 0.05, 1.7, 129, [['Cadre', '#c9a24b']], (g, p, K) => {
     const { w, h } = p, fr = K.m(p.c1, { m: 0.8, r: 0.3 }), mi = K.m('#d7e2e8', { r: 0.03, m: 1 });

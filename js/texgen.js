@@ -198,6 +198,14 @@ export function gravelPix() {
     return rgb(T[b] * big * (0.62 + 0.38 * smooth(0.07, 0.42, edge)) * (0.84 + 0.16 * lit), WM[b]);
   });
 }
+// ---- laine des tapis (répétable) : mèches serrées, poils un peu plus clairs au sommet ----
+export function woolPix() {
+  const n = qn(512), c = cv(n);
+  return out(c, n, n, (x, y) => {
+    const u = x / n, v = y / n, tuft = vnoise(u * 160, v * 160, 41, 160, 160), cl = fbm(u * 6, v * 6, 42, 3, 6, 6);
+    return rgb(0.8 + 0.12 * tuft * tuft + 0.08 * cl + 0.04 * (vnoise(u * 400, v * 400, 43, 400, 400) - 0.5), 0.01);
+  });
+}
 // ---- béton ciré (répétable) ----
 export function concretePix() {
   const n = qn(512), c = cv(n);

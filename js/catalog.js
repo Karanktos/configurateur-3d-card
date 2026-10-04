@@ -14,6 +14,36 @@ export const FINS = [['mat', 'Laqué mat'], ['bois', 'Bois / décor'], ['brillan
 
 const tone = (c, f) => { const k = new THREE.Color(c); k.lerp(new THREE.Color(f > 0 ? '#ffffff' : '#000000'), Math.abs(f)); return '#' + k.getHexString(); };
 
+// ---- formes « organiques » : feuilles, coussins ---------------------------------------------------
+export function rnd(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+// coussin / oreiller : ellipsoïde aux coins carrés, pincé sur sa couture (k : 0,2 ≈ pavé, 0,6 ≈ galet) ; épaisseur h selon y
+function pillowG(w, h, d, k = 0.35) {
+  const g = new THREE.SphereGeometry(1, 28, 18), P = g.attributes.position;
+  for (let i = 0; i < P.count; i++) {
+    const x = P.getX(i), y = P.getY(i), z = P.getZ(i);
+    P.setXYZ(i, Math.sign(x) * Math.pow(Math.abs(x), k) * w / 2, y * h / 2, Math.sign(z) * Math.pow(Math.abs(z), k) * d / 2);
+  }
+  g.computeVertexNormals(); return g;
+}
+// gabarit de feuille : nervure le long de +z (longueur 1, largeur 1), bords relevés, pointe fine
+const LEAF = (() => {
+  const N = 6, pos = [], idx = [];
+  for (let i = 0; i <= N; i++) { const t = i / N, wd = Math.pow(Math.sin(Math.PI * Math.min(1, 0.06 + t * 0.98)), 0.7) * 0.5; for (const sd of [-1, 0, 1]) pos.push(sd * wd, Math.abs(sd) * wd * 0.35, t); }
+  for (let i = 0; i < N; i++) for (let j = 0; j < 2; j++) { const a = i * 3 + j; idx.push(a, a + 3, a + 1, a + 1, a + 3, a + 4); }
+  return { pos, idx };
+})();
+// franges des tapis : fils clairs (texture partagée, répétée le long du bord)
+let FRINGE = null;
+function fringeTex() {
+  if (FRINGE) return FRINGE;
+  const c = document.createElement('canvas'); c.width = 8; c.height = 32; const x = c.getContext('2d');
+  x.fillStyle = '#000'; x.fillRect(0, 0, 8, 32); x.fillStyle = '#fff'; x.fillRect(1, 0, 4, 29);
+  FRINGE = new THREE.CanvasTexture(c); FRINGE.wrapS = THREE.RepeatWrapping; return FRINGE;
+}
+
 // ---- boîte à outils passée à chaque modèle -----------------------------------------------------
 function kit(g, p) {
   const parts = [], cache = new Map();
@@ -71,6 +101,30 @@ function kit(g, p) {
     K.add(pv, { slide: [0, 0, o.travel ?? d * 0.6] });
     return pv;
   };
+  K.pillow = (w, h, d, mt, x, y, z, par, k) => place(new THREE.Mesh(pillowG(w, h, d, k)), mt, x, y, z, par);
+  // tige souple passant par des points [[x, y, z], …]
+  K.tube = (pts, r, mt, par) => place(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((q) => new THREE.Vector3(...q))), 12, r, 5)), mt, 0, 0, 0, par);
+  // feuillage : toutes les feuilles en un seul maillage ; L = [{ x, y, z, yaw, el (inclinaison au-dessus de l'horizontale), len, wid, bend, sh (nuance), hue }]
+  K.leaves = (L, c, par) => {
+    const pos = [], col = [], idx = [], mx = new THREE.Matrix4(), v = new THREE.Vector3(), q = new THREE.Quaternion(), e = new THREE.Euler(), one = new THREE.Vector3(1, 1, 1);
+    for (const f of L) {
+      q.setFromEuler(e.set(-(f.el ?? 0), f.yaw ?? 0, f.roll ?? 0, 'YXZ')); mx.compose(v.set(f.x, f.y, f.z), q, one);
+      const o = pos.length / 3, sh = f.sh ?? 1, hu = f.hue ?? 0;
+      for (let i = 0; i < LEAF.pos.length; i += 3) {
+        const t = LEAF.pos[i + 2]; v.set(LEAF.pos[i] * f.wid, LEAF.pos[i + 1] * f.wid - (f.bend ?? 0.2) * t * t * f.len, t * f.len).applyMatrix4(mx); pos.push(v.x, v.y, v.z);
+        const k = sh * (0.78 + 0.3 * t) * (LEAF.pos[i] === 0 ? 1.08 : 1); col.push(k * (1 + hu), k, k * (1 - hu));   // nervure et pointe plus claires
+      }
+      for (const i of LEAF.idx) idx.push(o + i);
+    }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    const key = 'leaf|' + c; if (!cache.has(key)) cache.set(key, new THREE.MeshStandardMaterial({ color: c, roughness: 0.5, side: THREE.DoubleSide, vertexColors: true }));
+    return place(new THREE.Mesh(geo, cache.get(key)), cache.get(key), 0, 0, 0, par);
+  };
+  K.fringe = (w, x, z, rotY, par) => {   // franges d'un tapis le long d'un bord de largeur w
+    const geo = new THREE.PlaneGeometry(w, 0.07); geo.rotateX(-Math.PI / 2); const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * w / 0.012);
+    const key = 'fringe'; if (!cache.has(key)) cache.set(key, new THREE.MeshStandardMaterial({ color: '#efe8da', roughness: 1, alphaMap: fringeTex(), alphaTest: 0.5, side: THREE.DoubleSide }));
+    const o = place(new THREE.Mesh(geo), cache.get(key), x, 0.004, z, par); o.rotation.y = rotY; o.castShadow = false; return o;
+  };
   K.legs = (w, d, hgt, r, mt, inset = 0.06, par) => {
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) K.cyl(r, r * 0.8, hgt, mt, sx * (w / 2 - inset), hgt / 2, sz * (d / 2 - inset), par, 12);
   };
@@ -100,17 +154,27 @@ const WOOD = '#d9c3a5', WHITE = '#f1efea', GREY = '#8f9aa0', ANTH = '#4b5359';
 
 // ---------- CHAMBRE ----------
 function bed(g, p, K) {
-  const { w, d, h } = p, { box, rbox, piv, m, body } = K, fm = body(p.c1), mt = m('#f3f1ec', { r: 0.9 }), li = m(p.c2, { r: 0.95 }), pil = m(tone(p.c2, 0.35), { r: 0.95 });
+  const { w, d, h } = p, { box, rbox, piv, m, body } = K, fm = body(p.c1), mt = m('#f3f1ec', { r: 0.9 }), li = m(p.c2, { r: 0.95 });
+  const sheet = m('#f5f3ef', { r: 0.95 }), pil = m(tone(p.c2, 0.6), { r: 0.95 }), acc = m(tone(p.c2, -0.38), { r: 0.96 });
   box(w, 0.2, d, fm, 0, 0.2, 0);
   K.legs(w, d, 0.1, 0.03, fm, 0.05);
   box(w, h - 0.1, 0.07, fm, 0, 0.1 + (h - 0.1) / 2, -d / 2 + 0.035);
   box(w, 0.32, 0.05, fm, 0, 0.26, d / 2 - 0.025);
   rbox(w - 0.08, 0.22, d - 0.14, 0.05, mt, 0, 0.41, 0.02);
-  const np = w > 1.2 ? 2 : 1;
-  for (let i = 0; i < np; i++) rbox(np === 2 ? 0.6 : 0.55, 0.14, 0.4, 0.06, pil, np === 2 ? (i ? 1 : -1) * (w / 4) : 0, 0.59, -d / 2 + 0.4);
+  // oreillers bombés appuyés contre la tête de lit, coussins déco devant
+  const np = w > 1.2 ? 2 : 1, pw = np === 2 ? Math.min(0.66, (w - 0.14) / 2) : Math.min(0.6, w - 0.2);
+  for (let i = 0; i < np; i++) K.pillow(pw, 0.17, 0.44, pil, np === 2 ? (i ? 1 : -1) * (pw / 2 + 0.02) : 0, 0.62, -d / 2 + 0.31).rotation.x = -0.3;
+  if (w > 1.2) for (const sx of [-1, 1]) { const c = K.pillow(0.42, 0.13, 0.42, sx < 0 ? acc : li, sx * 0.2, 0.72, -d / 2 + 0.5); c.rotation.set(Math.PI / 2 - 0.45, 0, sx * 0.08); }
+  // couette : retombe sur les côtés et au pied, drap rabattu à la tête, plaid en travers au pied
   const L = d - 0.7, dv = piv(0, 0.52, d / 2 - 0.05);
   rbox(w - 0.03, 0.09, L, 0.04, li, 0, 0.045, -L / 2, dv);
-  K.add(dv, { scale: ['z', 1, 0.3] }); K.add(dv, { scale: ['y', 1, 2.3] });
+  for (const sx of [-1, 1]) rbox(0.03, 0.15, L, 0.012, li, sx * (w / 2 - 0.025), -0.03, -L / 2, dv);
+  rbox(w - 0.03, 0.15, 0.03, 0.012, li, 0, -0.03, -0.015, dv);
+  rbox(w - 0.035, 0.03, 0.24, 0.012, sheet, 0, 0.095, -L + 0.12, dv);
+  const tl = Math.min(0.5, L * 0.35);
+  rbox(w - 0.005, 0.03, tl, 0.012, acc, 0, 0.1, -0.06 - tl / 2, dv);
+  for (const sx of [-1, 1]) rbox(0.025, 0.17, tl, 0.01, acc, sx * (w / 2 - 0.005), -0.02, -0.06 - tl / 2, dv);
+  K.add(dv, { scale: ['z', 1, 0.3] }); K.add(dv, { scale: ['y', 1, 1.7] });
 }
 const bedColors = [['Cadre', WOOD], ['Linge de lit', '#9db4c0']];
 reg('lit90', 'Chambre', 'Lit simple 90', 0.98, 2.0, 0.85, 129, bedColors, bed, { anim: 'Défaire / refaire le lit', fin: 'bois' });
@@ -155,8 +219,12 @@ function sofaParts(g, p, K, o) {
   const backs = [];
   for (let i = 0; i < n; i++) {
     const x = xs - iw / 2 + (i + 0.5) * sw;
-    K.rbox(sw - 0.01, 0.16, dm - 0.24, 0.05, fab, x, sh + 0.08, zc + 0.12);
-    const b = K.rbox(sw - 0.02, 0.4, 0.17, 0.07, fab2, x, sh + 0.16 + 0.2, zc - dm / 2 + 0.3); b.rotation.x = -0.12; backs.push(b);
+    K.rbox(sw - 0.01, 0.16, dm - 0.24, 0.07, fab, x, sh + 0.08, zc + 0.12);
+    const b = K.pillow(sw - 0.02, 0.2, 0.44, fab2, x, sh + 0.16 + 0.22, zc - dm / 2 + 0.31, null, 0.3); b.rotation.x = Math.PI / 2 - 0.14; backs.push(b);
+  }
+  if (n >= 2) for (const sx of [-1, 1]) {   // coussins déco aux deux bouts, dans deux nuances du tissu
+    const c = K.pillow(0.42, 0.14, 0.42, K.m(tone(p.c1, sx < 0 ? -0.32 : 0.45), { r: 0.95 }), xs + sx * (iw / 2 - 0.27), sh + 0.16 + 0.21, zc - dm / 2 + 0.47);
+    c.rotation.set(Math.PI / 2 - 0.4, 0, sx * 0.12); backs.push(c);
   }
   return { backs };
 }
@@ -488,17 +556,27 @@ reg('chaise_bureau', 'Bureau', 'Chaise de bureau', 0.6, 0.6, 1.0, 129, [['Tissu'
 
 // ---------- DÉCO ----------
 reg('tapis', 'Déco', 'Tapis 200×300', 2.0, 3.0, 0.015, 119, [['Couleur', '#c9b79c'], ['Bordure', '#8a7e6d']], (g, p, K) => {
-  K.rbox(p.w, 0.015, p.d, 0.005, K.m(p.c2, { r: 1 }), 0, 0.0075, 0); K.rbox(p.w - 0.1, 0.017, p.d - 0.1, 0.005, K.m(p.c1, { r: 1 }), 0, 0.009, 0);
+  K.rbox(p.w, 0.015, p.d, 0.005, K.m(p.c2, { r: 1, map: 'laine' }), 0, 0.0075, 0); K.rbox(p.w - 0.16, 0.017, p.d - 0.16, 0.005, K.m(p.c1, { r: 1, map: 'laine' }), 0, 0.009, 0);
+  K.box(p.w - 0.24, 0.0175, 0.012, K.m(p.c2, { r: 1, map: 'laine' }), 0, 0.009, p.d / 2 - 0.14); K.box(p.w - 0.24, 0.0175, 0.012, K.m(p.c2, { r: 1, map: 'laine' }), 0, 0.009, -p.d / 2 + 0.14);
+  for (const sz of [-1, 1]) { K.box(0.012, 0.0175, p.d - 0.28, K.m(p.c2, { r: 1, map: 'laine' }), sz * (p.w / 2 - 0.14), 0.009, 0); K.fringe(p.w - 0.02, 0, sz * (p.d / 2 + 0.034), 0); }
 }, { fin: null });
 reg('tapis_r', 'Déco', 'Tapis rond Ø 160', 1.6, 1.6, 0.015, 89, [['Couleur', '#9aa5a8']], (g, p, K) => {
-  const t = K.cyl(0.5, 0.5, 0.015, K.m(p.c1, { r: 1 }), 0, 0.0075, 0, null, 48); t.scale.set(p.w, 1, p.d);
+  const t = K.cyl(0.5, 0.5, 0.015, K.m(p.c1, { r: 1, map: 'laine' }), 0, 0.0075, 0, null, 64); t.scale.set(p.w, 1, p.d);
 }, { fin: null });
+// pot + terreau ; renvoie la hauteur du terreau
+function pot(K, p, rt, rb, ph) { K.cyl(rt, rb, ph, K.m(p.c1, { r: 0.6 }), 0, ph / 2, 0, null, 28); K.cyl(rt * 0.92, rt * 0.92, 0.01, K.m('#3b2f25', { r: 1 }), 0, ph - 0.02, 0, null, 24); return ph - 0.015; }
 reg('plante', 'Déco', 'Plante en pot', 0.5, 0.5, 1.3, 39, [['Pot', '#d9c3a5'], ['Feuillage', '#4f7a55']], (g, p, K) => {
-  const { w, h } = p, pot = K.cyl(w * 0.34, w * 0.26, h * 0.25, K.m(p.c1, { r: 0.7 }), 0, h * 0.125, 0, null, 24);
-  K.cyl(0.015, 0.02, h * 0.45, K.m('#5a4636'), 0, h * 0.4, 0, null, 8);
-  const lm = K.m(p.c2, { r: 0.8 }); const pts = [[0, 0.62, 0, 0.2], [0.14, 0.5, 0.05, 0.16], [-0.13, 0.52, -0.06, 0.17], [0.05, 0.78, -0.05, 0.16], [-0.08, 0.72, 0.1, 0.14], [0.12, 0.9, 0.0, 0.1], [-0.05, 0.95, -0.03, 0.1]];
-  for (const [x, yy, z, r] of pts) K.sph(r * (w / 0.5), lm, x * (w / 0.5), h * yy, z * (w / 0.5), null, 1, 0.9, 1);
-  void pot;
+  // ficus / caoutchouc : quelques tiges souples garnies de larges feuilles brillantes
+  const { w, h } = p, sc = w / 0.5, R = rnd(7), y0 = pot(K, p, w * 0.34, w * 0.26, h * 0.25), stem = K.m('#5a4636', { r: 0.8 }), L = [];
+  for (let s = 0; s < 6; s++) {
+    const a = s * 1.047 + R() * 0.5, r = (0.08 + R() * 0.12) * sc, top = h * (0.72 + R() * 0.28), pts = [[0, y0, 0], [Math.cos(a) * r * 0.3, y0 + (top - y0) * 0.4, Math.sin(a) * r * 0.3], [Math.cos(a) * r, top, Math.sin(a) * r]];
+    K.tube(pts, 0.007 * sc, stem);
+    for (let i = 0; i < 9; i++) {
+      const t = 0.3 + (i / 8) * 0.7, x = pts[1][0] + (pts[2][0] - pts[1][0]) * t, z = pts[1][2] + (pts[2][2] - pts[1][2]) * t, y = pts[1][1] + (pts[2][1] - pts[1][1]) * t;
+      L.push({ x, y, z, yaw: a + (R() - 0.5) * 3.2, el: 0.15 + R() * 0.6, len: (0.14 + R() * 0.07) * sc, wid: (0.07 + R() * 0.03) * sc, bend: 0.25, sh: 0.8 + R() * 0.35, hue: (R() - 0.5) * 0.12 });
+    }
+  }
+  K.leaves(L, p.c2);
 }, { fin: null });
 reg('lampadaire', 'Éclairage', 'Lampadaire', 0.4, 0.4, 1.6, 59, [['Structure', '#2e3338'], ['Abat-jour', '#f1ead8']], (g, p, K) => {
   const { w, h } = p, bm = K.m(p.c1, { m: 0.6, r: 0.4 });
@@ -780,8 +858,16 @@ reg('barbecue', 'Extérieur', 'Barbecue', 1.2, 0.6, 1.05, 249, [['Corps', '#1b1c
   K.box(p.w * 0.3, 0.03, p.d, K.m(p.c2, { r: 0.7 }), p.w * 0.32, 0.8, 0); K.box(p.w * 0.3, 0.3, p.d - 0.05, bm, p.w * 0.32, 0.6, 0);
 }, { fin: null });
 reg('arbre', 'Extérieur', 'Arbre', 2.5, 2.5, 4.0, 0, [['Feuillage', '#4f7a55'], ['Tronc', '#5a4636']], (g, p, K) => {
-  K.cyl(0.05 * p.w / 2.5 * 1.5, 0.09 * p.w / 2.5 * 1.5, p.h * 0.45, K.m(p.c2, { r: 0.9 }), 0, p.h * 0.225, 0, null, 10);
-  const lm = K.m(p.c1, { r: 0.9 }); [[0, 0.68, 0, 0.4], [0.25, 0.58, 0.1, 0.28], [-0.25, 0.6, -0.1, 0.3], [0.05, 0.85, 0.05, 0.28], [-0.1, 0.55, 0.25, 0.26]].forEach(([x, y, z, r]) => K.sph(r * p.w, lm, x * p.w, y * p.h, z * p.w, null, 1, p.h / p.w * 0.45, 1));
+  // tronc, charpentières et houppier fait de bouquets de feuilles (masse sombre au cœur pour éviter les trous)
+  const { w, h } = p, R = rnd(29), bark = K.m(p.c2, { r: 0.9 }), cy = h * 0.66, rx = w * 0.46, ry = h * 0.3, L = [];
+  K.tube([[0, 0, 0], [0.04 * w, h * 0.25, 0], [0, h * 0.5, 0.03 * w]], 0.035 * w, bark);
+  for (let i = 0; i < 5; i++) { const a = i * 1.26 + R(); K.tube([[0, h * 0.45, 0], [Math.cos(a) * rx * 0.3, h * 0.58, Math.sin(a) * rx * 0.3], [Math.cos(a) * rx * 0.6, cy + (R() - 0.3) * ry * 0.6, Math.sin(a) * rx * 0.6]], 0.012 * w, bark); }
+  K.sph(1, K.m(tone(p.c1, -0.35), { r: 0.95, map: 'grass' }), 0, cy, 0, null, rx * 0.72, ry * 0.72, rx * 0.72);
+  for (let c = 0; c < 90; c++) {
+    const a = R() * 6.283, b = c < 14 ? R() * 0.6 : Math.acos(1 - 2 * R() * 0.92), bx = Math.sin(b) * Math.cos(a) * rx, bz = Math.sin(b) * Math.sin(a) * rx, by = cy + Math.cos(b) * ry;
+    for (let i = 0; i < 13; i++) L.push({ x: bx + (R() - 0.5) * 0.4 * w / 2.5, y: by + (R() - 0.5) * 0.35, z: bz + (R() - 0.5) * 0.4 * w / 2.5, yaw: R() * 6.283, el: (R() - 0.3) * 1.2, len: 0.28 * w / 2.5, wid: 0.15 * w / 2.5, bend: 0.2, sh: 0.75 + R() * 0.4 + 0.15 * Math.cos(b), hue: (R() - 0.5) * 0.15 });
+  }
+  K.leaves(L, p.c1);
 }, { fin: null });
 reg('haie', 'Extérieur', 'Haie', 3.0, 0.6, 1.4, 0, [['Feuillage', '#4f7a55']], (g, p, K) => {
   K.rbox(p.w, p.h, p.d, 0.15, K.m(p.c1, { r: 0.95 }), 0, p.h / 2, 0);
@@ -913,7 +999,24 @@ reg('plaque_induction', 'Électroménager', 'Plaque de cuisson', 0.6, 0.52, 0.01
 reg('cave_vin', 'Électroménager', 'Cave à vin', 0.6, 0.6, 0.85, 399, [['Corps', '#1b1c1f']], (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.02, K.m(p.c1, { r: 0.4 }), 0, p.h / 2, 0); K.box(p.w - 0.08, p.h - 0.1, 0.012, K.glass(), 0, p.h / 2, p.d / 2 + 0.002); for (let i = 0; i < 4; i++) K.box(p.w - 0.1, 0.01, 0.03, K.m('#c8a57a'), 0, 0.15 + i * 0.18, p.d / 2 - 0.01); }, { fin: null });
 // ---------- Déco ----------
 reg('horloge', 'Déco', 'Horloge murale', 0.4, 0.04, 0.4, 29, [['Cadre', '#1b1c1f']], (g, p, K) => { const c = K.cyl(0.5, 0.5, 0.04, K.m(p.c1, { r: 0.5 }), 0, p.h / 2, 0, null, 36); c.scale.set(p.w, 1, p.h); c.rotation.x = Math.PI / 2; const f = K.cyl(0.45, 0.45, 0.005, K.m('#f3f1ec', { r: 0.6 }), 0, p.h / 2, 0.02, null, 36); f.scale.set(p.w, 1, p.h); f.rotation.x = Math.PI / 2; K.box(0.012, p.h * 0.32, 0.006, K.black(), 0, p.h / 2 + p.h * 0.14, 0.026); K.box(p.w * 0.26, 0.012, 0.006, K.black(), p.w * 0.1, p.h / 2, 0.028); }, { elev: 1.7, fin: null });
-reg('palmier', 'Déco', 'Grande plante (palmier)', 0.8, 0.8, 1.8, 89, [['Pot', '#d9c3a5'], ['Feuillage', '#4f7a55']], (g, p, K) => { K.cyl(p.w * 0.25, p.w * 0.2, 0.3, K.m(p.c1, { r: 0.7 }), 0, 0.15, 0, null, 20); K.cyl(0.02, 0.03, p.h * 0.6, K.m('#5a4636'), 0, 0.3 + p.h * 0.3, 0, null, 8); for (let i = 0; i < 9; i++) { const a = (i / 9) * 6.283, l = K.sph(0.3, K.m(p.c2, { r: 0.8 }), Math.cos(a) * p.w * 0.3, p.h * 0.82 - (i % 2) * 0.12, Math.sin(a) * p.w * 0.3, null, 1.3, 0.18, 0.45); l.rotation.y = -a; l.rotation.z = 0.35; } }, { fin: null });
+reg('palmier', 'Déco', 'Grande plante (palmier)', 0.8, 0.8, 1.8, 89, [['Pot', '#d9c3a5'], ['Feuillage', '#4f7a55']], (g, p, K) => {
+  // palmier d'intérieur (areca) : cannes, palmes arquées garnies de folioles fines
+  const { w, h } = p, sc = w / 0.8, R = rnd(13), y0 = pot(K, p, w * 0.25, w * 0.2, 0.3), cane = K.m('#7d8a52', { r: 0.6 }), L = [];
+  for (let c = 0; c < 3; c++) {
+    const ca = c * 2.1 + 0.4, top = [Math.cos(ca) * 0.05, h * (0.45 + c * 0.08), Math.sin(ca) * 0.05];
+    K.tube([[Math.cos(ca) * 0.03, y0, Math.sin(ca) * 0.03], [top[0] * 0.6, (y0 + top[1]) / 2, top[2] * 0.6], top], 0.012 * sc, cane);
+    for (let f = 0; f < 4; f++) {
+      const yf = ca + f * 1.57 + (R() - 0.5) * 0.6, Lf = (0.6 + R() * 0.25) * sc * (h / 1.8), dx = Math.sin(yf), dz = Math.cos(yf), up = 0.5 + R() * 0.3;
+      const P = (u) => [top[0] + dx * u * Lf, top[1] + Lf * (up * Math.sin(u * 2.2) * 0.55 - u * u * 0.25), top[2] + dz * u * Lf];
+      K.tube([P(0), P(0.35), P(0.7), P(1)], 0.004 * sc, cane);
+      for (let i = 0; i < 16; i++) {
+        const u = 0.12 + (i / 15) * 0.86, [x, y, z] = P(u), ll = (0.26 - 0.15 * u) * sc;
+        for (const sd of [-1, 1]) L.push({ x, y, z, yaw: yf + sd * (1.05 - 0.4 * u), el: -0.15 - 0.4 * u, len: ll, wid: 0.028 * sc, bend: 0.35, sh: 0.82 + R() * 0.3, hue: 0.03 + (R() - 0.5) * 0.08 });
+      }
+    }
+  }
+  K.leaves(L, p.c2);
+}, { fin: null });
 reg('plaid_pouf', 'Déco', 'Coussins (lot de 3)', 0.5, 0.2, 0.4, 29, [['Tissu', '#d6a69a']], (g, p, K) => { for (let i = 0; i < 3; i++) { const c = K.rbox(0.4, 0.4, 0.1, 0.05, K.m(tone(p.c1, (i - 1) * 0.2), { r: 0.95 }), (i - 1) * 0.28, 0.2, 0); c.rotation.z = (i - 1) * 0.12; } }, { elev: 0.4, fin: null });
 // ---------- Extérieur ----------
 reg('banc_jardin', 'Extérieur', 'Banc de jardin', 1.5, 0.55, 0.85, 129, [['Lames', '#8a5a3c'], ['Structure', '#2e3338']], (g, p, K) => { const bm = K.body(p.c1), lm = K.m(p.c2, { m: 0.5, r: 0.5 }); for (let i = 0; i < 4; i++) K.box(p.w, 0.025, 0.09, bm, 0, p.h * 0.5, p.d / 2 - 0.08 - i * 0.1); for (let i = 0; i < 3; i++) { const b = K.box(p.w, 0.09, 0.02, bm, 0, p.h * 0.65 + i * 0.1, -p.d / 2 + 0.05 - i * 0.015); b.rotation.x = -0.15; } for (const sx of [-1, 1]) { K.box(0.04, p.h, 0.04, lm, sx * (p.w / 2 - 0.05), p.h / 2, -p.d / 2 + 0.05); K.box(0.04, p.h * 0.5, 0.04, lm, sx * (p.w / 2 - 0.05), p.h * 0.25, p.d / 2 - 0.05); } }, { fin: 'bois' });
@@ -941,7 +1044,7 @@ const SMALLAPP = (id, name, w, d, h, price, build) => reg(id, 'Électroménager'
 SMALLAPP('cafetiere', 'Machine à café', 0.2, 0.3, 0.35, 89, (g, p, K) => { const bm = K.m(p.c1, { r: 0.3, m: 0.5 }); K.box(p.w, p.h, p.d * 0.5, bm, 0, p.h / 2, -p.d * 0.25); K.box(p.w, 0.04, p.d, bm, 0, 0.02, 0); K.cyl(0.04, 0.04, 0.09, K.black(), 0, 0.09, p.d * 0.15, null, 14); });
 SMALLAPP('bouilloire', 'Bouilloire', 0.2, 0.2, 0.25, 39, (g, p, K) => { K.cyl(0.09, 0.1, p.h * 0.85, K.m(p.c1, { r: 0.3, m: 0.6 }), 0, p.h * 0.43, 0, null, 20); K.box(0.02, p.h * 0.6, 0.04, K.black(), p.w * 0.55, p.h * 0.5, 0); });
 SMALLAPP('grille_pain', 'Grille-pain', 0.3, 0.17, 0.2, 35, (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.04, K.m(p.c1, { r: 0.3, m: 0.5 }), 0, p.h / 2, 0); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, -0.03); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, 0.03); });
-{ const m = registerMore(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, ANTH, OAK, WALNUT }); m.surf.forEach((id) => { DEFS[id].surf = true; }); m.free.forEach((id) => { DEFS[id].free = true; }); }
+{ const m = registerMore(reg, { unit, sofaParts, bed, wardrobe, tone, rnd, WOOD, WHITE, ANTH, OAK, WALNUT }); m.surf.forEach((id) => { DEFS[id].surf = true; }); m.free.forEach((id) => { DEFS[id].free = true; }); }
 registerIkea(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, OAK });   // série inspirée des gammes IKEA (js/catalog4.js)
 for (const id of ['table_lack', 'buffet_hemnes', 'commode_nordli', 'commode_kullen', 'table_norden', 'table_ekedalen', 'table_ingatorp', 'table_applaro', 'bureau_micke', 'vasque_godmorgon', 'chaussures_hemnes', 'table_enfant_mammut']) DEFS[id].surf = true;
 for (const id of ['table_lack', 'fauteuil_oreilles', 'desserte_raskog', 'table_norden', 'table_ekedalen', 'table_ingatorp', 'chaise_teodores', 'chaise_ingolf', 'chaise_odger', 'chaise_markus', 'caisson_helmer', 'table_enfant_mammut', 'table_applaro', 'chaise_applaro', 'bain_soleil']) DEFS[id].free = true;   // meubles inspirés des grandes enseignes (js/catalog3.js)
