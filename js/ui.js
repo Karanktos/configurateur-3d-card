@@ -9,7 +9,7 @@ import {
 import { entities, stateOf, nameOf, hasHA, onHass, listDashboards, publishPlan, navigate } from './ha.js';
 import { iconList, refresh as refreshPins } from './pins.js';
 import * as SUN from './sun.js';
-import { FLOORS, FINISHES, PALETTE, TILE, POSES, canStagger, floorDef, finishDef, swatchInto, floorColor, finishColor, poseFixed } from './textures.js';
+import { FLOORS, FINISHES, PALETTE, TILE, POSES, canStagger, floorDef, finishDef, swatchInto } from './textures.js';
 import { CATS, ALL, FINS, buildItem, defOf, defaultItem } from './catalog.js';
 import { FACADES, HANDLES as KHANDLES, HFINS, FCOLORS, KSTYLE_KEYS, KDEF, isKitchen, facadeOf } from './kitchen.js';
 import { DOORS, WINDOWS, MATS, GLASSES, HANDLES, defaultOpening, buildOpening, modelOf } from './openings.js';
@@ -92,20 +92,20 @@ const SENS = [[0, '0°'], [90, '90°'], [45, 'Diagonale']];
 function fPose(o, ch) {
   const d = floorDef(o.mat), out = [];
   if (o.pose == null) o.pose = 'auto'; if (o.sens == null) o.sens = 0;
-  if (canStagger(d.tex) && !poseFixed(d)) out.push(fSeg('Pose', o, 'pose', POSES, ch));
+  if (canStagger(d.tex)) out.push(fSeg('Pose', o, 'pose', POSES, ch));
   if (d.tex) out.push(fSeg('Sens de pose', o, 'sens', SENS, ch));
   return out;
 }
 const prevMat = new Map();   // sol → revêtement qu'il avait avant le changement (pour « appliquer aux autres sols »)
 function fFloorMat(o, on) {
   const wrap = el('div', { class: 'mats' });
-  FLOORS.forEach((f) => wrap.append(el('button', { class: 'mat' + (o.mat === f.id ? ' on' : ''), onclick: () => { if (o.id && f.id !== o.mat && !prevMat.has(o.id)) prevMat.set(o.id, o.mat); o.mat = f.id; o.color = floorColor(f); if ('scale' in o) o.scale = 1; on(true); refreshPanels(); } },
+  FLOORS.forEach((f) => wrap.append(el('button', { class: 'mat' + (o.mat === f.id ? ' on' : ''), onclick: () => { if (o.id && f.id !== o.mat && !prevMat.has(o.id)) prevMat.set(o.id, o.mat); o.mat = f.id; o.color = f.color; if ('scale' in o) o.scale = 1; on(true); refreshPanels(); } },
     swatchInto(el('img', { alt: '' }), f.tex, o.mat === f.id ? o.color : f.color, 72), f.name)));
   return el('div', { class: 'f' }, el('div', { class: 'l' }, 'Matière du sol'), wrap);
 }
 function fFinish(o, key, on, label) {
   const fin = finishDef(o[key].f), wrap = el('div', { class: 'mats' });
-  FINISHES.forEach((f) => wrap.append(el('button', { class: 'mat' + (o[key].f === f.id ? ' on' : ''), onclick: () => { o[key].f = f.id; if (f.tex) o[key].c = finishColor(f); on(true); refreshPanels(); } },
+  FINISHES.forEach((f) => wrap.append(el('button', { class: 'mat' + (o[key].f === f.id ? ' on' : ''), onclick: () => { o[key].f = f.id; if (f.tex) o[key].c = f.color; on(true); refreshPanels(); } },
     swatchInto(el('img', { alt: '' }), f.tex, o[key].f === f.id ? o[key].c : f.color, 72), f.name)));
   void fin;
   return [el('div', { class: 'f' }, el('div', { class: 'l' }, label), wrap), fColor('Couleur', o[key], 'c', on)];

@@ -2,7 +2,6 @@
 // Chaque texture est en niveaux de gris : la « couleur » choisie par l'utilisateur est multipliée dessus.
 import * as THREE from 'three';
 import { hexToRgb } from './util.js';
-import { floorPbr, wallPbr, isPbr, pbrSize, attachMisc, pbrDefaultColor, pbrFixedPose, miscPbr } from './assets.js';
 import { boardsPix, slabPix, opusPix, stoneWallPix, woodPix, concretePix, grassPix, marblePix, gravelPix, woolPix, setTexQuality } from './texgen.js';
 setTexQuality(Math.min(screen.width, screen.height) < 700 ? 0.6 : 1);   // textures calculées moins finement sur téléphone
 
@@ -273,7 +272,7 @@ function variant(key) {
   if (SLABS[kind]) { const o = slabPose(kind, pose); GEN[key] = slabTex(o); TEX_SIZE[key] = slabSize(o); }
   else { const n = +kind.slice(4); GEN[key] = GEN.tile(n, k); TEX_SIZE[key] = [1, (k ? k * Math.ceil(n / k) : n) / n]; }
 }
-export const texSize = (key) => { if (!key) return [1, 1]; if (isPbr(key)) return pbrSize(key); if (!TEX_SIZE[key] && key.includes('@')) variant(key); return TEX_SIZE[key]; };
+export const texSize = (key) => { if (!key) return [1, 1]; if (!TEX_SIZE[key] && key.includes('@')) variant(key); return TEX_SIZE[key]; };
 
 const cache = {};
 export function getTex(kind) {
@@ -294,16 +293,7 @@ const BUMP = { parquet: 0.6, chevron: 0.6, plank: 0.6, deck: 1.2, tile4: 1, tile
   terrazzo: 0.3, concrete: 0.4, marble: 0.2, carpet: 0.8, grass: 1, gravel: 1.2, granite: 0.3, crepi: 1, brique: 1.6, lambris: 0.9, metro: 1, bois: 0.35, lames: 0.8, ardoise: 1.4, tissu: 0.5, stonewall: 1.6, laine: 1.2 };
 export function bumpFor(key) { const k = (key || '').split('@')[0]; return BUMP[k] ?? (SLABS[k] ? (SLABS[k].style === 'bois' ? 0.6 : 1) : 0); }
 // matériau standard avec relief si la texture en a un
-export function withBump(m, key, k = 3) { const b = bumpFor(key); if (b && m.map) { m.bumpMap = m.map; m.bumpScale = b * k; } return key && miscPbr(key) ? attachMisc(m, key) : m; }
-
-// ---- pack d'assets PBR (js/assets.js) : clé de matière « pbr:… » quand la matière existe dans le pack, sinon texture procédurale ----
-// sol : le calepinage des matières « pose » est déjà dans l'image → ni quinconce ni pose du moteur (rotation et échelle restent possibles)
-export const floorTex = (fd, pose) => floorPbr(fd.id) || texKey(fd.tex, pose);
-export const finishTex = (fd) => wallPbr(fd.id) || fd.tex;
-// couleur à appliquer quand on choisit une matière : celle du pack (albedo recentré) si elle est prête, sinon celle d'origine
-export const floorColor = (fd) => (floorPbr(fd.id) && pbrDefaultColor('floors', fd.id)) || fd.color;
-export const finishColor = (fd) => (wallPbr(fd.id) && pbrDefaultColor('walls', fd.id)) || fd.color;
-export const poseFixed = (fd) => !!floorPbr(fd.id) && pbrFixedPose(fd.id);
+export function withBump(m, key, k = 3) { const b = bumpFor(key); if (b && m.map) { m.bumpMap = m.map; m.bumpScale = b * k; } return m; }
 
 // variante dont la répétition est en mètres (pour les UV de boxG)
 const cacheM = {};

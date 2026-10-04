@@ -6,14 +6,7 @@ où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'o
 **Rendu réaliste** : matières « photo » calculées sur place (veinage du parquet, strates et alvéoles du travertin, dallage en pierre irrégulière, murs de pierres, terre cuite, marbre veiné, gravier, béton nuancé) et en relief, textiles veloutés, plinthes, couleurs fidèles ;
 en **Rendu HD** (case de l'éditeur ou bouton **HD** de la vue publiée ; activé d'office sur ordinateur) : ombrage de contact (occlusion ambiante), bords lissés, ombres fines et halo des lampes le soir.
 
-**Pack d'assets réalistes** (facultatif) : textures PBR (couleur, normales, occlusion/rugosité) et éclairage HDRI de [Poly Haven](https://polyhaven.com) (CC0, voir `assets/CREDITS.md`) pour les sols, les murs et le bois/tissu/laine des meubles ; chargées à la demande, en 1k sur ordinateur et en 512 sur petit écran, avec repli sur les matières générées par le code si un fichier manque. La carte cherche le dossier `assets/` dans l'ordre : `assets_url` (YAML) → à côté du fichier de la carte → jsDelivr (internet requis).
-HACS ne télécharge que `dist/configurateur-3d-card.js` (il ne sait pas livrer de sous-dossiers pour un « plugin » : voir ci-dessous). Pour un fonctionnement **100 % local** : copier le dossier `assets/` du dépôt (ou seulement les sous-dossiers `512` + `materials.json` + `hdri`, 10 Mo) dans `/config/www/configurateur-3d-assets/`, puis dans la carte :
-```yaml
-type: custom:configurateur-3d-card
-assets_url: /local/configurateur-3d-assets/     # false = désactiver le pack
-assets_skip: [floor-pierre, floor-zellige]      # optionnel : clés du pack à ne pas utiliser
-```
-(Ne pas le placer sous `/config/www/community/…` : HACS vide ce dossier à chaque mise à jour.)
+> **Deux éditions.** Ce dépôt est l'édition **légère** (un seul fichier de 182 Ko, textures générées par le code). L'édition **HD**, avec les textures PBR et l'éclairage HDRI Poly Haven installés en local par HACS, est dans [`configurateur-3d-card-hd`](https://github.com/Karanktos/configurateur-3d-card-hd). N'installe qu'une des deux : elles déclarent la même carte `custom:configurateur-3d-card`, et les plans sont compatibles.
 
 **Cuisine modulaire** façon configurateur de grande surface : meubles bas, hauts, colonnes et demi-colonnes aux dimensions standard (four, micro-ondes, plaque, évier, lave-vaisselle, réfrigérateur intégrés), joues, fileurs et crédence ;
 façades façon Leroy Merlin (Sofia, Tokyo, Oxford…) ou IKEA (Voxtorp, Bodbyn, Axstad, Havstorp, Kungsbacka, Nickebo, Sinarp…), poignées et finitions au choix, plan de travail. Le style choisi est repris pour chaque nouveau meuble, et les meubles se collent bord à bord.

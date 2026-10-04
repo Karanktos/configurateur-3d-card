@@ -1,7 +1,7 @@
 // Géométrie d'un mur percé d'ouvertures.
 // Repère local du mur : x le long de l'axe (0 → L), y vers le haut, z dans l'épaisseur (+z = face A, −z = face B).
 import * as THREE from 'three';
-import { texSize } from './textures.js';
+import { TEX_SIZE } from './textures.js';
 
 // holes : [{x0,x1,y0,y1,round}]  ; texA/texB : clé de texture (pour mettre les UV à l'échelle)
 export function wallGeometry(L, H, t, holes, extA = 0, extB = 0, texA = null, texB = null) {
@@ -67,7 +67,7 @@ function splitFaces(g, t, texA, texB) {
       N[w * 3] = nor.getX(i + k); N[w * 3 + 1] = nor.getY(i + k); N[w * 3 + 2] = nor.getZ(i + k);
       let u = uv.getX(i + k), v = uv.getY(i + k);
       const tex = gi === 0 ? texA : gi === 1 ? texB : null;
-      if (tex) { const sz = texSize(tex); u /= sz[0]; v /= sz[1]; }
+      if (tex) { u /= TEX_SIZE[tex][0]; v /= TEX_SIZE[tex][1]; }
       if (gi === 1) u = -u; // face B vue de l'autre côté
       U[w * 2] = u; U[w * 2 + 1] = v;
     }
