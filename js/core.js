@@ -1,7 +1,8 @@
 // Cœur : état du plan, scène three.js, rendu des entités, caméra, historique.
 import * as THREE from 'three';
 import { clamp, rad, disposeTree, r2 } from './util.js';
-import { getTex, floorDef, finishDef, TEX_SIZE, texKey, texSize, withBump } from './textures.js';
+import { getTex, floorDef, finishDef, TEX_SIZE, floorTex, finishTex, texSize, withBump } from './textures.js';
+import { isPbr, pbrMaterial, initAssets, loadHdri, PBR_UNITS, pbrActive } from './assets.js';
 import { wallGeometry, cutWallGeometry } from './geom.js';
 import { buildOpening, modelOf, defaultOpening } from './openings.js';
 import { buildItem, defOf, defaultItem } from './catalog.js';
@@ -115,7 +116,7 @@ export function initScene(canvas) {
   Object.assign(R, { renderer, scene, persp, ortho, canvas, cam: persp });
 
   const pm = new THREE.PMREMGenerator(renderer);
-  scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.55; // reflets des métaux (inox, miroir)
+  scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; scene.environmentIntensity = 0.55; R.envK = 1; // reflets des métaux (inox, miroir) ; envK : facteur du HDRI du pack d'assets (voir setEnvironment)
   const hemi = new THREE.HemisphereLight('#ffffff', '#b8c0c8', 0.95); scene.add(hemi); R.hemi = hemi;
   const sun = new THREE.DirectionalLight('#fffaf3', 2.4); sun.position.set(8, 16, 10); sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
@@ -303,7 +304,7 @@ const matCache = new Map();
 export function surfMat(texKey, color, rough = 0.9) {
   const k = texKey + '|' + color;
   if (!matCache.has(k)) {
-    const m = withBump(new THREE.MeshStandardMaterial({ color, roughness: rough, map: getTex(texKey) }), texKey);
+    const m = isPbr(texKey) ? pbrMaterial(texKey, color) : withBump(new THREE.MeshStandardMaterial({ color, roughness: rough, map: getTex(texKey) }), texKey);
     m.userData.shared = true; matCache.set(k, m);
   }
   return matCache.get(k);
@@ -371,8 +372,8 @@ export function renderWalls() {
       return { x0, x1: o.s + o.w / 2, y0, y1: y0 + o.h, round: !!modelOf(o).round };
     });
     const ea = extension(w, false), eb = extension(w, true);
-    const geo = (wallsCut && w.h > CUT_H && cutWallGeometry(L, CUT_H, w.t, holes, ea, eb, fa.tex, fb.tex)) || wallGeometry(L, w.h, w.t, holes, ea, eb, fa.tex, fb.tex);
-    const mesh = new THREE.Mesh(geo, [surfMat(fa.tex, w.fa.c), surfMat(fb.tex, w.fb.c), topMat]);
+    const geo = (wallsCut && w.h > CUT_H && cutWallGeometry(L, CUT_H, w.t, holes, ea, eb, finishTex(fa), finishTex(fb))) || wallGeometry(L, w.h, w.t, holes, ea, eb, finishTex(fa), finishTex(fb));
+    const mesh = new THREE.Mesh(geo, [surfMat(finishTex(fa), w.fa.c), surfMat(finishTex(fb), w.fb.c), topMat]);
     mesh.castShadow = mesh.receiveShadow = true;
     const g = new THREE.Group(); g.position.set(w.x1, 0, w.z1); g.rotation.y = -ang; g.add(mesh);
     g.userData.wall = w.id; g.userData.mesh = mesh; tagRef(g, 'wall', w.id);
@@ -467,7 +468,7 @@ export function renderOpenings() {
 export function renderFloors() {
   clearKind('floor');
   S.floors.forEach((f, idx) => {
-    const fd = floorDef(f.mat), key = texKey(fd.tex, f.pose), size = texSize(key), sc = f.scale || 1;
+    const fd = floorDef(f.mat), key = floorTex(fd, f.pose), size = texSize(key), sc = f.scale || 1;
     const a = ((f.sens || 0) * Math.PI) / 180, ca = Math.cos(a), sa = Math.sin(a);   // sens de pose : 0°, 90° ou 45° (diagonale)
     const geo = new THREE.PlaneGeometry(f.w, f.d); geo.rotateX(-Math.PI / 2);
     const uv = geo.attributes.uv, pos = geo.attributes.position;
@@ -564,6 +565,16 @@ export function rebuildAll() {
 }
 // reconstruit seulement ce qui dépend d'un mur / ouverture (garde les meubles)
 export function rebuildStructure() { renderWalls(); renderOpenings(); renderFloors(); renderPlot(); updateLight(); drawSelection(); updateCutaway(); invalidate(); }
+// pack d'assets : la liste des matières disponibles vient de changer (manifest chargé, image introuvable) → tout est reconstruit une fois
+export function refreshAssets() { built.clear(); rebuildAll(); }
+export function setEnvironment(env, intensity) {   // HDRI du pack : remplace RoomEnvironment pour les reflets/l'éclairage ambiant (pas le fond)
+  const old = R.scene.environment; R.scene.environment = env; if (old && old !== env) old.dispose();
+  R.envK = (intensity || 0.55) / 0.55; applySun(); invalidate();
+}
+export function startAssets(bases, skip) {
+  if (![].concat(bases || []).filter(Boolean).length) return;
+  initAssets(bases, { change: refreshAssets, tex: () => invalidate() }, skip).then((ok) => { if (ok) loadHdri(R.renderer, setEnvironment); });
+}
 export function rebuildFloors() { renderFloors(); renderPlot(); drawSelection(); invalidate(); }
 
 const DEF_DIR = new THREE.Vector3(0.6, 1.5, 0.9).normalize();
@@ -689,7 +700,8 @@ let last = performance.now();
 // au-delà de quelques-unes allumées en même temps le rendu casserait. Les suivantes éclairent quand même, simplement sans ombre.
 const SMALLSCREEN = Math.min(screen.width, screen.height) < 700;
 function budgetShadows() {
-  const max = Math.max(3, Math.min(SMALLSCREEN ? 6 : 8, R.renderer.capabilities.maxTextures - 8));
+  // marge réservée aux textures des matières : 6 + (2 avec relief procédural, PBR_UNITS avec le pack d'assets : color, normal, ao et rugosité)
+  const max = Math.max(3, Math.min(SMALLSCREEN ? 6 : 8, R.renderer.capabilities.maxTextures - 6 - (pbrActive() ? PBR_UNITS : 2)));
   let n = 0;
   const walk = (o) => { if (!o.visible) return; if (o.isLight && o.userData.sh) o.castShadow = n++ < max; for (const c of o.children) walk(c); };
   walk(R.scene);
@@ -752,7 +764,7 @@ export function applySun() {
   const bg = (c) => { if (R.scene.background) R.scene.background.set(c); };
   if (sm.mode === 'off') {
     R.sunDir = null; sun.color.set('#fffaf3'); sun.intensity = 2.4; R.hemi.intensity = 0.95; R.hemi.color.set('#ffffff'); R.hemi.groundColor.set('#b8c0c8');
-    R.scene.environmentIntensity = 0.55; R.renderer.toneMappingExposure = 0.9; bg('#dde6ee'); R.ground.material.color.set('#e7ecef');
+    R.scene.environmentIntensity = 0.55 * R.envK; R.renderer.toneMappingExposure = 0.9; bg('#dde6ee'); R.ground.material.color.set('#e7ecef');
     R.grid.material.opacity = 0.9; R.sunInfo = null; setLightGain(1); updateLight(); invalidate(); return;
   }
   let p = SUN.current(sm);
@@ -767,7 +779,7 @@ export function applySun() {
   else sun.color.set('#8fa6d6');
   R.hemi.intensity = L.hemi; R.hemi.color.copy(cA.set('#3a4a6a')).lerp(cB.set('#f4f7ff'), L.t).lerp(cB.setRGB(1, 0.72, 0.5), 0.28 * L.tw);
   R.hemi.groundColor.copy(cA.set('#141c26')).lerp(cB.set('#b8c0c8'), L.t);
-  R.scene.environmentIntensity = L.env; R.renderer.toneMappingExposure = L.exposure * 0.95;
+  R.scene.environmentIntensity = L.env * R.envK; R.renderer.toneMappingExposure = L.exposure * 0.95;
   if (R.scene.background) R.scene.background.copy(cA.set('#0b1220')).lerp(cB.set('#dde6ee'), L.t).lerp(cB.setRGB(1, 0.62, 0.42), 0.25 * L.tw);
   R.ground.material.color.copy(cA.set('#1b232c')).lerp(cB.set('#e7ecef'), L.t);
   R.grid.material.opacity = 0.12 + 0.78 * L.t; R.sunInfo = { el: p.el, az: p.az, night: L.t < 0.35, t: L.t };

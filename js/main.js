@@ -1,4 +1,4 @@
-import { select, project, initScene, loadSaved, undo, redo, canUndo, canRedo, exportJSON, load, reset, snapshotPNG, frameAll, S, on, setLive, settings, entOfItem, setPresent, viewAspect } from './core.js';
+import { select, project, initScene, loadSaved, undo, redo, canUndo, canRedo, exportJSON, load, reset, snapshotPNG, frameAll, startAssets, S, on, setLive, settings, entOfItem, setPresent, viewAspect } from './core.js';
 import { initTools, setTool } from './tools.js';
 import { initUI, bindHistory, download, toast, openModal, closeModal, openPublish } from './ui.js';
 import { loadSample } from './sample.js';
@@ -38,6 +38,7 @@ $('#b-png').onclick = () => { const a = document.createElement('a'); a.href = sn
 initPins($('#pins'));
 initPresent($('#stage'));
 const CFG = window.__CFG || {};
+startAssets(CFG.assets_bases || (/^https?:/.test(location.protocol) ? ['assets/'] : []), CFG.assets_skip);   // pack d'assets PBR (facultatif) : adresses fournies par la carte, ou dossier voisin en développement
 settings.readonly = !!CFG.readonly;
 if (settings.readonly) { document.body.classList.add('ro'); document.documentElement.classList.add('ro'); document.documentElement.dataset.theme = 'light'; }   // pas de thème sombre : l'iframe doit rester transparente
 const had = settings.readonly ? false : loadSaved();
