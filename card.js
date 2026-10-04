@@ -6,19 +6,19 @@
 //   readonly: true
 //   plan: { … }
 //   height: 85vh                                  # optionnel ; par défaut la vue publiée s'ajuste à la maison (sans dépasser l'écran)
-// Dossier assets/ (textures PBR + HDRI, facultatif), par ordre de préférence :
-//   1. assets_url (YAML) : adresse forcée (assets_url: false pour désactiver le pack) ;
-//   2. le dossier assets/ placé à côté de ce fichier (installation locale : /hacsfiles/<dépôt>/assets/ ou /config/www/...) ;
-//   3. jsDelivr, figé sur la révision du dépôt qui contient les assets.
-//   assets_skip: [floor-pierre, floor-zellige]    # clés du pack à ne pas utiliser (la matière procédurale d'origine est gardée)
+// Assets (textures PBR + HDRI), par ordre de préférence :
+//   1. assets_url (YAML) : adresse forcée (assets_url: false pour désactiver le pack ; assets_flat: true si les fichiers sont à plat) ;
+//   2. les fichiers déposés par HACS à côté de ce fichier (pièces jointes de la release, à plat : textures__…__color.jpg) ;
+//   3. un dossier assets/ à côté de ce fichier (copie manuelle) ;
+//   4. jsDelivr, figé sur la révision du dépôt qui contient les assets (internet requis).
 // import.meta.url exige que la ressource soit chargée comme module (HACS l'enregistre ainsi : type « module »).
 const ASSETS_REF = '__ASSETS_REF__';
-function assetBases(forced) {
+function assetBases(forced, flat) {
   if (forced === false || forced === 'off') return [];
-  if (forced) { try { return [new URL(String(forced).replace(/\/?$/, '/'), location.href).href]; } catch (e) { return []; } }   // adresse absolue : l'iframe srcdoc ne sait pas résoudre une adresse relative
+  if (forced) { try { return [{ base: new URL(String(forced).replace(/\/?$/, '/'), location.href).href, flat: !!flat }]; } catch (e) { return []; } }   // adresse absolue : l'iframe srcdoc ne sait pas résoudre une adresse relative
   const out = [];
-  try { const u = new URL('assets/', import.meta.url); out.push(u.href); } catch (e) { /* adresse du module inconnue */ }
-  if (!ASSETS_REF.startsWith('__')) out.push('https://cdn.jsdelivr.net/gh/Karanktos/configurateur-3d-card@' + ASSETS_REF + '/assets/');
+  try { out.push({ base: new URL('./', import.meta.url).href, flat: true }, { base: new URL('assets/', import.meta.url).href, flat: false }); } catch (e) { /* adresse du module inconnue */ }
+  if (!ASSETS_REF.startsWith('__')) out.push({ base: 'https://cdn.jsdelivr.net/gh/Karanktos/configurateur-3d-card-hd@' + ASSETS_REF + '/assets/', flat: false });
   return out;
 }
 
@@ -36,7 +36,7 @@ export function defineCard(getHtml) {
       f.setAttribute('allow', 'fullscreen');
       this.append(f);
       getHtml().then((html) => {
-        f.srcdoc = html.replace('<body>', '<body><script>window.__CFG=' + JSON.stringify({ ...this._c, assets_bases: assetBases(this._c.assets_url) }).replace(/</g, '\\u003c') + ';<\/script>');
+        f.srcdoc = html.replace('<body>', '<body><script>window.__CFG=' + JSON.stringify({ ...this._c, assets_bases: assetBases(this._c.assets_url, this._c.assets_flat) }).replace(/</g, '\\u003c') + ';<\/script>');
         f.addEventListener('load', () => { this._push(); this._fit(); });
       });
       if (ro && !this._c.height && window.ResizeObserver) { this._ro = new ResizeObserver(() => this._fit()); this._ro.observe(this); }

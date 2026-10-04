@@ -1,4 +1,4 @@
-# Configurateur 3D pour Home Assistant
+# Configurateur 3D HD pour Home Assistant
 
 Dessinez votre maison en 3D (façon Sims / IKEA : murs, sols, portes, fenêtres, meubles, lumières), puis affichez-la dans un tableau de bord Home Assistant
 où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'ouvrent, lumières qui s'allument, capteurs, soleil réel ou simulé.
@@ -6,14 +6,29 @@ où elle réagit en direct à vos entités : volets, portes et fenêtres qui s'o
 **Rendu réaliste** : matières « photo » calculées sur place (veinage du parquet, strates et alvéoles du travertin, dallage en pierre irrégulière, murs de pierres, terre cuite, marbre veiné, gravier, béton nuancé) et en relief, textiles veloutés, plinthes, couleurs fidèles ;
 en **Rendu HD** (case de l'éditeur ou bouton **HD** de la vue publiée ; activé d'office sur ordinateur) : ombrage de contact (occlusion ambiante), bords lissés, ombres fines et halo des lampes le soir.
 
-**Pack d'assets réalistes** (facultatif) : textures PBR (couleur, normales, occlusion/rugosité) et éclairage HDRI de [Poly Haven](https://polyhaven.com) (CC0, voir `assets/CREDITS.md`) pour les sols, les murs et le bois/tissu/laine des meubles ; chargées à la demande, en 1k sur ordinateur et en 512 sur petit écran, avec repli sur les matières générées par le code si un fichier manque. La carte cherche le dossier `assets/` dans l'ordre : `assets_url` (YAML) → à côté du fichier de la carte → jsDelivr (internet requis).
-HACS ne télécharge que `dist/configurateur-3d-card.js` (il ne sait pas livrer de sous-dossiers pour un « plugin » : voir ci-dessous). Pour un fonctionnement **100 % local** : copier le dossier `assets/` du dépôt (ou seulement les sous-dossiers `512` + `materials.json` + `hdri`, 10 Mo) dans `/config/www/configurateur-3d-assets/`, puis dans la carte :
+> **Édition HD.** Même carte que [`configurateur-3d-card`](https://github.com/Karanktos/configurateur-3d-card) (édition légère, 182 Ko), plus un pack de **textures PBR** (couleur, normales, occlusion/rugosité) et un **éclairage HDRI** de [Poly Haven](https://polyhaven.com) (CC0, voir `assets/CREDITS.md`) pour les sols, les murs et le bois/tissu/laine des meubles. N'installe qu'une des deux éditions : elles déclarent la même carte `custom:configurateur-3d-card`, et les plans sont compatibles.
+
+## Installation (HACS, tout en local)
+1. HACS → ⋮ → **Dépôts personnalisés** → `https://github.com/Karanktos/configurateur-3d-card-hd`, catégorie **Tableau de bord**.
+2. Télécharger **Configurateur 3D HD**, puis recharger le navigateur. HACS dépose la carte **et** tous les fichiers du pack dans `/config/www/community/configurateur-3d-card-hd/` (une seule release, ~41 Mo) : rien à copier à la main, aucun accès à internet n'est ensuite nécessaire pour les textures.
+3. Dans le tableau de bord, la carte garde le même type (`custom:configurateur-3d-card`).
+
+Chargement à la demande (une matière à la fois), 1k sur ordinateur et 512 sur petit écran, repli sur les matières générées par le code si un fichier manque. Ordre de recherche des fichiers : `assets_url` (YAML) → fichiers de HACS à côté de la carte → dossier `assets/` à côté de la carte → jsDelivr (internet requis). Options de la carte :
 ```yaml
 type: custom:configurateur-3d-card
-assets_url: /local/configurateur-3d-assets/     # false = désactiver le pack
-assets_skip: [floor-pierre, floor-zellige]      # optionnel : clés du pack à ne pas utiliser
+assets_url: false                                # désactiver le pack (édition légère)
+assets_skip: [floor-pierre, floor-zellige]       # clés du pack à ne pas utiliser (la matière d'origine est gardée)
 ```
-(Ne pas le placer sous `/config/www/community/…` : HACS vide ce dossier à chaque mise à jour.)
+`assets_url: /local/mon-dossier/` force une autre adresse (ajouter `assets_flat: true` si les fichiers y sont « à plat »).
+
+## Pourquoi des fichiers « à plat » ?
+Pour une carte (catégorie « plugin »), HACS ne sait télécharger que le fichier JS ou les pièces jointes d'une release, et il les dépose **sans sous-dossiers** ; `zip_release` ne convient pas (HACS enregistrerait le .zip comme ressource Lovelace). Le workflow `.github/workflows/release.yml` joint donc à chaque release le JS et tous les fichiers de `assets/` renommés `textures__floor-parquet__512__color.jpg`, etc. (`tools/release-assets.mjs`), et la carte applique la même conversion pour les relire.
+
+## Publier une version (mainteneur)
+```
+npm run build && git commit -am "…" && git tag v1.0.1 && git push origin main v1.0.1
+```
+Le tag déclenche la release (≈ 304 pièces jointes) ; HACS propose alors la mise à jour.
 
 **Cuisine modulaire** façon configurateur de grande surface : meubles bas, hauts, colonnes et demi-colonnes aux dimensions standard (four, micro-ondes, plaque, évier, lave-vaisselle, réfrigérateur intégrés), joues, fileurs et crédence ;
 façades façon Leroy Merlin (Sofia, Tokyo, Oxford…) ou IKEA (Voxtorp, Bodbyn, Axstad, Havstorp, Kungsbacka, Nickebo, Sinarp…), poignées et finitions au choix, plan de travail. Le style choisi est repris pour chaque nouveau meuble, et les meubles se collent bord à bord.

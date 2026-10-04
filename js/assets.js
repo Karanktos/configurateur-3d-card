@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 
 const SMALL = Math.min(screen.width, screen.height) < 700;
-export const A = { base: '', q: '', man: null, ready: false, res: SMALL ? '512' : '1k', failed: new Set() };
+export const A = { base: '', q: '', flat: false, man: null, ready: false, res: SMALL ? '512' : '1k', failed: new Set() };
 const hooks = { change: () => {}, tex: () => {} };   // change : la liste des matières utilisables a changé (reconstruire) ; tex : une image vient d'arriver (redessiner)
 const reg = new Map();   // clé -> { st: 'idle'|'load'|'ready'|'fail', t: { color, normal, arm }, users: [[matériau, mode]], mclone }
 
@@ -28,17 +28,19 @@ export const pbrSize = (key) => { const e = pbrEntry(key); return e ? e.size : [
 export const pbrDefaultColor = (tbl, id) => { const k = A.man && A.man[tbl] && A.man[tbl][id]; const e = k && entryOf(k); return e ? e.colorDefault : null; };
 export const pbrFixedPose = (id) => { const k = A.man && A.man.floors && A.man.floors[id]; const e = k && entryOf(k); return !!(e && e.pose); };
 
-const url = (rel) => A.base + rel + A.q;
+// mode « à plat » (édition HD installée par HACS) : HACS dépose les pièces jointes d'une release dans un seul dossier, sans sous-dossiers
+// → textures/floor-parquet/512/color.jpg devient textures__floor-parquet__512__color.jpg
+const url = (rel) => A.base + (A.flat ? rel.replace(/\//g, '__') : rel) + A.q;
 const probe = (u) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(true); i.onerror = () => ok(false); i.src = u; });
 
-// bases : adresse (ou liste d'adresses essayées dans l'ordre) du dossier assets/ ; la première qui fournit un materials.json valide est retenue
+// bases : adresse (ou liste d'adresses, ou { base, flat }) du dossier d'assets, essayées dans l'ordre ; la première qui fournit un materials.json valide est retenue
 export async function initAssets(bases, h, skip) {
   Object.assign(hooks, h || {});
   for (const k of [].concat(skip || [])) A.failed.add(String(k));   // matières écartées par la configuration (assets_skip)
-  for (const base of [].concat(bases || []).filter(Boolean)) {
+  for (const b of [].concat(bases || []).filter(Boolean)) {
     try {
-      const u = new URL(base, location.href), q = u.search; u.search = '';
-      A.base = u.href.endsWith('/') ? u.href : u.href + '/'; A.q = q;
+      const base = typeof b === 'string' ? b : b.base, u = new URL(base, location.href), q = u.search; u.search = '';
+      A.base = u.href.endsWith('/') ? u.href : u.href + '/'; A.q = q; A.flat = !!(b && b.flat);
       const r = await fetch(url('materials.json'), { cache: 'no-cache' });
       if (!r.ok) continue;
       const m = await r.json();
