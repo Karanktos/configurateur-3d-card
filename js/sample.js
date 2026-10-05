@@ -30,22 +30,22 @@ export function loadSample() {
   // meubles
   const it = (model, x, z, rot = 0, extra = {}) => { const o = { ...defaultItem(model), id: nid(), x, z, rot, ...extra }; S.items.push(o); return o; };
   // cuisine le long du mur nord
-  it('frigo', 0.4, 0.4); it('kbas80', 1.08, 0.4); it('kevier', 2.05, 0.4, 0, { c2: '#d9c3a5' }); it('ktiroirs', 2.95, 0.4); it('cuisiniere', 3.55, 0.4);
-  it('kbas60', 4.15, 0.4); it('hotte', 3.55, 0.35, 0, { elev: 1.55 });
+  it('frigo', 0.4, 0.43); it('kbas80', 1.1, 0.4); it('kevier', 2.1, 0.4, 0, { c2: '#d9c3a5' }); it('ktiroirs', 3.0, 0.4); it('cuisiniere', 3.6, 0.4);
+  it('kbas60', 4.2, 0.4); it('hotte', 3.6, 0.35, 0, { elev: 1.55 });
   it('khaut', 1.2, 0.3, 0, { w: 0.8, elev: 1.5 }); it('khaut', 4.55, 0.3, 0, { elev: 1.5, w: 0.6 });
-  it('lavevaisselle', 4.75, 0.4);
+  it('lavevaisselle', 4.8, 0.4);
   // séjour
-  it('canape3', 2.6, 3.9, 90, { c1: '#8fa6b8' }); it('tablebasse', 3.9, 3.9, 90); it('tapis', 3.5, 3.9, 0, { c1: '#c9b79c', c2: '#b9a89a', w: 2.2, d: 3 });
+  it('canape3', 2.6, 3.9, 90, { c1: '#8fa6b8' }); it('tablebasse', 3.9, 3.9, 90); it('tapis', 3.5, 3.9, 0, { c1: '#c9b79c', c2: '#b9a89a', w: 2.2, d: 2.2 });
   it('meubletv', 6.18, 3.9, 270); it('tv', 6.18, 3.9, 270, { elev: 0.5 });
-  it('fauteuil', 4.2, 5.5, 200, { c1: '#d6a69a' });
-  it('table', 3.2, 6.1, 0, {}); [[2.7, 5.4, 0], [3.7, 5.4, 0], [2.7, 6.65, 180], [3.7, 6.65, 180]].forEach(([x, z, r]) => it('chaise', x, z, r));
-  it('biblio', 0.25, 6.6, 0, {}); it('plante', 5.9, 6.5, 0); it('lampadaire', 5.8, 1.8, 0);
+  it('fauteuil', 4.9, 2.7, 320, { c1: '#d6a69a' });
+  it('table', 3.2, 5.95, 0, { d: 0.85 }); [[2.7, 5.28, 0], [3.7, 5.28, 0], [2.7, 6.62, 180], [3.7, 6.62, 180]].forEach(([x, z, r]) => it('chaise', x, z, r));
+  it('biblio', 0.26, 6.4, 90, {}); it('plante', 5.9, 6.5, 0); it('lampadaire', 5.8, 1.8, 0);
   // chambre
   it('lit160', 8.85, 1.9, 270, { c2: '#9db4c0' }); it('chevet', 9.7, 0.7, 270); it('chevet', 9.7, 3.1, 270);
   it('armoire3', 8.0, 3.64, 180); it('commode', 7.2, 0.35, 0);
   // salle de bain
-  it('baignoire', 9.05, 6.5, 180); it('douche', 7.1, 6.4, 180); it('vasque', 9.66, 4.95, 270); it('miroir', 9.91, 4.95, 270);
-  it('wc', 7.9, 4.5, 0); it('seche_serv', 6.7, 5.2, 90, { elev: 0.5 });
+  it('baignoire', 9.05, 6.5, 180); it('douche', 7.1, 6.4, 180); it('vasque', 9.66, 4.95, 270); it('miroir', 9.88, 4.95, 270);
+  it('wc', 7.9, 4.5, 0); it('seche_serv', 7.9, 6.85, 180, { elev: 0.5 });
   // lumières (groupes de points lumineux) et capteurs d'exemple : non reliés, à relier à vos entités (panneau de droite → champ « Entité »)
   const lgrp = (name, x, z, pts) => {
     const g = { id: nid(), name, ent: '', ic: 'mdi:ceiling-light', x, z, h: 2 }; S.lights.push(g);
