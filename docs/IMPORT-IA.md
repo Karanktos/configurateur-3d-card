@@ -490,8 +490,8 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 
 ### Structure
 
-* `escalier_droit` — Escalier droit (marches suspendues) — 0.58×3.42×2.4 — champs `nb` (marches, 12), `rp` (main courante 0/1, 0 par défaut) — couleurs : Marches, Limons. La montée se fait vers l'arrière (−z) : on arrive par la face avant.
-* `escalier_quart` — Escalier quart tournant (palier) — 2.2×3.0×2.5 — champs `sw` (largeur des marches, 0.8), `rp` (main courante, 1) — variante `v` 0 = virage à gauche, 1 = à droite (vu de celui qui monte) — couleurs : Marches, Limons. Le nombre de marches découle des dimensions (giron ≈ 26 cm).
-* `escalier_demi_tour` — Escalier demi-tour avec palier — 1.9×2.4×2.5 — champs `sw`, `rp` — variante `v` (virage à gauche / à droite) — couleurs : Marches, Limons.
-* `escalier_balance` — Escalier demi-tour balancé (six marches triangulaires) — 1.9×1.9×2.5 — champs `sw`, `rp` — variante `v` — couleurs : Marches, Limons.
-* `escalier_colimacon` — Escalier hélicoïdal (colimaçon) — 1.5×1.5×2.5 — champs `nb` (marches, 13), `rp` — variante `v` (sens horaire / anti-horaire) — couleurs : Marches, Colonne.
+* `escalier_droit` — Escalier droit (marches suspendues) — 0.58×3.42×2.4 — champs `nb` (marches, 12), `rp` (rambarde, 0 par défaut : 0 sans, 1 main courante seule, 2 bois, 3 fer, 4 verre, 5 câbles inox) — couleurs : Marches, Limons, Rambarde (fer). La montée se fait vers l'arrière (−z) : on arrive par la face avant.
+* `escalier_quart` — Escalier quart tournant (palier) — 2.2×3.0×2.5 — champs `sw` (largeur des marches, 0.8), `rp` (rambarde 0–5, 1 par défaut) — variante `v` 0 = virage à gauche, 1 = à droite (vu de celui qui monte) — couleurs : Marches, Limons, Rambarde (fer). Le nombre de marches découle des dimensions (giron ≈ 26 cm).
+* `escalier_demi_tour` — Escalier demi-tour avec palier — 1.9×2.4×2.5 — champs `sw`, `rp` (rambarde 0–5) — variante `v` (virage à gauche / à droite) — couleurs : Marches, Limons, Rambarde (fer).
+* `escalier_balance` — Escalier demi-tour balancé (six marches triangulaires) — 1.9×1.9×2.5 — champs `sw`, `rp` (rambarde 0–5) — variante `v` — couleurs : Marches, Limons, Rambarde (fer).
+* `escalier_colimacon` — Escalier hélicoïdal (colimaçon) — 1.5×1.5×2.5 — champs `nb` (marches, 13), `rp` (rambarde 0–5) — variante `v` (sens horaire / anti-horaire) — couleurs : Marches, Colonne, Rambarde (fer).

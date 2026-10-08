@@ -62,7 +62,7 @@ readonly: true
 centered: true
 ```
 
-* **Escaliers** (catégorie « Structure ») : droit, quart tournant avec palier, demi-tour avec palier, demi-tour balancé, hélicoïdal. Largeur des marches, main courante et sens du virage (variante) réglables ; le nombre de marches découle de l'emprise.
+* **Escaliers** (catégorie « Structure ») : droit, quart tournant avec palier, demi-tour avec palier, demi-tour balancé, hélicoïdal. Largeur des marches, rambarde (sans, main courante seule, bois, fer, verre, câbles inox) et sens du virage (variante) réglables ; le nombre de marches découle de l'emprise.
 
 ## Publier votre maison
 
