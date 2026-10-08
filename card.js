@@ -10,6 +10,17 @@
 const THREE_URL = '__THREE_URL__';
 try { if (!THREE_URL.startsWith('__') && !document.querySelector('link[rel=modulepreload][href="' + THREE_URL + '"]')) { const l = document.createElement('link'); l.rel = 'modulepreload'; l.href = THREE_URL; document.head.appendChild(l); } } catch (e) { /* préchargement facultatif */ }
 
+// modèles 3D des meubles (100 % local), par ordre de préférence :
+//   1. assets_url (YAML) : dossier choisi (assets_url: false pour désactiver les modèles ; assets_flat: true si les fichiers sont à plat) ;
+//   2. les fichiers déposés par HACS à côté de ce fichier (pièces jointes de la release, à plat : models__canape2.glb) ;
+//   3. un dossier assets/ à côté de ce fichier (copie manuelle : assets/models/canape2.glb).
+// Aucun accès internet : sans les fichiers, les meubles restent ceux générés par le code. import.meta.url exige un chargement en module (HACS l'enregistre ainsi).
+function modelsBases(forced, flat) {
+  if (forced === false || forced === 'off') return [];
+  if (forced) { try { return [{ base: new URL(String(forced).replace(/\/?$/, '/'), location.href).href, flat: !!flat }]; } catch (e) { return []; } }   // adresse absolue : l'iframe srcdoc ne sait pas résoudre une adresse relative
+  try { return [{ base: new URL('./', import.meta.url).href, flat: true }, { base: new URL('assets/', import.meta.url).href, flat: false }]; } catch (e) { return []; }
+}
+
 export function defineCard(getHtml) {
   if (customElements.get('configurateur-3d-card')) return;
   class Configurateur3DCard extends HTMLElement {
@@ -27,7 +38,7 @@ export function defineCard(getHtml) {
         // vue publiée : l'interface de l'éditeur ne doit pas apparaître pendant le chargement (elle se masque seule une fois le mode aperçu actif, voir main.js) ;
         // sécurité : réaffichée d'office après 10 s si l'application n'a pas démarré (message d'erreur visible)
         if (ro) html = html.replace('</head>', '<style id="cfg-ro-hide">html,body{background:transparent!important}body>*:not(#boot){visibility:hidden;animation:cfgshow 0s 10s forwards}@keyframes cfgshow{to{visibility:visible}}</style></head>');
-        f.srcdoc = html.replace('<body>', '<body><script>window.__CFG=' + JSON.stringify(this._c).replace(/</g, '\\u003c') + ';<\/script>');
+        f.srcdoc = html.replace('<body>', '<body><script>window.__CFG=' + JSON.stringify({ ...this._c, models_bases: modelsBases(this._c.assets_url, this._c.assets_flat) }).replace(/</g, '\\u003c') + ';<\/script>');
         f.addEventListener('load', () => { this._push(); this._fit(); });
       });
       if (ro && !this._c.height && window.ResizeObserver) { this._ro = new ResizeObserver(() => this._fit()); this._ro.observe(this); }

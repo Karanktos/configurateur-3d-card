@@ -1,0 +1,30 @@
+# Publie une release quand on pousse un tag « v… » : le JS de la carte + les modèles 3D à plat en pièces jointes.
+# C'est ce que HACS télécharge (et installe en local dans /config/www/community/configurateur-3d-card/).
+name: Release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de la release (ex. v1.0.0) ; créé sur la branche main s'il n'existe pas"
+        required: true
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run build
+      - run: node tools/release-assets.mjs
+      - name: Créer la release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          gh release create "$TAG" release/* --target "$GITHUB_SHA" --title "$TAG" --notes "Carte + 27 modèles 3D de meubles installés en local par HACS (aucun accès internet pour les modèles)."

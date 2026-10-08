@@ -64,6 +64,15 @@ centered: true
 
 * **Escaliers** (catégorie « Structure ») : droit, quart tournant avec palier, demi-tour avec palier, demi-tour balancé, hélicoïdal. Largeur des marches, rambarde (sans, main courante seule, bois, fer, verre, câbles inox) et sens du virage (variante) réglables ; le nombre de marches découle de l'emprise.
 
+### Modèles 3D des meubles (100 % local)
+
+Les 27 meubles qui existent en modèles 3D dans l'édition HD (canapés, lits, cuisine, lampes…) s'affichent aussi ici. Les fichiers `.glb` (~3 Mo en tout) sont des pièces jointes de la **release** GitHub : HACS les installe dans `/config/www/community/configurateur-3d-card/` à côté de la carte (`models__canape2.glb`…), et la carte les lit **sans aucun accès internet**. Chaque modèle n'est chargé qu'à la première utilisation du meuble ; tant qu'il n'est pas arrivé, ou s'il est absent, le meuble reste en version « boîtes ». Les couleurs/matières utilisent les textures procédurales légères de cette édition (pas de textures PBR).
+
+* Dans HACS, installez le dépôt comme **carte (Dashboard)** et laissez-le suivre les **releases** (pas une branche), sinon les modèles ne sont pas téléchargés.
+* Copie manuelle : dossier `assets/models/*.glb` à côté de `configurateur-3d-card.js`, ou option YAML `assets_url: /local/mon-dossier/` (dossier contenant `models/*.glb` ; ajouter `assets_flat: true` si les fichiers sont à plat `models__*.glb`).
+* `assets_url: false` désactive les modèles (meubles en boîtes uniquement).
+* Mise à jour de la liste des modèles : `node tools/sync-models.mjs <dépôt HD>/assets/materials.json` (régénère `js/models-manifest.js` et copie les `.glb` dans `assets/models/`). Publication : workflow GitHub « Release » avec un tag `vX.Y.Z` (`tools/release-assets.mjs` prépare `release/`).
+
 ## Publier votre maison
 
 Dans le configurateur, bouton **Publier** : le plan est copié dans une carte en lecture seule (`readonly: true`) d'un tableau de bord de votre choix, créé automatiquement.
@@ -142,7 +151,7 @@ npm run build      # produit dist/configurateur-3d-card.js (un seul fichier, ce 
 
 Code dans `js/` (état et scène `core.js`, outils `tools.js`, panneaux `ui.js`, pastilles `pins.js`, vue maison `present.js`, liaison Home Assistant `ha.js`,
 catalogue de meubles `catalog.js`). Ajouter un meuble : un appel `reg(...)` dans `js/catalog.js`.
-Penser à reconstruire `dist/` avant chaque version : HACS installe le fichier du dépôt.
+Penser à reconstruire `dist/` avant chaque version, puis publier une release (workflow « Release ») : HACS installe la carte et les modèles depuis la release.
 
 ## Licence
 

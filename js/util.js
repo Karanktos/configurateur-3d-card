@@ -26,7 +26,7 @@ export function boxG(w, h, d, noSwap = false) {
 // libère géométries / matériaux (les textures partagées ne sont pas détruites)
 export function disposeTree(o) {
   o.traverse((c) => {
-    if (c.geometry) c.geometry.dispose();
+    if (c.geometry && !(c.geometry.userData && c.geometry.userData.shared)) c.geometry.dispose();
     if (c.material && !c.material.userData?.shared) {
       (Array.isArray(c.material) ? c.material : [c.material]).forEach((m) => m.dispose());
     }
