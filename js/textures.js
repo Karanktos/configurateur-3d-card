@@ -2,8 +2,11 @@
 // Chaque texture est en niveaux de gris : la « couleur » choisie par l'utilisateur est multipliée dessus.
 import * as THREE from 'three';
 import { hexToRgb } from './util.js';
+import { loadTexCache, cachedCanvas, saveCanvas } from './texcache.js';
 import { boardsPix, slabPix, opusPix, stoneWallPix, woodPix, concretePix, grassPix, marblePix, gravelPix, woolPix, setTexQuality } from './texgen.js';
-setTexQuality(Math.min(screen.width, screen.height) < 700 ? 0.6 : 1);   // textures calculées moins finement sur téléphone
+const TQ = Math.min(screen.width, screen.height) < 700 ? 0.6 : 1;
+setTexQuality(TQ);   // textures calculées moins finement sur téléphone
+export const preloadTextures = () => loadTexCache(TQ);   // relit les textures déjà calculées lors d'une visite précédente (js/texcache.js)
 
 function rng(seed) {
   let a = seed >>> 0;
@@ -279,7 +282,8 @@ export function getTex(kind) {
   if (!kind) return null;
   if (cache[kind]) return cache[kind];
   if (!GEN[kind] && kind.includes('@')) variant(kind);
-  const c = GEN[kind]();
+  let c = cachedCanvas(TQ, kind);
+  if (!c) { c = GEN[kind](); saveCanvas(TQ, kind, c); }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   t.colorSpace = THREE.SRGBColorSpace;

@@ -6,7 +6,9 @@ import { initPins } from './pins.js';
 import { initPresent, applyLocalRot } from './present.js';
 import { connectAuto, onHass, loadUser, saveUser, setWatcher } from './ha.js';
 
+import { preloadTextures } from './textures.js';
 const $ = (s) => document.querySelector(s);
+await preloadTextures();   // textures procédurales déjà calculées lors d'une visite précédente (cache IndexedDB)
 initScene($('#view'));
 initTools($('#view'), $('#labels'));
 initUI(); bindHistory(canUndo, canRedo);

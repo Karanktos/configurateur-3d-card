@@ -6,6 +6,10 @@
 //   readonly: true
 //   plan: { … }
 //   height: 85vh                                  # optionnel ; par défaut la vue publiée s'ajuste à la maison (sans dépasser l'écran)
+// bibliothèque 3D : préchargée dès que la ressource est chargée par Home Assistant (le cadre ne la demandera que bien plus tard) ; elle est alors déjà en cache quand la carte s'affiche
+const THREE_URL = '__THREE_URL__';
+try { if (!THREE_URL.startsWith('__') && !document.querySelector('link[rel=modulepreload][href="' + THREE_URL + '"]')) { const l = document.createElement('link'); l.rel = 'modulepreload'; l.href = THREE_URL; document.head.appendChild(l); } } catch (e) { /* préchargement facultatif */ }
+
 export function defineCard(getHtml) {
   if (customElements.get('configurateur-3d-card')) return;
   class Configurateur3DCard extends HTMLElement {
