@@ -64,6 +64,18 @@ centered: true
 
 * **Escaliers** (catégorie « Structure ») : droit, quart tournant avec palier, demi-tour avec palier, demi-tour balancé, hélicoïdal. Largeur des marches, rambarde (sans, main courante seule, bois, fer, verre, câbles inox) et sens du virage (variante) réglables ; le nombre de marches découle de l'emprise.
 
+### Modèles 3D des meubles
+
+Les 27 meubles qui existent en modèles 3D dans l'édition HD (canapés, lits, cuisine, lampes…) s'affichent aussi ici : chaque modèle (`.glb`, ~100 Ko) est chargé **à la demande**, la première fois qu'un meuble est posé, depuis les fichiers publics du dépôt [configurateur-3d-card-hd](https://github.com/Karanktos/configurateur-3d-card-hd) via jsDelivr (version épinglée). Tant que le modèle n'est pas arrivé, ou si le réseau est coupé, la version « boîtes » d'origine reste affichée. Les couleurs/matières utilisent les textures procédurales légères de cette édition (pas de textures PBR).
+
+```yaml
+type: custom:configurateur-3d-card
+assets_url: false          # désactive les modèles 3D (meubles en boîtes uniquement)
+# assets_url: /local/assets/   # ou dossier perso contenant models/*.glb
+```
+
+Mise à jour de la liste des modèles : `node tools/sync-models.mjs <chemin du dépôt HD>/assets/materials.json` (régénère `js/models-manifest.js`), puis mettre à jour `MODELS_REF` dans `card.js`.
+
 ## Publier votre maison
 
 Dans le configurateur, bouton **Publier** : le plan est copié dans une carte en lecture seule (`readonly: true`) d'un tableau de bord de votre choix, créé automatiquement.
@@ -131,6 +143,7 @@ Un plan d'exemple complet est disponible : [`docs/exemple-plan.json`](docs/exemp
 
 * three.js est chargé depuis jsDelivr (version épinglée) : un accès internet est nécessaire au navigateur.
 * Au plus 8 lumières (6 sur téléphone) projettent des ombres en même temps (limite des unités de texture du GPU).
+* Les modèles 3D des meubles demandent aussi un accès à jsDelivr (voir ci-dessus) ; sans lui, les meubles restent en version « boîtes ».
 * Pas d'étage ni de toit ; les sols sont rectangulaires.
 
 ## Développement

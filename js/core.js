@@ -5,6 +5,7 @@ import { getTex, floorDef, finishDef, TEX_SIZE, texKey, texSize, withBump } from
 import { wallGeometry, cutWallGeometry } from './geom.js';
 import { buildOpening, modelOf, defaultOpening } from './openings.js';
 import { buildItem, defOf, defaultItem } from './catalog.js';
+import { initModels } from './modeles3d.js';
 import { applyParts, LG } from './anim.js';
 import { mergeStatic } from './merge.js';
 import { levelOf, stateOf, hasHA } from './ha.js';
@@ -485,7 +486,7 @@ export function renderFloors() {
 }
 export function renderItem(it) {
   disposeEntity(objs.item, it.id);
-  const b = buildItem(it), g = new THREE.Group(); mergeStatic(b.group, b.parts); g.add(b.group);
+  const b = buildItem(it), g = new THREE.Group(); if (!b.glb) mergeStatic(b.group, b.parts); g.add(b.group);   // les GLB gardent leurs couleurs de sommets (ombres de contact cuites) : pas de fusion
   g.position.set(it.x, FLOOR_Y + (it.elev || 0), it.z); g.rotation.y = rad(it.rot || 0);
   tagRef(g, 'item', it.id); g.visible = itemVisible(it); root.item.add(g); objs.item.set(it.id, g); built.set('i' + it.id, keyOf(it, OMIT_I));
   if (cutApplied && cutItem(it)) clipTree(g, hidePlane);
@@ -558,6 +559,10 @@ export function openAll(v) {
   commit();
 }
 
+// un modèle 3D vient d'arriver : reconstruire les meubles concernés
+export function refreshModel(id) { for (const it of S.items) if (it.model === id) built.delete('i' + it.id); renderItems(); invalidate(); }
+// active les modèles 3D (GLB) : base = dossier assets/ (voir js/modeles3d.js)
+export function startModels(base) { initModels(base, refreshModel); }
 export function rebuildAll() {
   for (const k of [...anims.keys()]) { const id = +k.slice(1); const kind = k[0] === 'i' ? 'item' : 'opening'; if (!find(kind, id)) anims.delete(k); }
   setTimeout(syncLive, 0);

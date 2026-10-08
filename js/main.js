@@ -1,4 +1,4 @@
-import { select, project, initScene, loadSaved, undo, redo, canUndo, canRedo, exportJSON, load, reset, snapshotPNG, frameAll, S, on, setLive, settings, entOfItem, setPresent, viewAspect } from './core.js';
+import { select, project, initScene, loadSaved, undo, redo, canUndo, canRedo, exportJSON, load, reset, snapshotPNG, frameAll, startModels, S, on, setLive, settings, entOfItem, setPresent, viewAspect } from './core.js';
 import { initTools, setTool } from './tools.js';
 import { initUI, bindHistory, download, toast, openModal, closeModal, openPublish } from './ui.js';
 import { loadSample } from './sample.js';
@@ -40,6 +40,7 @@ $('#b-png').onclick = () => { const a = document.createElement('a'); a.href = sn
 initPins($('#pins'));
 initPresent($('#stage'));
 const CFG = window.__CFG || {};
+startModels(CFG.models_base);   // modèles 3D des meubles (facultatif : sans eux, les meubles restent ceux générés par le code)
 settings.readonly = !!CFG.readonly;
 try { const c = localStorage.getItem('cfg3d-centered'); settings.centered = CFG.centered != null ? !!CFG.centered : c === '1' ? true : c === '0' ? false : null; } catch (e) { settings.centered = CFG.centered != null ? !!CFG.centered : null; }   // vue maison centrée : YAML `centered`, sinon dernier choix du bouton « Centrée », sinon réglage du plan
 if (settings.readonly) { document.body.classList.add('ro'); document.documentElement.classList.add('ro'); document.documentElement.dataset.theme = 'light'; }   // pas de thème sombre : l'iframe doit rester transparente

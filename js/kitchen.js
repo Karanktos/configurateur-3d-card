@@ -87,8 +87,9 @@ function handle(K, p, par, w, h, cx, cy, z0, pos, side, horiz) {
   const yTop = cy + h / 2, yBot = cy - h / 2;
   if (kind === 'gorge') {   // gorge : rainure sombre + profil métal le long du bord
     const y = pos === 'bottom' ? yBot + 0.012 : yTop - 0.012;
-    K.box(w - 0.004, 0.022, 0.004, dark(K), cx, y, zf - 0.002, par);
-    K.box(w - 0.004, 0.004, 0.006, hm, cx, pos === 'bottom' ? yBot + 0.003 : yTop - 0.003, zf - 0.003, par);
+    // les faces avant dépassent de 0,5 et 1 mm de la façade : coplanaires, elles scintillaient (hachures) à distance
+    K.box(w - 0.004, 0.022, 0.004, dark(K), cx, y, zf - 0.0015, par);
+    K.box(w - 0.004, 0.004, 0.006, hm, cx, pos === 'bottom' ? yBot + 0.003 : yTop - 0.003, zf - 0.002, par);
     return;
   }
   if (kind === 'profil') {   // profilé horizontal sur toute la largeur
