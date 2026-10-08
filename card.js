@@ -20,6 +20,9 @@ export function defineCard(getHtml) {
       f.setAttribute('allow', 'fullscreen');
       this.append(f);
       getHtml().then((html) => {
+        // vue publiée : l'interface de l'éditeur ne doit pas apparaître pendant le chargement (elle se masque seule une fois le mode aperçu actif, voir main.js) ;
+        // sécurité : réaffichée d'office après 10 s si l'application n'a pas démarré (message d'erreur visible)
+        if (ro) html = html.replace('</head>', '<style id="cfg-ro-hide">html,body{background:transparent!important}body>*:not(#boot){visibility:hidden;animation:cfgshow 0s 10s forwards}@keyframes cfgshow{to{visibility:visible}}</style></head>');
         f.srcdoc = html.replace('<body>', '<body><script>window.__CFG=' + JSON.stringify(this._c).replace(/</g, '\\u003c') + ';<\/script>');
         f.addEventListener('load', () => { this._push(); this._fit(); });
       });

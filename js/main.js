@@ -73,7 +73,7 @@ onHass(async () => {
 connectAuto();
 setTool('select');
 frameAll();
-requestAnimationFrame(() => requestAnimationFrame(() => { const b = $('#boot'); if (b && !b.dataset.keep) { b.classList.add('gone'); setTimeout(() => b.remove(), 500); } }));
+requestAnimationFrame(() => requestAnimationFrame(() => { const hide = document.getElementById('cfg-ro-hide'); if (hide) hide.remove(); const b = $('#boot'); if (b && !b.dataset.keep) { b.classList.add('gone'); setTimeout(() => b.remove(), 500); } }));
 // utile à la carte Home Assistant : rapport hauteur / largeur de la vue maison (pour choisir la hauteur de l'iframe)
 window.__aspect = () => (settings.cfg ? 99 : viewAspect());   // en mode Configurer le cadre prend toute la hauteur disponible
 window.__plan = {   // pratique pour déboguer depuis la console
