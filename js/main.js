@@ -39,6 +39,7 @@ initPins($('#pins'));
 initPresent($('#stage'));
 const CFG = window.__CFG || {};
 settings.readonly = !!CFG.readonly;
+try { const c = localStorage.getItem('cfg3d-centered'); settings.centered = CFG.centered != null ? !!CFG.centered : c === '1' ? true : c === '0' ? false : null; } catch (e) { settings.centered = CFG.centered != null ? !!CFG.centered : null; }   // vue maison centrée : YAML `centered`, sinon dernier choix du bouton « Centrée », sinon réglage du plan
 if (settings.readonly) { document.body.classList.add('ro'); document.documentElement.classList.add('ro'); document.documentElement.dataset.theme = 'light'; }   // pas de thème sombre : l'iframe doit rester transparente
 const had = settings.readonly ? false : loadSaved();
 if (settings.readonly) {

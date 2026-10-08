@@ -432,7 +432,7 @@ const PUB_KEY = 'configurateur3d-publish';
 export async function openPublish() {
   const box = modal().querySelector('.box'); box.innerHTML = ''; box.classList.add('pform');
   let saved = {}; try { saved = JSON.parse(localStorage.getItem(PUB_KEY) || '{}'); } catch (e) { /* ignore */ }
-  const st = { url: saved.url ?? 'configurateur-test', newName: saved.newName || 'maison-3d', viewTitle: saved.viewTitle || 'Maison 3D', keep: false };
+  const st = { url: saved.url ?? 'configurateur-test', newName: saved.newName || 'maison-3d', viewTitle: saved.viewTitle || 'Maison 3D', keep: false, centered: saved.centered !== false };
   const status = el('p', { class: 'sub' }, 'Chargement des tableaux de bord…'), form = el('div', {});
   box.append(el('h2', {}, 'Publier la maison'), el('p', { class: 'sub' }, 'Le plan est copié dans une carte « Configurateur 3D » en lecture seule : même rendu, avec capteurs d\'ouverture, lumières, volets, soleil et pastilles reliés à Home Assistant. La page est créée automatiquement ; si le tableau contient déjà une telle carte, elle est simplement mise à jour.'), form, status);
   const buttons = el('div', { class: 'row', style: { marginTop: '10px' } });
@@ -449,8 +449,10 @@ export async function openPublish() {
   sel2.addEventListener('change', () => { st.url = sel2.value; vis(); }); vis();
   const vt = el('input', { type: 'text', value: st.viewTitle }); vt.addEventListener('input', () => { st.viewTitle = vt.value; });
   const keep = el('input', { type: 'checkbox', checked: st.keep }); keep.addEventListener('change', () => { st.keep = keep.checked; });
+  const ctr = el('input', { type: 'checkbox', checked: st.centered }); ctr.addEventListener('change', () => { st.centered = ctr.checked; });
   form.append(el('div', { class: 'f' }, el('div', { class: 'l' }, 'Tableau de bord'), sel2), newF, el('div', { class: 'f' }, el('div', { class: 'l' }, 'Titre de la page'), vt),
-    el('label', { class: 'f', style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } }, keep, 'Prendre l\'angle de vue actuel de l\'éditeur comme vue de départ (sinon : vue depuis le nord)'));
+    el('label', { class: 'f', style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } }, keep, 'Prendre l\'angle de vue actuel de l\'éditeur comme vue de départ (sinon : vue depuis le nord)'),
+    el('label', { class: 'f', style: { display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' } }, ctr, 'Vue centrée : de face, sans inclinaison de gauche à droite (désactivé : vue légèrement inclinée comme dans la carte plan-3d)'));
   const go = btn('⬆ Publier', async () => {
     status.className = 'sub'; status.textContent = 'Publication…'; go.disabled = true;
     try {
@@ -460,11 +462,12 @@ export async function openPublish() {
       plan.meta = plan.meta || {};
       const ang = keep.checked && settings.view === '3d' && !settings.present ? { az: V.az, pol: V.pol, sh: 0, persp: 1 } : homeView();
       plan.meta.view = { az: +ang.az.toFixed(3), pol: +ang.pol.toFixed(3) };
+      if (st.centered && !ang.persp) plan.meta.view.sh = 0;   // vue centrée : pas de cisaillement
       if (ang.persp) { plan.meta.view.sh = 0; plan.meta.view.persp = 1; }   // angle de l'éditeur repris tel quel : pas de cisaillement de la vue maison
       if (plan.meta.plot == null) plan.meta.plot = true;
       plan.items.forEach((i) => { if (defOf(i.model) && defOf(i.model).cat === 'Éclairage') i.open = 0; });   // les lumières suivent Home Assistant, pas l'aperçu
       const r = await publishPlan(plan, { url, dashTitle: st.viewTitle, viewTitle: st.viewTitle.trim() || 'Maison 3D' });
-      try { localStorage.setItem(PUB_KEY, JSON.stringify({ url: r.url || '', newName: st.newName, viewTitle: st.viewTitle })); } catch (e) { /* ignore */ }
+      try { localStorage.setItem(PUB_KEY, JSON.stringify({ url: r.url || '', newName: st.newName, viewTitle: st.viewTitle, centered: st.centered })); } catch (e) { /* ignore */ }
       status.className = 'sub ok'; status.innerHTML = '';
       status.append(`✔ ${r.created ? 'Tableau de bord créé et ' : ''}publié (${r.n} carte${r.n > 1 ? 's' : ''}). `, el('a', { href: r.path, target: '_top', style: { color: 'var(--accent)', fontWeight: '600' }, onclick: (ev) => { if (navigate(r.path)) { ev.preventDefault(); closeModal(); } } }, 'Ouvrir la page →'));
     } catch (e) { status.className = 'sub err'; status.textContent = e.message || String(e); }

@@ -442,6 +442,8 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `pergola` — Pergola — 3×3×2.5 — couleurs : Structure, Lames
 * `abri_jardin` — Abri de jardin — 2×1.6×2.2 — couleurs : Murs, Toit
 * `banc_jardin` — Banc de jardin — 1.5×0.55×0.85 — couleurs : Lames, Structure
+* `banquette_jardin` — Banquette de jardin en teck — 2×0.75×0.78 — couleurs : Teck, Coussins
+* `bbq_maconne` — Barbecue maçonné avec cheminée — 2.16×2.58×3.4 — couleurs : Enduit, Pierre
 * `bac_potager` — Bac potager — 1.2×0.8×0.4 — couleurs : Bois, Terre
 * `jardiniere` — Jardinière fleurie — 0.8×0.25×0.35 — couleurs : Bac, Fleurs
 * `cloture` — Palissade (panneau) — 1.8×0.05×1.5 — couleurs : Lames
@@ -485,3 +487,11 @@ Placer les modules bord à bord contre le mur (`rot` : face avant vers la pièce
 * `chaussures_abattants` — Meuble à chaussures 2 abattants — 0.8×0.24×1 — couleurs : Corps
 * `chaussures_hemnes` — Meuble à chaussures 2 compartiments (type Hemnes) — 0.89×0.3×1.27 — couleurs : Corps
 * `portant_trones` — Range-chaussures mural (type Trones) — 0.52×0.18×0.39 — elev 0.3 — couleurs : Corps
+
+### Structure
+
+* `escalier_droit` — Escalier droit (marches suspendues) — 0.58×3.42×2.4 — champs `nb` (marches, 12), `rp` (main courante 0/1, 0 par défaut) — couleurs : Marches, Limons. La montée se fait vers l'arrière (−z) : on arrive par la face avant.
+* `escalier_quart` — Escalier quart tournant (palier) — 2.2×3.0×2.5 — champs `sw` (largeur des marches, 0.8), `rp` (main courante, 1) — variante `v` 0 = virage à gauche, 1 = à droite (vu de celui qui monte) — couleurs : Marches, Limons. Le nombre de marches découle des dimensions (giron ≈ 26 cm).
+* `escalier_demi_tour` — Escalier demi-tour avec palier — 1.9×2.4×2.5 — champs `sw`, `rp` — variante `v` (virage à gauche / à droite) — couleurs : Marches, Limons.
+* `escalier_balance` — Escalier demi-tour balancé (six marches triangulaires) — 1.9×1.9×2.5 — champs `sw`, `rp` — variante `v` — couleurs : Marches, Limons.
+* `escalier_colimacon` — Escalier hélicoïdal (colimaçon) — 1.5×1.5×2.5 — champs `nb` (marches, 13), `rp` — variante `v` (sens horaire / anti-horaire) — couleurs : Marches, Colonne.

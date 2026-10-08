@@ -8,6 +8,8 @@ import { addPart } from './anim.js';
 import { registerKitchen, KDEF, KSTYLE_KEYS } from './kitchen.js';
 import { registerMore } from './catalog3.js';
 import { registerIkea } from './catalog4.js';
+import { registerMaison } from './catalog5.js';
+import { registerEscaliers } from './escaliers.js';
 
 export const CATS = ['Chambre', 'Salon', 'Salle à manger', 'Cuisine', 'Électroménager', 'Salle de bain', 'Bureau', 'Éclairage', 'Déco', 'Extérieur'];
 export const FINS = [['mat', 'Laqué mat'], ['bois', 'Bois / décor'], ['brillant', 'Brillant']];
@@ -1046,9 +1048,11 @@ SMALLAPP('bouilloire', 'Bouilloire', 0.2, 0.2, 0.25, 39, (g, p, K) => { K.cyl(0.
 SMALLAPP('grille_pain', 'Grille-pain', 0.3, 0.17, 0.2, 35, (g, p, K) => { K.rbox(p.w, p.h, p.d, 0.04, K.m(p.c1, { r: 0.3, m: 0.5 }), 0, p.h / 2, 0); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, -0.03); K.box(p.w * 0.7, 0.01, 0.03, K.black(), 0, p.h, 0.03); });
 { const m = registerMore(reg, { unit, sofaParts, bed, wardrobe, tone, rnd, WOOD, WHITE, ANTH, OAK, WALNUT }); m.surf.forEach((id) => { DEFS[id].surf = true; }); m.free.forEach((id) => { DEFS[id].free = true; }); }
 registerIkea(reg, { unit, sofaParts, bed, wardrobe, tone, WOOD, WHITE, OAK });   // série inspirée des gammes IKEA (js/catalog4.js)
+registerMaison(reg); registerEscaliers(reg);   // barbecue maçonné, banquette de jardin (js/catalog5.js) et escaliers (js/escaliers.js)
 for (const id of ['table_lack', 'buffet_hemnes', 'commode_nordli', 'commode_kullen', 'table_norden', 'table_ekedalen', 'table_ingatorp', 'table_applaro', 'bureau_micke', 'vasque_godmorgon', 'chaussures_hemnes', 'table_enfant_mammut']) DEFS[id].surf = true;
 for (const id of ['table_lack', 'fauteuil_oreilles', 'desserte_raskog', 'table_norden', 'table_ekedalen', 'table_ingatorp', 'chaise_teodores', 'chaise_ingolf', 'chaise_odger', 'chaise_markus', 'caisson_helmer', 'table_enfant_mammut', 'table_applaro', 'chaise_applaro', 'bain_soleil']) DEFS[id].free = true;   // meubles inspirés des grandes enseignes (js/catalog3.js)
 const SUBS = {
+  Structure: { 'Escaliers': ['escalier_droit', 'escalier_quart', 'escalier_demi_tour', 'escalier_balance', 'escalier_colimacon'] },
   Salon: { 'Canapés et fauteuils': ['canape2', 'canape3', 'canape_angle', 'canape_conv', 'fauteuil', 'fauteuil_coque', 'bergere', 'chauffeuse'], 'Tables': ['tablebasse', 'tablebasse_r', 'table_basse_carree', 'gueridon'], 'Meubles TV': ['meubletv', 'meuble_tv_tiroirs', 'tv', 'tv_mur'], 'Rangements': ['biblio', 'biblio_haute', 'enfilade', 'vitrine_salon', 'etagere_cubes', 'etagere_murale', 'console'], 'Chauffage': ['poele'], 'Confort': ['pouf'] },
   'Salle à manger': { 'Tables': ['table', 'table_r', 'table_extensible', 'table_haute'], 'Chaises et bancs': ['chaise', 'chaise_visiteur', 'chaise_bar', 'tabouret', 'banc'], 'Rangements': ['buffet', 'vaisselier'] },
   Cuisine: { 'Îlots et accessoires': ['evier_pose', 'ilot', 'desserte', 'hotte_ilot'] },
@@ -1060,13 +1064,13 @@ const SUBS = {
   'Électroménager': { 'Froid': ['frigo', 'frigo_us', 'congelateur', 'cave_vin'], 'Cuisson': ['cuisiniere', 'four', 'micro', 'hotte', 'plaque_induction'], 'Petit électroménager': ['cafetiere', 'bouilloire', 'grille_pain'], 'Lavage': ['lavelinge', 'seche', 'lavevaisselle'], 'Chauffage et eau': ['radiateur', 'chauffeeau', 'clim'] },
   'Éclairage': { 'Plafond': ['plafonnier', 'spot', 'reglette', 'suspension', 'lustre', 'rail'], 'Murales': ['applique', 'liseuse', 'lanterne'], 'À poser et sur pied': ['lampadaire', 'lampadaire_arc', 'lampe_poser'], 'Extérieur': ['projecteur', 'potelet'] },
   'Déco': { 'Tapis': ['tapis', 'tapis_r'], 'Plantes': ['plante', 'palmier', 'vase'], 'Murs': ['tableau', 'cadres', 'miroir_rond', 'horloge'], 'Textile': ['rideau', 'plaid_pouf'] },
-  'Extérieur': { 'Mobilier de jardin': ['table_jardin', 'chaise_jardin', 'banc_jardin', 'transat', 'parasol', 'barbecue'], 'Végétation': ['arbre', 'haie', 'bac_potager', 'jardiniere'], 'Aménagements': ['piscine', 'pergola', 'abri_jardin', 'carport', 'trampoline', 'cloture', 'portillon'], 'Véhicules': ['voiture1', 'voiture2'] },
+  'Extérieur': { 'Mobilier de jardin': ['table_jardin', 'chaise_jardin', 'banc_jardin', 'banquette_jardin', 'transat', 'parasol', 'barbecue'], 'Végétation': ['arbre', 'haie', 'bac_potager', 'jardiniere'], 'Aménagements': ['bbq_maconne', 'piscine', 'pergola', 'abri_jardin', 'carport', 'trampoline', 'cloture', 'portillon'], 'Véhicules': ['voiture1', 'voiture2'] },
 };
 for (const [cat, subs] of Object.entries(SUBS)) for (const [sub, ids] of Object.entries(subs)) for (const id of ids) { if (DEFS[id]) { DEFS[id].cat = cat; DEFS[id].sub = sub; } else console.warn('catalogue : modèle inconnu', id); }
 // anciens meubles de cuisine : remplacés par la cuisine modulaire, toujours acceptés dans les plans existants mais masqués dans la bibliothèque
 for (const id of ['kbas40', 'kbas60', 'kbas80', 'kbas120', 'ktiroirs', 'kbas_four', 'khaut40', 'khaut', 'khaut80', 'khaut_vitre', 'colonne_frigo', 'colonne_four', 'colonne_rangement', 'kevier', 'plan_travail']) if (DEFS[id]) { DEFS[id].hidden = true; DEFS[id].cat = 'Cuisine'; DEFS[id].sub = 'Anciens modèles'; }
 for (const d of Object.values(DEFS)) d.sub = d.sub || 'Autres';
-CATS.length = 0; CATS.push('Salon', 'Cuisine', 'Salle à manger', 'Chambre', 'Enfant', 'Salle de bain', 'Bureau', 'Entrée', 'Électroménager', 'Éclairage', 'Déco', 'Extérieur');
+CATS.length = 0; CATS.push('Salon', 'Cuisine', 'Salle à manger', 'Chambre', 'Enfant', 'Salle de bain', 'Bureau', 'Entrée', 'Électroménager', 'Éclairage', 'Déco', 'Extérieur', 'Structure');
 
 for (const k of Object.keys(DEFS)) { DEFS[k].fin = DEFS[k].fin === undefined ? 'mat' : DEFS[k].fin; DEFS[k].colors = DEFS[k].colors || []; }
 export const ALL = Object.values(DEFS);

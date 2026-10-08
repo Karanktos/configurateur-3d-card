@@ -22,7 +22,7 @@ export const S = { walls: [], openings: [], floors: [], items: [], markers: [], 
 // present = affichage « vue maison » (fond transparent, barre jour/soir, boussole) ; readonly = vue publiée (aucune modification)
 // vue seule (publiée ou aperçu) : rien ne s'édite ; le mode « Configurer » de la vue publiée rouvre l'édition des pastilles, lumières et liaisons
 export const viewOnly = () => (settings.readonly || settings.present) && !settings.cfg;
-export const settings = { wallMode: 'auto', snap: 0.1, magnet: true, view: '3d', ortho: false, camOrtho: false, live: false, present: false, readonly: false, cfg: false, free: false, hd: hdWanted(), sun: { mode: 'off', date: '', min: 720, force: null } };
+export const settings = { wallMode: 'auto', snap: 0.1, magnet: true, view: '3d', ortho: false, camOrtho: false, live: false, present: false, centered: null, readonly: false, cfg: false, free: false, hd: hdWanted(), sun: { mode: 'off', date: '', min: 720, force: null } };
 export const sel = { kind: null, id: null };
 
 const listeners = {};
@@ -153,7 +153,9 @@ const camDir = () => new THREE.Vector3(Math.sin(V.pol) * Math.sin(V.az), Math.co
 export const isOrtho = () => settings.view === '2d' || settings.camOrtho;
 // vue maison fixe : projection oblique (x' = x + k·hauteur), les murs laissent voir leurs faces sans perdre le plan au sol
 const SHEAR = 0.18;
-const shearNow = () => (settings.present && !settings.free && settings.camOrtho && settings.view === '3d' ? (S.meta && S.meta.view && S.meta.view.sh != null ? S.meta.view.sh : SHEAR) : 0);
+// inclinaison de la vue maison : 0 = vue centrée (de face, sans glissement latéral). settings.centered (option YAML `centered` ou bouton « Centrée ») prime sur le plan (meta.view.sh)
+export const viewSh = () => { const c = settings.centered; return c === true ? 0 : c === false ? SHEAR : (S.meta && S.meta.view && S.meta.view.sh != null ? S.meta.view.sh : SHEAR); };
+const shearNow = () => (settings.present && !settings.free && settings.camOrtho && settings.view === '3d' ? viewSh() : 0);
 export function setupCam() {
   const aspect = R.w / R.h;
   if (settings.view === '2d') {
@@ -216,7 +218,7 @@ function projBox() {
   const hMax = S.walls.reduce((m, w) => Math.max(m, w.h), 2.4), y0 = pr ? -0.46 : 0;
   const dir = camDir(), r = new THREE.Vector3(0, 1, 0).cross(dir).normalize(), u = dir.clone().cross(r).normalize();
   let amin = 1e9, amax = -1e9, bmin = 1e9, bmax = -1e9;
-  const sh = settings.present && !settings.free && settings.camOrtho ? SHEAR : 0;
+  const sh = settings.present && !settings.free && settings.camOrtho ? viewSh() : 0;
   for (const x of [b.minx, b.maxx]) for (const z of [b.minz, b.maxz]) for (const y of [y0, hMax]) {
     const a = x * r.x + y * r.y + z * r.z + sh * y, c = x * u.x + y * u.y + z * u.z;
     amin = Math.min(amin, a); amax = Math.max(amax, a); bmin = Math.min(bmin, c); bmax = Math.max(bmax, c);
