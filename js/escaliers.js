@@ -30,7 +30,12 @@ export function registerEscaliers(reg) {
     const rail = (pts) => {   // rambarde le long d'une ligne de nez de marches relevée de 0,9 m : main courante, poteaux, remplissage selon le type choisi
       const t = +(p.rp ?? 1); if (!t) return;
       const hm = t === 2 ? wood : t === 3 ? K.m(p.c3 || '#3a3d44', { r: 0.4, m: 0.5 }) : t === 1 ? metal : inox;
-      K.tube(pts, t === 2 ? 0.032 : 0.022, hm);
+      const hr = t === 2 ? 0.032 : 0.022, UP = new THREE.Vector3(0, 1, 0);   // main courante : segments droits entre les points (pas de courbe lissée) et rotules aux angles
+      for (let i = 0; i < pts.length - 1; i++) {
+        const a = pts[i], b = pts[i + 1], v = new THREE.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]), L = v.length(); if (L < 1e-4) continue;
+        K.cyl(hr, hr, L, hm, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2, null, 8).quaternion.setFromUnitVectors(UP, v.normalize());
+      }
+      for (const q of pts) K.sph(hr, hm, q[0], q[1], q[2]);
       const seg = (a, b) => {
         const lh = Math.hypot(b[0] - a[0], b[2] - a[2]), at = (u, dy = 0) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u + dy, a[2] + (b[2] - a[2]) * u];
         if (t === 4) {   // panneau de verre : parallélogramme dans le plan vertical de la volée
@@ -58,7 +63,7 @@ export function registerEscaliers(reg) {
     for (let i = 1; i <= nb; i++) T.tread(tw, 0.22, 0, r * i, run / 2 - (run * i) / (nb + 1));
     const len = Math.hypot(run, p.h), ang = Math.atan2(p.h, run);
     for (const s of [-1, 1]) { const st = K.box(0.035, 0.24, len, K.m(p.c2, { r: 0.45 }), s * (p.w / 2 - 0.0175), p.h / 2 + 0.06, 0); st.rotation.x = ang; }
-    if (T.rp) for (const s of [-1, 1]) T.rail([[s * (p.w / 2 - 0.02), 0.9, run / 2], [s * (p.w / 2 - 0.02), r * nb + 0.9, run / 2 - (run * nb) / (nb + 1)]]);
+    if (T.rp) for (const s of [-1, 1]) { const x = s * (p.w / 2 - 0.02); T.rail([[x, r + 0.9, run / 2 - run / (nb + 1) + 0.11], [x, r * nb + 0.9, run / 2 - (run * nb) / (nb + 1) - 0.11]]); }
   }, { ...common, fields: [{ k: 'nb', l: 'Nombre de marches', min: 6, max: 20, step: 1, def: 12, unit: '' }], selects: [{ ...RP, def: 0 }] });
 
   // ---------- quart tournant avec palier ----------
@@ -74,7 +79,7 @@ export function registerEscaliers(reg) {
       T.beam([xin, r * (n1 + 1) - 0.12, zl + e * sw / 2], [-s * w / 2, r * N - 0.12, zl + e * sw / 2]);
     }
     for (const a of [-1, 1]) for (const b of [-1, 1]) T.post(xc + a * (sw / 2 - 0.03), zl + b * (sw / 2 - 0.03), 0, r * (n1 + 1) - 0.06);
-    if (T.rp) { const xo = s * (w / 2 - 0.02), zo = -d / 2 + 0.02; T.rail([[xo, 0.9, d / 2], [xo, r * (n1 + 1) + 0.9, zo]]); T.rail([[xo, r * (n1 + 1) + 0.9, zo], [-s * w / 2, r * N + 0.9, zo]]); }
+    if (T.rp) { const xo = s * (w / 2 - 0.02), zo = -d / 2 + 0.02, y0 = r * (n1 + 1) + 0.9; T.rail([[xo, r + 0.9, d / 2], [xo, y0, -d / 2 + sw], [xo, y0, zo], [xin, y0, zo], [-s * (w / 2 - 0.02), r * N + 0.9, zo]]); }
   }, { ...common, variants: VAR, fields: [SW], selects: [RP] });
 
   // ---------- demi-tour avec palier ----------
@@ -88,7 +93,7 @@ export function registerEscaliers(reg) {
       T.beam([-xA + e * sw / 2, r * (nA + 1) - 0.12, -d / 2 + sw], [-xA + e * sw / 2, r * N - 0.12, d / 2]);
     }
     for (const a of [-1, 1]) for (const b of [-1, 1]) T.post(a * (w / 2 - 0.03), zl + b * (sw / 2 - 0.03), 0, r * (nA + 1) - 0.06);
-    if (T.rp) { const xo = s * (w / 2 - 0.02), zo = -d / 2 + 0.02, y = r * (nA + 1) + 0.9; T.rail([[xo, 0.9, d / 2], [xo, y, zo], [-xo, y, zo], [-xo, r * N + 0.9, d / 2]]); }
+    if (T.rp) { const xo = s * (w / 2 - 0.02), zo = -d / 2 + 0.02, y = r * (nA + 1) + 0.9; T.rail([[xo, r + 0.9, d / 2], [xo, y, -d / 2 + sw], [xo, y, zo], [-xo, y, zo], [-xo, y, -d / 2 + sw], [-xo, r * N + 0.9, d / 2]]); }
   }, { ...common, variants: VAR, fields: [SW], selects: [RP] });
 
   // ---------- demi-tour balancé : six marches triangulaires autour d'un noyau central ----------
@@ -110,10 +115,13 @@ export function registerEscaliers(reg) {
     for (const [x, z] of [[w / 2 - 0.03, zf0 + 0.03], [-w / 2 + 0.03, zf0 + 0.03]]) T.post(x, z, 0, r * (nA + 3));
     for (const e of [-1, 1]) T.beam([xA + e * sw / 2, r - 0.12, d / 2], [xA + e * sw / 2, r * nA - 0.12, zf1]);
     for (const e of [-1, 1]) T.beam([-xA + e * sw / 2, r * (nA + NW) - 0.12, zf1], [-xA + e * sw / 2, r * N - 0.12, d / 2]);
-    if (T.rp) {
-      const xo = s * (w / 2 - 0.02), y0 = r * nA + 0.9, path = [[xo, 0.9, d / 2], [xo, y0, zf1 - 0.02]];
-      for (let k = 1; k < NW; k++) { const q = hit((k * Math.PI) / NW); path.push([q[0] * 0.97, r * (nA + k) + 0.9, q[1] + (zf1 - q[1]) * 0.03]); }
-      path.push([-xo, r * (nA + NW) + 0.9, zf1 - 0.02], [-xo, r * N + 0.9, d / 2]); T.rail(path);
+    if (T.rp) {   // contour extérieur : volée A, éventail (points du contour + angles du palier), volée B
+      const inset = (q) => { const dx = q[0], dz = q[1] - zf1, L = Math.hypot(dx, dz) || 1; return [q[0] - (dx / L) * 0.02, q[1] - (dz / L) * 0.02]; };
+      const yAt = (f) => r * (nA + 1) + 0.9 + (r * f) / (Math.PI / NW), xo = s * (w / 2 - 0.02);
+      const path = [[xo, r + 0.9, d / 2]];
+      const fans = [...Array.from({ length: NW + 1 }, (_, k) => (k * Math.PI) / NW), corner, Math.PI - corner].sort((u, v) => u - v);
+      for (const f of fans) { const q = inset(hit(f)); path.push([q[0], yAt(f), q[1]]); }
+      path[1][0] = xo; path.push([-xo, r * N + 0.9, d / 2]); T.rail(path);
     }
   }, { ...common, variants: VAR, fields: [SW], selects: [RP] });
 
