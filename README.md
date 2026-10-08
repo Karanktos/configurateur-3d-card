@@ -138,7 +138,7 @@ Un plan d'exemple complet est disponible : [`docs/exemple-plan.json`](docs/exemp
 
 ## Remarques
 
-* three.js est chargé depuis jsDelivr (version épinglée) : un accès internet est nécessaire au navigateur.
+* La bibliothèque three.js est embarquée dans le fichier de la carte : aucun accès internet n'est nécessaire (carte et modèles 100 % locaux).
 * Au plus 8 lumières (6 sur téléphone) projettent des ombres en même temps (limite des unités de texture du GPU).
 * Pas d'étage ni de toit ; les sols sont rectangulaires.
 
@@ -146,7 +146,7 @@ Un plan d'exemple complet est disponible : [`docs/exemple-plan.json`](docs/exemp
 
 ```
 npm i
-npm run build      # produit dist/configurateur-3d-card.js (un seul fichier, ce que HACS installe)
+npm run build      # produit dist/configurateur-3d-card.js (un seul fichier avec three.js embarqué ; la release y joint les modèles 3D)
 ```
 
 Code dans `js/` (état et scène `core.js`, outils `tools.js`, panneaux `ui.js`, pastilles `pins.js`, vue maison `present.js`, liaison Home Assistant `ha.js`,

@@ -6,10 +6,6 @@
 //   readonly: true
 //   plan: { … }
 //   height: 85vh                                  # optionnel ; par défaut la vue publiée s'ajuste à la maison (sans dépasser l'écran)
-// bibliothèque 3D : préchargée dès que la ressource est chargée par Home Assistant (le cadre ne la demandera que bien plus tard) ; elle est alors déjà en cache quand la carte s'affiche
-const THREE_URL = '__THREE_URL__';
-try { if (!THREE_URL.startsWith('__') && !document.querySelector('link[rel=modulepreload][href="' + THREE_URL + '"]')) { const l = document.createElement('link'); l.rel = 'modulepreload'; l.href = THREE_URL; document.head.appendChild(l); } } catch (e) { /* préchargement facultatif */ }
-
 // modèles 3D des meubles (100 % local), par ordre de préférence :
 //   1. assets_url (YAML) : dossier choisi (assets_url: false pour désactiver les modèles ; assets_flat: true si les fichiers sont à plat) ;
 //   2. les fichiers déposés par HACS à côté de ce fichier (pièces jointes de la release, à plat : models__canape2.glb) ;
